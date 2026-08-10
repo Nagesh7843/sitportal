@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/push")
-@CrossOrigin(origins = "*")
 public class PushNotificationController {
 
     @Autowired

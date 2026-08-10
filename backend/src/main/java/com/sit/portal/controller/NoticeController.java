@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/notices")
-@CrossOrigin(origins = "*")
 public class NoticeController {
 
     @Autowired

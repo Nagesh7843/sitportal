@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/activities")
-@CrossOrigin(origins = "*")
 public class ActivityLogController {
 
     @Autowired

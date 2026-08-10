@@ -4,15 +4,20 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtils {
 
-    // 256-bit Secret Key for HMAC-SHA
-    private final Key key = Keys.hmacShaKeyFor("SitPortalSecretKeyForJwtAuthenticationToken2026SecureKey!".getBytes());
+    private final Key key;
     private final long jwtExpirationMs = 86400000; // 24 Hours
+
+    public JwtUtils(@Value("${JWT_SECRET:SitPortalSecretKeyForJwtAuthenticationToken2026SecureKey!}") String jwtSecret) {
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
     public String generateToken(String email, String role) {
         return Jwts.builder()

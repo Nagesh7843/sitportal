@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUtilsTest {
 
-    private final JwtUtils jwtUtils = new JwtUtils();
+    private final JwtUtils jwtUtils = new JwtUtils("SitPortalSecretKeyForJwtAuthenticationToken2026SecureKey!");
 
     @Test
     void generatesAValidTokenContainingTheEmailAndRole() {
