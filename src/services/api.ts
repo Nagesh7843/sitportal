@@ -285,5 +285,38 @@ export const apiService = {
     const response = await fetch(`${API_BASE_URL}/analytics/stats`, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch analytics stats');
     return await response.json();
+  },
+
+  // User Profile & Password Management
+  async fetchUserProfile() {
+    const response = await fetch(`${API_BASE_URL}/users/profile`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch user profile');
+    return await response.json();
+  },
+
+  async updateUserProfile(profileData: Record<string, any>) {
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to update user profile');
+    }
+    return await response.json();
+  },
+
+  async changePassword(passwords: { currentPassword: string; newPassword: string }) {
+    const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(passwords),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to change password');
+    }
+    return await response.json();
   }
 };

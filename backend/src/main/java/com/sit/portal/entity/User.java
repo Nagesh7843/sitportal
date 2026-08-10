@@ -35,6 +35,18 @@ public class User {
 
     private String department;
 
+    private String phone;
+
+    @Column(length = 1000)
+    private String avatar;
+
+    @Column(length = 1000)
+    private String bio;
+
+    private String officeLocation;
+
+    private String qualification;
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -10,6 +10,7 @@ interface HeaderProps {
   setSearchQuery: (q: string) => void;
   onOpenNotifications: () => void;
   onOpenHelp: () => void;
+  onOpenEditProfile?: () => void;
   onToggleMobileSidebar?: () => void;
   unreadCount?: number;
   canGoBack?: boolean;
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   setSearchQuery,
   onOpenNotifications,
   onOpenHelp,
+  onOpenEditProfile,
   onToggleMobileSidebar,
   unreadCount = 0,
   canGoBack,
@@ -145,6 +147,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 <div className="py-1">
+                  {onOpenEditProfile && (
+                    <button
+                      onClick={() => {
+                        onOpenEditProfile();
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#f3faff] text-[13px] font-semibold text-[#071e27] transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-[#000666]">edit_square</span>
+                      <span>Edit My Profile</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       onNavigate('settings');

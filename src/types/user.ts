@@ -7,4 +7,8 @@ export interface UserProfile {
   avatar: string;
   department: string;
   email: string;
+  phone?: string;
+  bio?: string;
+  officeLocation?: string;
+  qualification?: string;
 }

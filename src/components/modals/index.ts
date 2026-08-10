@@ -6,5 +6,6 @@ export * from './UploadAssetModal';
 export * from './NotificationsDrawer';
 export * from './HelpModal';
 export * from './ActivityLogModal';
+export * from './EditProfileModal';
 export { ModalsContainer as Modals } from './ModalsContainer';
 export * from './ModalsContainer';

@@ -18,6 +18,7 @@ import { AnalyticsView } from '@/features/analytics';
 import { SettingsView } from '@/features/settings';
 import { NoticeFeedView, NoticePublishModal } from '@/features/notices';
 import { DocumentLibraryView } from '@/features/documents';
+import { EditProfileModal } from '@/components/modals';
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showPublishNoticeModal, setShowPublishNoticeModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Fetch Database Records on Load (PostgreSQL sitportaldb)
@@ -475,6 +477,7 @@ export default function App() {
           setSearchQuery={setSearchQuery}
           onOpenNotifications={() => requireAuthAction(() => setShowNotifications(true))}
           onOpenHelp={() => setShowHelp(true)}
+          onOpenEditProfile={() => requireAuthAction(() => setShowEditProfileModal(true))}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           canGoBack={viewHistory.length > 0}
           onGoBack={handleGoBack}
@@ -654,6 +657,23 @@ export default function App() {
         onPublishNotice={handlePublishNotice}
         currentUserName={currentProfile?.name || 'Unknown Author'}
         currentUserRoleTitle={currentProfile?.roleTitle || 'Authorized Personnel'}
+      />
+
+      <EditProfileModal
+        isOpen={showEditProfileModal}
+        onClose={() => setShowEditProfileModal(false)}
+        currentProfile={currentProfile}
+        onProfileUpdated={(updated) => {
+          setCurrentProfile(updated);
+          const savedSession = localStorage.getItem('sit_portal_auth_session');
+          if (savedSession) {
+            try {
+              const session = JSON.parse(savedSession);
+              session.profile = updated;
+              localStorage.setItem('sit_portal_auth_session', JSON.stringify(session));
+            } catch (e) {}
+          }
+        }}
       />
 
       {/* Embedded AI Department Helpdesk & Summarizer Widget */}
