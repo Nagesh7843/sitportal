@@ -7,6 +7,7 @@ import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -22,41 +23,25 @@ public class PushNotificationService {
 
     private PushService pushService;
 
-    // Hardcoded VAPID keys for demonstration
-    private final String PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuB22Wz9C3b2ZMAk9bA5Yj2zEQ";
-    private final String PRIVATE_KEY = "dummy_private_key_replace_with_real_later_or_generate";
-    // Actually, nl.martijndwars requires valid keys. Let me generate standard valid ones or generate them dynamically on start.
-    // To generate on start:
-    private String dynamicPublicKey;
-    private String dynamicPrivateKey;
+    @Value("${VAPID_PUBLIC_KEY:BIZRhlCjiAthaeVDsYk6XhYD-W0wByq8A65inxm8AjgA8WJQTgV1F5FDmtLP15cwPHXt3fsF5aVsFgJvu-usg7U}")
+    private String publicKey;
+
+    @Value("${VAPID_PRIVATE_KEY:g5y8LW8emWI87N44Rc_NFg1NbNUEKv0Ux7B22WBLfeI}")
+    private String privateKey;
 
     @PostConstruct
     public void init() throws GeneralSecurityException {
         Security.addProvider(new BouncyCastleProvider());
         
-        // Generate keys at runtime
         try {
-            java.security.KeyPairGenerator keyPairGenerator = java.security.KeyPairGenerator.getInstance("ECDSA", "BC");
-            keyPairGenerator.initialize(new java.security.spec.ECGenParameterSpec("prime256v1"), new java.security.SecureRandom());
-            java.security.KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-            this.dynamicPublicKey = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(
-                    nl.martijndwars.webpush.Utils.encode((org.bouncycastle.jce.interfaces.ECPublicKey) keyPair.getPublic())
-            );
-            this.dynamicPrivateKey = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(
-                    nl.martijndwars.webpush.Utils.encode((org.bouncycastle.jce.interfaces.ECPrivateKey) keyPair.getPrivate())
-            );
-            pushService = new PushService();
-            pushService.setPublicKey(keyPair.getPublic());
-            pushService.setPrivateKey(keyPair.getPrivate());
-            pushService.setSubject("mailto:admin@sit.edu");
+            pushService = new PushService(publicKey, privateKey, "mailto:admin@sit.edu");
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error initializing PushService with VAPID keys: " + e.getMessage());
         }
     }
 
     public String getPublicKey() {
-        return dynamicPublicKey;
+        return publicKey;
     }
 
     public void sendPushNotificationToAll(String title, String message) {

@@ -1,7 +1,7 @@
 import { NoticeItem, StudentRecord, FacultyMember, EmailLog, UploadAsset, ActivityLog } from '@/types';
 
 const getRawApiUrl = () => {
-  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://sitportal.onrender.com';
   const cleanUrl = envUrl.replace(/\/$/, '');
   return cleanUrl.endsWith('/api/v1') ? cleanUrl : `${cleanUrl}/api/v1`;
 };
@@ -256,7 +256,7 @@ export const apiService = {
   },
 
   // Native Web Push API (Service Worker based)
-  async getVapidPublicKey(): Promise<{publicKey: string}> {
+  async getVapidPublicKey(): Promise<{ publicKey: string }> {
     const response = await fetch(`${API_BASE_URL}/push/vapid-public-key`);
     if (!response.ok) throw new Error('Failed to fetch VAPID public key');
     return await response.json();
@@ -269,13 +269,13 @@ export const apiService = {
       p256dh: subscription.keys ? subscription.keys.p256dh : '',
       auth: subscription.keys ? subscription.keys.auth : ''
     };
-    
+
     const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload)
     });
-    
+
     if (!response.ok) throw new Error('Failed to save push subscription to database');
     return await response.text();
   },

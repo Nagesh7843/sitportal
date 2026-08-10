@@ -28,3 +28,7 @@ services:
           property: password
       - key: JWT_SECRET
         generateValue: true
+      - key: VAPID_PUBLIC_KEY
+        value: BIZRhlCjiAthaeVDsYk6XhYD-W0wByq8A65inxm8AjgA8WJQTgV1F5FDmtLP15cwPHXt3fsF5aVsFgJvu-usg7U
+      - key: VAPID_PRIVATE_KEY
+        value: g5y8LW8emWI87N44Rc_NFg1NbNUEKv0Ux7B22WBLfeI
