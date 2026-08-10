@@ -47,7 +47,9 @@ public class PushNotificationService {
     public void sendPushNotificationToAll(String title, String message) {
         List<PushSubscription> subscriptions = repository.findAll();
         
-        String payload = String.format("{\"title\":\"%s\", \"message\":\"%s\"}", title, message);
+        String safeTitle = title != null ? title.replace("\"", "\\\"").replace("\n", " ") : "New Notice";
+        String safeMessage = message != null ? message.replace("\"", "\\\"").replace("\n", " ") : "You have a new update.";
+        String payload = String.format("{\"title\":\"%s\", \"message\":\"%s\"}", safeTitle, safeMessage);
 
         for (PushSubscription sub : subscriptions) {
             try {
