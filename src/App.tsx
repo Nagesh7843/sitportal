@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem } from '@/types';
 import { apiService } from '@/services/api';
+import { registerWebPushDevice } from '@/utils/webPush';
 
 
 import { Sidebar, Header, Footer } from '@/components/layout';
@@ -75,6 +76,7 @@ export default function App() {
 
   useEffect(() => {
     loadDatabaseData();
+    registerWebPushDevice().catch(() => {});
     const savedSession = localStorage.getItem('sit_portal_auth_session');
     if (savedSession) {
       try {

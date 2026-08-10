@@ -1,14 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiService } from '@/services/api';
+import { registerWebPushDevice } from '@/utils/webPush';
 
 export const SettingsView: React.FC = () => {
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [autoSyncDB, setAutoSyncDB] = useState(true);
-  const [fcmPushEnabled, setFcmPushEnabled] = useState(false);
-  const [smtpHost, setSmtpHost] = useState('smtp.sitcoe.org');
-  const [activeDepartment, setActiveDepartment] = useState('CSE');
+  const [emailAlerts, setEmailAlerts] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sit_setting_email_alerts');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [autoSyncDB, setAutoSyncDB] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sit_setting_auto_sync');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [fcmPushEnabled, setFcmPushEnabled] = useState<boolean>(false);
+  const [smtpHost, setSmtpHost] = useState<string>(() => {
+    return localStorage.getItem('sit_setting_smtp_host') || 'smtp.sitcoe.org';
+  });
+  const [activeDepartment, setActiveDepartment] = useState<string>(() => {
+    return localStorage.getItem('sit_setting_active_dept') || 'CSE';
+  });
+
+  useEffect(() => {
+    // Check if push notifications are already granted & active on mount
+    if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+      navigator.serviceWorker.getRegistration('/sw.js').then((registration) => {
+        if (registration) {
+          registration.pushManager.getSubscription().then((subscription) => {
+            if (subscription) {
+              setFcmPushEnabled(true);
+            }
+          });
+        }
+      });
+    }
+  }, []);
 
   const handleSave = () => {
+    localStorage.setItem('sit_setting_email_alerts', JSON.stringify(emailAlerts));
+    localStorage.setItem('sit_setting_auto_sync', JSON.stringify(autoSyncDB));
+    localStorage.setItem('sit_setting_smtp_host', smtpHost);
+    localStorage.setItem('sit_setting_active_dept', activeDepartment);
     alert('System preferences and security settings saved successfully.');
   };
 
@@ -17,51 +47,28 @@ export const SettingsView: React.FC = () => {
     setFcmPushEnabled(isEnabled);
 
     if (isEnabled) {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          alert('Notification permission denied by user.');
-          setFcmPushEnabled(false);
-          return;
-        }
-
-        // Register Service Worker
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-
-        // Fetch VAPID key from backend
-        const { publicKey } = await apiService.getVapidPublicKey();
-        
-        // Convert URL-safe base64 string to Uint8Array
-        const padding = '='.repeat((4 - publicKey.length % 4) % 4);
-        const base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
-        }
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: outputArray
-        });
-
-        // Send to backend
-        await apiService.subscribeToWebPush(subscription.toJSON());
+      const success = await registerWebPushDevice();
+      if (success) {
         alert('Web Push notifications enabled successfully! Your device will now receive background notifications.');
-
-      } catch (err: any) {
-        console.error('Push subscription failed', err);
-        alert('Failed to enable push notifications: ' + err.message);
+      } else {
         setFcmPushEnabled(false);
+      }
+    } else {
+      // Unsubscribe if toggled off
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+        if (registration) {
+          const subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            await subscription.unsubscribe();
+          }
+        }
       }
     }
   };
 
   return (
     <div className="space-y-6 max-w-4xl">
-
-
       {/* Multi-Department Expansion Setup */}
       <div className="bg-white p-6 rounded-2xl border border-[#c6c5d4] shadow-xs space-y-4">
         <h3 className="font-bold text-[16px] text-[#071e27] flex items-center gap-2">
@@ -79,7 +86,10 @@ export const SettingsView: React.FC = () => {
           ].map((dept) => (
             <button
               key={dept.code}
-              onClick={() => setActiveDepartment(dept.code)}
+              onClick={() => {
+                setActiveDepartment(dept.code);
+                localStorage.setItem('sit_setting_active_dept', dept.code);
+              }}
               className={`p-3.5 rounded-xl border text-left font-bold text-[13px] transition-all ${
                 activeDepartment === dept.code
                   ? 'bg-[#000666] text-white border-[#000666] shadow-sm'
@@ -144,7 +154,10 @@ export const SettingsView: React.FC = () => {
             <input
               type="checkbox"
               checked={autoSyncDB}
-              onChange={(e) => setAutoSyncDB(e.target.checked)}
+              onChange={(e) => {
+                setAutoSyncDB(e.target.checked);
+                localStorage.setItem('sit_setting_auto_sync', JSON.stringify(e.target.checked));
+              }}
               className="w-5 h-5 text-[#000666]"
             />
           </label>
@@ -157,7 +170,10 @@ export const SettingsView: React.FC = () => {
             <input
               type="checkbox"
               checked={emailAlerts}
-              onChange={(e) => setEmailAlerts(e.target.checked)}
+              onChange={(e) => {
+                setEmailAlerts(e.target.checked);
+                localStorage.setItem('sit_setting_email_alerts', JSON.stringify(e.target.checked));
+              }}
               className="w-5 h-5 text-[#000666]"
             />
           </label>
