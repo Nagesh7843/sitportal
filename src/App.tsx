@@ -194,11 +194,15 @@ export default function App() {
       profile,
       activeView: defaultView
     }));
+
+    // Register web push device with the newly acquired authentication token
+    registerWebPushDevice().catch(() => {});
   };
 
   // Logout Handler (Clears Persistent Session)
   const handleLogout = () => {
     localStorage.removeItem('sit_portal_auth_session');
+    localStorage.removeItem('sit_portal_jwt_token');
     setIsLoggedIn(false);
     setUserRole('public');
     setCurrentProfile(null);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { fcmService } from '@/utils/fcmService';
+import React, { useState, useEffect } from 'react';
+import { registerWebPushDevice, isWebPushSubscribed, unsubscribeWebPushDevice } from '@/utils/webPush';
 
 interface NotificationsDrawerProps {
   isOpen: boolean;
@@ -11,23 +11,33 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
   onClose
 }) => {
   const [fcmEnabled, setFcmEnabled] = useState(false);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      isWebPushSubscribed().then(setFcmEnabled).catch(() => setFcmEnabled(false));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleEnablePush = async () => {
-    const granted = await fcmService.requestNotificationPermission();
-    if (granted) {
-      const tokenObj = fcmService.getDeviceToken();
-      setFcmEnabled(true);
-      setFcmToken(tokenObj?.token || 'fcm-device-registered');
-      fcmService.sendPushNotification(
-        'CSE Department Communication Portal',
-        'FCM Push Notifications are now active on your browser!'
-      );
-    } else {
-      alert('Browser notification permission was not granted.');
+    setIsLoading(true);
+    const granted = await registerWebPushDevice();
+    setFcmEnabled(granted);
+    setIsLoading(false);
+    if (!granted) {
+      alert('Browser notification permission was not granted or subscription failed.');
     }
+  };
+
+  const handleDisablePush = async () => {
+    setIsLoading(true);
+    const success = await unsubscribeWebPushDevice();
+    if (success) {
+      setFcmEnabled(false);
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -44,12 +54,12 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
             </button>
           </div>
 
-          {/* FCM Push Notification Banner */}
+          {/* FCM Web Push Banner */}
           <div className="bg-[#000666] text-white p-4 rounded-2xl shadow-sm space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#759efd]">bolt</span>
-                <span className="font-bold text-[13px]">FCM Web Push Alerts</span>
+                <span className="font-bold text-[13px]">Real-time Push Alerts</span>
               </div>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${fcmEnabled ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-[#000666]'}`}>
                 {fcmEnabled ? 'ACTIVE' : 'OFFLINE'}
@@ -58,17 +68,27 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
 
             <p className="text-[#cfe6f2] text-[11px] leading-relaxed">
               {fcmEnabled
-                ? `Token: ${fcmToken?.slice(0, 20)}...`
+                ? 'Your device is actively receiving secure push notifications seamlessly.'
                 : 'Receive real-time push notifications when urgent notices or exam schedules are published.'}
             </p>
 
-            {!fcmEnabled && (
+            {!fcmEnabled ? (
               <button
                 onClick={handleEnablePush}
-                className="w-full py-2 bg-[#759efd] text-[#00337c] font-bold rounded-xl text-[12px] hover:bg-[#b0c6ff] transition-all flex items-center justify-center gap-1.5 mt-1"
+                disabled={isLoading}
+                className="w-full py-2 bg-[#759efd] text-[#00337c] font-bold rounded-xl text-[12px] hover:bg-[#b0c6ff] transition-all flex items-center justify-center gap-1.5 mt-1 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[16px]">notifications_active</span>
-                <span>Enable Push Notifications</span>
+                <span>{isLoading ? 'Enabling...' : 'Enable Push Notifications'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleDisablePush}
+                disabled={isLoading}
+                className="w-full py-2 bg-red-500/20 text-red-100 font-bold rounded-xl text-[12px] hover:bg-red-500/40 transition-all flex items-center justify-center gap-1.5 mt-1 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[16px]">notifications_off</span>
+                <span>{isLoading ? 'Disabling...' : 'Unsubscribe Device'}</span>
               </button>
             )}
           </div>

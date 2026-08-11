@@ -53,3 +53,36 @@ export async function registerWebPushDevice(): Promise<boolean> {
     return false;
   }
 }
+
+export async function isWebPushSubscribed(): Promise<boolean> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return false;
+  }
+  if (Notification.permission !== 'granted') return false;
+
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  return !!subscription;
+}
+
+export async function unsubscribeWebPushDevice(): Promise<boolean> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return false;
+  }
+  
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+      const endpoint = subscription.endpoint;
+      await subscription.unsubscribe();
+      await apiService.unsubscribeFromWebPush(endpoint).catch(() => {});
+      console.log('Web Push device unsubscribed successfully.');
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Failed to unsubscribe from Web Push:', err);
+    return false;
+  }
+}

@@ -42,4 +42,15 @@ public class PushNotificationController {
             return ResponseEntity.ok("Subscribed successfully.");
         }
     }
+
+    @PostMapping("/unsubscribe")
+    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> payload) {
+        String endpoint = payload.get("endpoint");
+        Optional<PushSubscription> existing = repository.findByEndpoint(endpoint);
+        if (existing.isPresent()) {
+            repository.delete(existing.get());
+            return ResponseEntity.ok("Unsubscribed successfully.");
+        }
+        return ResponseEntity.ok("Subscription not found.");
+    }
 }

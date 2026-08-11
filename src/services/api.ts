@@ -280,6 +280,17 @@ export const apiService = {
     return await response.text();
   },
 
+  async unsubscribeFromWebPush(endpoint: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/push/unsubscribe`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ endpoint })
+    });
+
+    if (!response.ok) throw new Error('Failed to remove push subscription from database');
+    return await response.text();
+  },
+
   // Real-time Analytics Statistics
   async fetchAnalyticsStats() {
     const response = await fetch(`${API_BASE_URL}/analytics/stats`, { headers: getAuthHeaders() });
