@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS email_logs (
     subject VARCHAR(255) NOT NULL,
     recipient_group VARCHAR(150) NOT NULL,
     recipient_count INT NOT NULL,
+    recipient_emails TEXT,
     priority VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL,
     open_rate VARCHAR(20) DEFAULT 'Not available',

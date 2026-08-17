@@ -27,6 +27,9 @@ public class EmailLogEntity {
     @Column(name = "recipient_count", nullable = false)
     private Integer recipientCount;
 
+    @Column(name = "recipient_emails", columnDefinition = "TEXT")
+    private String recipientEmails;
+
     @Column(nullable = false)
     private String priority;
 

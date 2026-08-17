@@ -16,6 +16,7 @@ public class BroadcastRequest {
 
     @Data
     public static class Filters {
+        private List<String> studentEmails;
         private List<String> academicYears;
         private List<String> divisions;
         private List<String> batches;

@@ -29,6 +29,7 @@ export interface EmailLog {
   priority: 'URGENT' | 'NORMAL';
   openRate?: string;
   content?: string;
+  recipientEmails?: string;
 }
 
 export interface DepartmentEvent {

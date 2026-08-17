@@ -268,7 +268,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                   </td>
                   <td className="py-3 px-4 text-right flex justify-end items-center gap-4">
                     <button
-                      onClick={() => onNavigate('bulk-email')}
+                      onClick={() => onNavigate('bulk-email', st.email)}
                       className="text-[#000666] font-bold text-[12px] hover:underline"
                     >
                       Send Notice

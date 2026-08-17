@@ -51,33 +51,39 @@ export default function App() {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Fetch Database Records on Load (PostgreSQL sitportaldb)
-  const loadDatabaseData = async () => {
-    try {
-      const [fetchedNotices, fetchedStudents, fetchedFaculty, fetchedEmails, fetchedDocuments, fetchedActivities, fetchedCourses] = await Promise.all([
-        apiService.fetchNotices().catch(() => []),
-        apiService.fetchStudents().catch(() => []),
-        apiService.fetchFaculty().catch(() => []),
-        apiService.fetchEmailLogs().catch(() => []),
-        apiService.fetchDocuments().catch(() => []),
-        apiService.fetchActivities().catch(() => []),
-        apiService.fetchCourses().catch(() => []),
-      ]);
-
-      setNotices(fetchedNotices);
-      setStudentsList(fetchedStudents);
-      setFacultyList(fetchedFaculty);
-      setEmailLogs(fetchedEmails);
-      setUploads(fetchedDocuments);
-      setActivities(fetchedActivities);
-      setCoursesList(fetchedCourses);
-    } catch (err) {
-      console.warn('Database sync warning:', err);
-    }
-  };
+  // Lazy Fetch Database Records based on active view
+  useEffect(() => {
+    const fetchDataForView = async () => {
+      try {
+        if (['dashboard', 'hod-dashboard', 'public-landing', 'notices'].includes(activeView) && notices.length === 0) {
+          apiService.fetchNotices().then(setNotices).catch(console.warn);
+        }
+        if (['dashboard', 'hod-dashboard', 'faculty-portal', 'students', 'analytics'].includes(activeView) && studentsList.length === 0) {
+          apiService.fetchStudents().then(setStudentsList).catch(console.warn);
+        }
+        if (['dashboard', 'hod-dashboard', 'faculty', 'bulk-email', 'faculty-email'].includes(activeView) && facultyList.length === 0) {
+          apiService.fetchFaculty().then(setFacultyList).catch(console.warn);
+        }
+        if (['bulk-email', 'faculty-email', 'analytics'].includes(activeView) && emailLogs.length === 0) {
+          apiService.fetchEmailLogs().then(setEmailLogs).catch(console.warn);
+        }
+        if (['documents', 'faculty-portal'].includes(activeView) && uploads.length === 0) {
+          apiService.fetchDocuments().then(setUploads).catch(console.warn);
+        }
+        if (['dashboard'].includes(activeView) && activities.length === 0) {
+          apiService.fetchActivities().then(setActivities).catch(console.warn);
+        }
+        if (['curriculum'].includes(activeView) && coursesList.length === 0) {
+          apiService.fetchCourses().then(setCoursesList).catch(console.warn);
+        }
+      } catch (err) {
+        console.warn('Lazy loading warning:', err);
+      }
+    };
+    fetchDataForView();
+  }, [activeView]);
 
   useEffect(() => {
-    loadDatabaseData();
     registerWebPushDevice().catch(() => {});
     const savedSession = localStorage.getItem('sit_portal_auth_session');
     if (savedSession) {
@@ -95,8 +101,11 @@ export default function App() {
     }
   }, []);
 
+  const [prefilledEmail, setPrefilledEmail] = useState<string>('');
+  
   // Authentication & Role Navigation Guard
-  const handleProtectedNavigate = (targetView: ViewMode) => {
+  const handleProtectedNavigate = (targetView: ViewMode, emailContext?: string) => {
+    setPrefilledEmail(emailContext || '');
     const publicViews: ViewMode[] = ['public-landing', 'login', 'curriculum', 'notices', 'faculty', 'documents', 'students'];
     const adminViews: ViewMode[] = ['bulk-email', 'faculty-email'];
 
@@ -342,6 +351,16 @@ export default function App() {
       try {
         const savedLog = await apiService.sendBroadcast(payload);
         setEmailLogs((prev) => [savedLog || payload, ...prev]);
+        
+        if (savedLog?.status === 'SIMULATED') {
+          setTimeout(() => {
+            alert('WARNING: Backend is running in Simulation Mode because SMTP credentials (spring.mail.username, etc.) are not configured. The email was logged but NOT actually sent.');
+          }, 100);
+        } else if (savedLog?.status === 'NO_RECIPIENTS') {
+          setTimeout(() => {
+            alert('WARNING: No recipients matched your filters. The email was NOT sent to anyone.');
+          }, 100);
+        }
         try {
           const savedAct = await apiService.createActivity({
             title: `Broadcast: ${savedLog.subject}`,
@@ -581,6 +600,7 @@ export default function App() {
               onSendBroadcast={handleSendBroadcast}
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="STUDENT"
+              prefilledEmail={prefilledEmail}
             />
           )}
 
@@ -591,6 +611,7 @@ export default function App() {
               onSendBroadcast={handleSendBroadcast}
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="FACULTY"
+              prefilledEmail={prefilledEmail}
             />
           )}
 

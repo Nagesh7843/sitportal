@@ -5,8 +5,9 @@ interface BulkEmailPanelProps {
   emailLogs: EmailLog[];
   facultyList?: FacultyMember[];
   onSendBroadcast: (newLog: any) => void;
-  onNavigate: (view: ViewMode) => void;
+  onNavigate: (view: ViewMode, emailContext?: string) => void;
   defaultTargetRole?: 'STUDENT' | 'FACULTY';
+  prefilledEmail?: string;
 }
 
 export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
@@ -14,7 +15,8 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   facultyList = [],
   onSendBroadcast,
   onNavigate,
-  defaultTargetRole = 'STUDENT'
+  defaultTargetRole = 'STUDENT',
+  prefilledEmail = ''
 }) => {
   const [targetRole, setTargetRole] = useState<'STUDENT' | 'FACULTY'>(defaultTargetRole);
   const [priority, setPriority] = useState<'URGENT' | 'NORMAL'>('NORMAL');
@@ -129,11 +131,13 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
           clearInterval(interval);
           setTimeout(() => {
             const count = targetRole === 'STUDENT'
-              ? selectedYears.length * 60 + selectedDivs.length * 40
+              ? (prefilledEmail ? 1 : selectedYears.length * 60 + selectedDivs.length * 40)
               : selectedFacultyIds.length; // Use exact manual count
 
             let groupName = '';
-            if (targetRole === 'STUDENT') {
+            if (prefilledEmail) {
+              groupName = `Individual Student: ${prefilledEmail}`;
+            } else if (targetRole === 'STUDENT') {
               groupName = `Students (${selectedYears.join(', ')})`;
             } else {
               groupName = `Faculty (Manual Selection: ${selectedFacultyIds.length} members)`;
@@ -146,6 +150,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               priority: priority,
               scheduledAt: scheduleForLater ? scheduledTime : null,
               filters: {
+                studentEmails: prefilledEmail ? [prefilledEmail] : [],
                 academicYears: targetRole === 'STUDENT' ? selectedYears : [],
                 divisions: targetRole === 'STUDENT' ? selectedDivs : [],
                 batches: targetRole === 'STUDENT' ? selectedBatches : [],
@@ -158,7 +163,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
             setSendProgress(0);
             setSubject('');
             setMessage('');
-            alert(`Email sent successfully to ${count} recipients!`);
+            alert(`Email process completed for ${count} recipients!`);
           }, 300);
           return 100;
         }
@@ -342,6 +347,16 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
 
             {/* Student Filters */}
             {targetRole === 'STUDENT' && (
+              <>
+              {prefilledEmail ? (
+                <div className="bg-white p-3 rounded-lg border border-[#c6c5d4] flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[#000666]">person</span>
+                  <div>
+                    <p className="text-[11px] text-[#767683] font-bold uppercase">Sending to Individual Student</p>
+                    <p className="text-[14px] font-bold text-[#454652]">{prefilledEmail}</p>
+                  </div>
+                </div>
+              ) : (
               <div className="space-y-4 pt-2">
                 {/* Step 1: Academic Year Selection */}
                 <div>
@@ -427,6 +442,8 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                   <p className="text-[11px] text-[#767683] italic pl-7">Select at least one division above to see batch options.</p>
                 ) : null}
               </div>
+              )}
+              </>
             )}
 
             {/* Faculty Manual Selection */}
@@ -784,6 +801,12 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               <p><strong>Total Delivered:</strong> {selectedLog.recipientCount || 240}</p>
               <p><strong>Timestamp:</strong> {selectedLog.sentAt}</p>
               <p><strong>Open Rate:</strong> {selectedLog.openRate || '88.4%'}</p>
+              {selectedLog.recipientEmails && (
+                <div className="pt-2 border-t border-[#c6c5d4] mt-2">
+                  <p className="font-bold mb-1">Raw Recipient Emails:</p>
+                  <p className="text-[11px] font-mono break-words">{selectedLog.recipientEmails}</p>
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-gray-50 border rounded-xl text-[13px] whitespace-pre-wrap max-h-48 overflow-y-auto mb-4">
