@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '@/services/api';
 import { registerWebPushDevice } from '@/utils/webPush';
 
+import { UserProfile } from '@/types';
+
 interface DiagnosticItem {
   id: string;
   name: string;
@@ -11,7 +13,11 @@ interface DiagnosticItem {
   details: string;
 }
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  currentProfile?: UserProfile | null;
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) => {
   const [activeDepartment, setActiveDepartment] = useState<string>(() => {
     return localStorage.getItem('sit_setting_active_dept') || 'CSE';
   });
@@ -39,7 +45,9 @@ export const SettingsView: React.FC = () => {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
-  const [testEmailAddress, setTestEmailAddress] = useState<string>('gnagesh550@gmail.com');
+  const [testEmailAddress, setTestEmailAddress] = useState<string>(() => {
+    return currentProfile?.email || '';
+  });
   const [isSendingTestEmail, setIsSendingTestEmail] = useState<boolean>(false);
   const [fcmPushEnabled, setFcmPushEnabled] = useState<boolean>(false);
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState<boolean>(false);

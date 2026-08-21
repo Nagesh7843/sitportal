@@ -19,7 +19,7 @@ import { AnalyticsView } from '@/features/analytics';
 import { SettingsView } from '@/features/settings';
 import { NoticeFeedView, NoticePublishModal } from '@/features/notices';
 import { DocumentLibraryView } from '@/features/documents';
-import { EditProfileModal } from '@/components/modals';
+import { EditProfileModal, ContactFacultyModal } from '@/components/modals';
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
 export default function App() {
@@ -54,6 +54,8 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [showPublishNoticeModal, setShowPublishNoticeModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showContactFacultyModal, setShowContactFacultyModal] = useState(false);
+  const [selectedFacultyForContact, setSelectedFacultyForContact] = useState<FacultyMember | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Lazy Fetch Database Records based on active view
@@ -619,6 +621,7 @@ export default function App() {
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="STUDENT"
               prefilledEmail={prefilledEmail}
+              currentProfile={currentProfile}
             />
           )}
 
@@ -631,6 +634,7 @@ export default function App() {
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="FACULTY"
               prefilledEmail={prefilledEmail}
+              currentProfile={currentProfile}
             />
           )}
 
@@ -646,6 +650,11 @@ export default function App() {
               onNavigate={handleProtectedNavigate}
               onAddFaculty={userRole === 'admin' ? () => requireAuthAction(() => setShowAddFaculty(true)) : undefined}
               onAddFacultyBulk={userRole === 'admin' ? handleAddFacultyBulk : undefined}
+              onContactFaculty={(fac) => {
+                setSelectedFacultyForContact(fac);
+                setShowContactFacultyModal(true);
+              }}
+              currentProfile={currentProfile}
             />
           )}
 
@@ -661,7 +670,7 @@ export default function App() {
 
           {activeView === 'analytics' && <AnalyticsView notices={notices} students={studentsList} emails={emailLogs} />}
 
-          {activeView === 'settings' && <SettingsView />}
+          {activeView === 'settings' && <SettingsView currentProfile={currentProfile} />}
         </main>
 
         {/* Footer */}
@@ -718,6 +727,27 @@ export default function App() {
               localStorage.setItem('sit_portal_auth_session', JSON.stringify(session));
             } catch (e) {}
           }
+        }}
+      />
+
+      <ContactFacultyModal
+        isOpen={showContactFacultyModal}
+        onClose={() => {
+          setShowContactFacultyModal(false);
+          setSelectedFacultyForContact(null);
+        }}
+        faculty={selectedFacultyForContact}
+        currentProfile={currentProfile}
+        onSuccess={(msg) => {
+          if (selectedFacultyForContact) {
+            apiService.createActivity({
+              title: `Inquiry to ${selectedFacultyForContact.name}`,
+              subtitle: `From ${currentProfile?.name || 'Student'}`,
+              icon: 'mail',
+              type: 'email'
+            }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
+          }
+          alert(msg);
         }}
       />
 

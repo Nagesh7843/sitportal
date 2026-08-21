@@ -1470,18 +1470,45 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/email/test?targetEmail=gnagesh550@gmail.com",
+							"raw": "{{base_url}}/api/v1/email/test?targetEmail=notifications@sitcoe.org.in",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "email", "test"],
 							"query": [
 								{
 									"key": "targetEmail",
-									"value": "gnagesh550@gmail.com",
+									"value": "notifications@sitcoe.org.in",
 									"description": "Recipient email address for live SMTP test verification"
 								}
 							]
 						},
 						"description": "Directly transmits a test verification email via JavaMailSender SMTP."
+					},
+					"response": []
+				},
+				{
+					"name": "Contact Faculty Member (Student Direct Inquiry)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"facultyId\": \"1\",\n  \"facultyName\": \"Dr. S. S. Gurav\",\n  \"facultyEmail\": \"hod.cse@sitcoe.org.in\",\n  \"studentName\": \"Alex Chen\",\n  \"studentEmail\": \"alex.chen@sitcoe.org.in\",\n  \"studentPrn\": \"21CSE042\",\n  \"academicYear\": \"Final Year\",\n  \"division\": \"A\",\n  \"inquiryType\": \"Project Guidance\",\n  \"subject\": \"Capstone Project Review Appointment Request\",\n  \"message\": \"Respected Sir,\\n\\nI would like to request 15 minutes during your office hours to discuss our Capstone Machine Learning model evaluation metrics.\\n\\nThank you,\\nAlex Chen\",\n  \"priority\": \"NORMAL\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/contact-faculty",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "contact-faculty"]
+						},
+						"description": "Transmits a direct student inquiry email to a faculty member with Reply-To set to the student's email."
 					},
 					"response": []
 				}

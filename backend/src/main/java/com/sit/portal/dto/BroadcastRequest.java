@@ -6,7 +6,9 @@ import java.util.Map;
 
 @Data
 public class BroadcastRequest {
+    private String senderName;
     private String senderEmail;
+    private String senderRole;
     private String targetRole; // "FACULTY" or "STUDENT"
     private String subject;
     private String content;

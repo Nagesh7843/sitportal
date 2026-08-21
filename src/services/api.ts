@@ -454,6 +454,16 @@ export const apiService = {
     return await response.json();
   },
 
+  async contactFaculty(inquiry: any): Promise<EmailLog> {
+    const response = await fetch(`${API_BASE_URL}/email/contact-faculty`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(inquiry),
+    });
+    if (!response.ok) throw new Error('Failed to transmit message to faculty member');
+    return await response.json();
+  },
+
   // Activity Log Endpoints
   async fetchActivities(): Promise<ActivityLog[]> {
     const response = await fetch(`${API_BASE_URL}/activities`, { headers: getAuthHeaders() });

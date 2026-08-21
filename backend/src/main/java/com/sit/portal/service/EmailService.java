@@ -125,4 +125,22 @@ public class EmailService {
     public void sendDirectTestEmail(String targetEmail, BroadcastRequest request) {
         asyncEmailWorker.dispatchEmailsAsync(List.of(targetEmail), request);
     }
+
+    public EmailLogEntity processFacultyContact(com.sit.portal.dto.ContactFacultyRequest request) {
+        EmailLogEntity log = new EmailLogEntity();
+        log.setSubject("🎓 [Inquiry] " + request.getSubject());
+        log.setContent(request.getMessage());
+        log.setRecipientGroup("Faculty: " + request.getFacultyName());
+        log.setRecipientEmails(request.getFacultyEmail());
+        log.setRecipientCount(1);
+        log.setPriority(request.getPriority() != null ? request.getPriority() : "NORMAL");
+        log.setOpenRate("0.0%");
+        log.setStatus(javaMailSender == null ? "SIMULATED" : "SUCCESS");
+
+        EmailLogEntity savedLog = emailLogRepository.save(log);
+
+        asyncEmailWorker.dispatchFacultyInquiryAsync(request);
+
+        return savedLog;
+    }
 }

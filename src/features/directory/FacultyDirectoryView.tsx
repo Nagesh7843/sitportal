@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FacultyMember, ViewMode } from '@/types';
+import { FacultyMember, UserProfile, ViewMode } from '@/types';
 
 interface FacultyDirectoryProps {
   facultyList: FacultyMember[];
@@ -8,6 +8,8 @@ interface FacultyDirectoryProps {
   onNavigate: (view: ViewMode) => void;
   onAddFaculty?: () => void;
   onAddFacultyBulk?: (faculty: FacultyMember[]) => void;
+  onContactFaculty?: (faculty: FacultyMember) => void;
+  currentProfile?: UserProfile | null;
 }
 
 export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
@@ -16,7 +18,9 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
   onDeleteFaculty,
   onNavigate,
   onAddFaculty,
-  onAddFacultyBulk
+  onAddFacultyBulk,
+  onContactFaculty,
+  currentProfile
 }) => {
   const [search, setSearch] = useState('');
   const [rankFilter, setRankFilter] = useState('ALL');
@@ -207,16 +211,28 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
               </div>
 
               <div className="flex gap-2">
-                <a
-                  href={`mailto:${fac.email}`}
-                  className="flex-1 py-2 bg-[#000666] text-white rounded-lg text-center font-bold text-[12px] hover:bg-[#1a237e] transition-colors"
-                >
-                  Send Email
-                </a>
+                {onContactFaculty ? (
+                  <button
+                    type="button"
+                    onClick={() => onContactFaculty(fac)}
+                    className="flex-1 py-2.5 bg-[#000666] text-white rounded-xl text-center font-bold text-[12px] hover:bg-[#1a237e] transition-all shadow-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">mail</span>
+                    <span>Contact Faculty</span>
+                  </button>
+                ) : (
+                  <a
+                    href={`mailto:${fac.email}`}
+                    className="flex-1 py-2.5 bg-[#000666] text-white rounded-xl text-center font-bold text-[12px] hover:bg-[#1a237e] transition-all shadow-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">mail</span>
+                    <span>Contact Faculty</span>
+                  </a>
+                )}
                 {onDeleteFaculty && (
                   <button
                     onClick={() => onDeleteFaculty(fac.id)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+                    className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100 hover:bg-red-100 transition-colors"
                     title="Delete Faculty"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>

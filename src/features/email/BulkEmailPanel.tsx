@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember, StudentRecord } from '@/types';
+import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember, StudentRecord, UserProfile } from '@/types';
 
 interface BulkEmailPanelProps {
   emailLogs: EmailLog[];
@@ -9,6 +9,7 @@ interface BulkEmailPanelProps {
   onNavigate: (view: ViewMode, emailContext?: string) => void;
   defaultTargetRole?: 'STUDENT' | 'FACULTY';
   prefilledEmail?: string;
+  currentProfile?: UserProfile | null;
 }
 
 export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
@@ -18,7 +19,8 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   onSendBroadcast,
   onNavigate,
   defaultTargetRole = 'STUDENT',
-  prefilledEmail = ''
+  prefilledEmail = '',
+  currentProfile
 }) => {
   const [targetRole, setTargetRole] = useState<'STUDENT' | 'FACULTY'>(defaultTargetRole);
   const [priority, setPriority] = useState<'URGENT' | 'NORMAL'>('NORMAL');
@@ -198,6 +200,9 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
             }
 
             const payload: any = {
+              senderName: currentProfile?.name || 'Department Faculty',
+              senderEmail: currentProfile?.email || 'notifications@sitcoe.org.in',
+              senderRole: currentProfile?.roleTitle || currentProfile?.role || 'Faculty',
               targetRole: targetRole,
               subject: subject,
               content: message,
@@ -754,6 +759,26 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Active Sender Identity Preview */}
+          <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#000666] text-[20px]">badge</span>
+              <div>
+                <span className="text-[12px] text-[#475569]">Transmitting as: </span>
+                <strong className="text-[13px] text-[#071e27]">{currentProfile?.name || 'Authorized Department User'}</strong>
+                <span className="text-[11px] text-[#2b5bb5] font-semibold ml-1.5">
+                  ({currentProfile?.roleTitle || currentProfile?.role || 'Faculty'})
+                </span>
+                {currentProfile?.email && (
+                  <span className="text-[11px] text-[#64748b] ml-1.5">&bull; {currentProfile.email}</span>
+                )}
+              </div>
+            </div>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-md border border-emerald-200">
+              Reply-To: {currentProfile?.email || 'Institutional Email'}
+            </span>
           </div>
 
           {/* Subject Line & Priority */}

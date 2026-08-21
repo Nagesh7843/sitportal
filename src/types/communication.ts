@@ -54,3 +54,19 @@ export interface ScrapedNotice {
   author?: string;
   isNew?: boolean;
 }
+
+export interface ContactFacultyRequest {
+  facultyId?: string | number;
+  facultyName: string;
+  facultyEmail: string;
+  studentName: string;
+  studentEmail: string;
+  studentPrn?: string;
+  academicYear?: string;
+  division?: string;
+  inquiryType: string;
+  subject: string;
+  message: string;
+  priority?: 'NORMAL' | 'URGENT';
+}
+
