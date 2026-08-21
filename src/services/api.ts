@@ -1,4 +1,4 @@
-import { NoticeItem, StudentRecord, FacultyMember, EmailLog, UploadAsset, ActivityLog } from '@/types';
+import { NoticeItem, StudentRecord, FacultyMember, EmailLog, UploadAsset, ActivityLog, ScrapedNotice } from '@/types';
 
 const getRawApiUrl = () => {
   const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
@@ -121,6 +121,28 @@ export const apiService = {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete notice from database');
+  },
+
+  // SITCOE Official Notice Scraper & Sync
+  async previewOfficialNotices(): Promise<ScrapedNotice[]> {
+    const response = await fetch(`${API_BASE_URL}/scraper/notices/preview`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to preview notices from college portal');
+    return await response.json();
+  },
+
+  async syncOfficialNotices(): Promise<{ status: string; totalScraped: number; newlyAdded: number; alreadyExisted: number; notices: NoticeItem[] }> {
+    const response = await fetch(`${API_BASE_URL}/scraper/notices/sync`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to synchronize official college notices');
+    return await response.json();
+  },
+
+  async getOfficialScraperStatus(): Promise<{ lastSyncTimestamp: string; lastSyncedCount: number; lastSyncStatus: string; targetUrl: string }> {
+    const response = await fetch(`${API_BASE_URL}/scraper/notices/status`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to get scraper status');
+    return await response.json();
   },
 
   // Student Endpoints (PostgreSQL sitportaldb)

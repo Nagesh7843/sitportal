@@ -13,6 +13,8 @@ export interface AudienceTarget {
   role?: UserRole[];
   department?: string;
   studentEmails?: string[];
+  collegeSynced?: boolean;
+  source?: string;
 }
 
 export interface NoticeItem {

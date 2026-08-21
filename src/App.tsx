@@ -581,6 +581,7 @@ export default function App() {
               onMarkAsRead={handleMarkAsRead}
               onOpenPublishModal={() => requireAuthAction(() => setShowPublishNoticeModal(true))}
               onDeleteNotice={userRole === 'admin' ? handleDeleteNotice : undefined}
+              onRefreshNotices={() => apiService.fetchNotices().then(setNotices).catch(console.warn)}
             />
           )}
 

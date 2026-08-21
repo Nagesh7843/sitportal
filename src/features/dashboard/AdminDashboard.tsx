@@ -218,7 +218,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </span>
           </div>
 
-
+          {/* Official College Notices Sync Card */}
+          <div className="bg-gradient-to-br from-[#002171] to-[#1a237e] p-6 rounded-xl text-white shadow-lg flex flex-col justify-between relative overflow-hidden group">
+            <div className="z-10 relative">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-[24px] text-cyan-300">travel_explore</span>
+                <h3 className="font-bold text-[18px]">SITCOE Official Notices</h3>
+              </div>
+              <p className="text-[13px] opacity-85 mb-6 leading-relaxed">
+                Sync live notifications, exam postponement circulars, and university guidelines directly from sitcoe.ac.in.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => onNavigate('notices')}
+                  className="bg-cyan-400 text-slate-950 px-5 py-2 rounded-lg font-bold text-[13px] shadow-md hover:bg-cyan-300 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[17px]">sync</span>
+                  <span>Sync & View Notices</span>
+                </button>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-[130px] absolute -right-6 -bottom-8 opacity-10 rotate-12 group-hover:scale-110 transition-transform">
+              travel_explore
+            </span>
+          </div>
         </div>
       </div>
       <ActivityLogModal

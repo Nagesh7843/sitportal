@@ -43,3 +43,14 @@ export interface DepartmentEvent {
   category: string;
   status: 'Upcoming' | 'Closed' | 'Live';
 }
+
+export interface ScrapedNotice {
+  title: string;
+  pdfUrl: string;
+  category: string;
+  priority: string;
+  date?: string;
+  sourceUrl?: string;
+  author?: string;
+  isNew?: boolean;
+}

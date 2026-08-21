@@ -1330,6 +1330,62 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "🕷️ 12. College Notification Scraper Module",
+			"item": [
+				{
+					"name": "Preview Scraped Notices from SITCOE Official Website",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/scraper/notices/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scraper", "notices", "preview"]
+						},
+						"description": "Live scrape latest notices directly from official SITCOE website (https://sitcoe.ac.in/notification/) with PDF links."
+					},
+					"response": []
+				},
+				{
+					"name": "Synchronize College Official Notices to Database",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/scraper/notices/sync",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scraper", "notices", "sync"]
+						},
+						"description": "Extracts latest official college notices, automatically classifies categories/priorities, and saves new circulars to PostgreSQL database."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scraper Operational Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/scraper/notices/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scraper", "notices", "status"]
+						},
+						"description": "Returns scraper operational metrics, last sync timestamp, and total synced count."
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }
