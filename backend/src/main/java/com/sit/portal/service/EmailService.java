@@ -121,4 +121,8 @@ public class EmailService {
 
         return savedLog;
     }
+
+    public void sendDirectTestEmail(String targetEmail, BroadcastRequest request) {
+        asyncEmailWorker.dispatchEmailsAsync(List.of(targetEmail), request);
+    }
 }

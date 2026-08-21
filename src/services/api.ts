@@ -445,6 +445,15 @@ export const apiService = {
     return await response.json();
   },
 
+  async sendTestEmail(targetEmail: string): Promise<{ status: string; recipient: string; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/email/test?targetEmail=${encodeURIComponent(targetEmail)}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to dispatch test email');
+    return await response.json();
+  },
+
   // Activity Log Endpoints
   async fetchActivities(): Promise<ActivityLog[]> {
     const response = await fetch(`${API_BASE_URL}/activities`, { headers: getAuthHeaders() });

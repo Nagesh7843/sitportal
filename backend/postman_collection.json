@@ -1411,6 +1411,81 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "✉️ 13. Email Broadcast & SMTP Gateway Module",
+			"item": [
+				{
+					"name": "Get All Email Broadcast Logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/logs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "logs"]
+						},
+						"description": "Returns historical audit trail of all email broadcasts sent from the portal."
+					},
+					"response": []
+				},
+				{
+					"name": "Dispatch Bulk Email Broadcast",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"targetRole\": \"STUDENT\",\n  \"subject\": \"Winter End Semester Examination Form Notice\",\n  \"content\": \"Dear Students,\\n\\nPlease complete your examination forms before the scheduled deadline.\",\n  \"priority\": \"HIGH\",\n  \"filters\": {\n    \"academicYears\": [\"Third Year\"]\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/broadcast",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "broadcast"]
+						},
+						"description": "Dispatches real email notifications with rich HTML layout and records PostgreSQL audit log."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Live Test Verification Email",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/test?targetEmail=gnagesh550@gmail.com",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "test"],
+							"query": [
+								{
+									"key": "targetEmail",
+									"value": "gnagesh550@gmail.com",
+									"description": "Recipient email address for live SMTP test verification"
+								}
+							]
+						},
+						"description": "Directly transmits a test verification email via JavaMailSender SMTP."
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

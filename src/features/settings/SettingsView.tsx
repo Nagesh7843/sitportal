@@ -39,6 +39,8 @@ export const SettingsView: React.FC = () => {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
+  const [testEmailAddress, setTestEmailAddress] = useState<string>('gnagesh550@gmail.com');
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState<boolean>(false);
   const [fcmPushEnabled, setFcmPushEnabled] = useState<boolean>(false);
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState<boolean>(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
@@ -241,6 +243,24 @@ export const SettingsView: React.FC = () => {
       });
     } else {
       alert('Please enable browser push notifications above first.');
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress || !testEmailAddress.includes('@')) {
+      alert('Please enter a valid email address for testing.');
+      return;
+    }
+    setIsSendingTestEmail(true);
+    try {
+      const res = await apiService.sendTestEmail(testEmailAddress);
+      setSaveToast(`✉️ Live Test Email dispatched successfully to ${res.recipient}! Check your inbox.`);
+      setTimeout(() => setSaveToast(null), 6000);
+    } catch (err: any) {
+      setSaveToast(`❌ Email Test Failed: ${err.message || 'Could not send test email'}`);
+      setTimeout(() => setSaveToast(null), 6000);
+    } finally {
+      setIsSendingTestEmail(false);
     }
   };
 
@@ -537,6 +557,42 @@ export const SettingsView: React.FC = () => {
               className="w-5 h-5 text-[#000666] rounded cursor-pointer"
             />
           </label>
+
+          {/* Instant Live Email Gateway Test */}
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#000666] text-[20px]">mark_email_read</span>
+                <span className="font-bold text-[13px] text-[#071e27]">Live SMTP Email Delivery Verification</span>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                Gmail SMTP Active
+              </span>
+            </div>
+            <p className="text-[12px] text-[#454652]">
+              Send a real test email with HTML styling and SIT institutional branding to verify your inbox receives broadcasts.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <input
+                type="email"
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+                placeholder="Enter recipient email..."
+                className="flex-1 bg-white border border-[#c6c5d4] rounded-xl px-3 py-2 text-[13px] text-[#071e27] outline-none font-medium"
+              />
+              <button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={isSendingTestEmail}
+                className="px-4 py-2 bg-[#000666] hover:bg-[#1a237e] text-white text-[13px] font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0"
+              >
+                <span className={`material-symbols-outlined text-[17px] ${isSendingTestEmail ? 'animate-spin' : ''}`}>
+                  send
+                </span>
+                <span>{isSendingTestEmail ? 'Sending...' : 'Send Test Email'}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="pt-4 border-t border-[#c6c5d4] flex justify-end gap-3">

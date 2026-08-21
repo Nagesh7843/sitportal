@@ -36,6 +36,21 @@ public class EmailController {
         return ResponseEntity.status(201).body(savedLog);
     }
 
+    @PostMapping("/test")
+    public ResponseEntity<java.util.Map<String, Object>> sendTestEmail(@RequestParam(defaultValue = "gnagesh550@gmail.com") String targetEmail) {
+        com.sit.portal.dto.BroadcastRequest req = new com.sit.portal.dto.BroadcastRequest();
+        req.setSubject("SIT CSE Portal - Live Email Delivery Verification");
+        req.setContent("Hello!\n\nThis is a live delivery confirmation from Sharad Institute of Technology College of Engineering (SITCOE) CSE Portal.\n\nYour SMTP gateway is active and emails are being delivered successfully!");
+        req.setPriority("HIGH");
+
+        emailService.sendDirectTestEmail(targetEmail, req);
+        return ResponseEntity.ok(java.util.Map.of(
+                "status", "SUCCESS",
+                "recipient", targetEmail,
+                "message", "Test email dispatched successfully to " + targetEmail
+        ));
+    }
+
     @DeleteMapping("/logs/{id}")
     public ResponseEntity<Void> deleteEmailLog(@PathVariable Long id) {
         if (!emailLogRepository.existsById(id)) {
