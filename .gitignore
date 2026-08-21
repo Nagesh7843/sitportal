@@ -9,3 +9,4 @@ coverage/
 backend/target/
 playwright-report/
 test-results/
+*.pdf

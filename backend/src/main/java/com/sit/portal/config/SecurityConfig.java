@@ -41,6 +41,23 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(
+                    "/",
+                    "/index.html",
+                    "/assets/**",
+                    "/favicon.ico",
+                    "/sw.js",
+                    "/manifest.json",
+                    "/syllabus/**",
+                    "/*.js",
+                    "/*.css",
+                    "/*.png",
+                    "/*.jpg",
+                    "/*.jpeg",
+                    "/*.svg",
+                    "/*.ico",
+                    "/*.json"
+                ).permitAll()
                 .requestMatchers("/api/v1/auth/**", "/api/v1/push/**", "/api/v1/notifications/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/notices/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/courses/**").permitAll()
@@ -50,7 +67,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/documents/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/analytics/**").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, authException) -> 

@@ -1,9 +1,15 @@
 import { NoticeItem, StudentRecord, FacultyMember, EmailLog, UploadAsset, ActivityLog } from '@/types';
 
 const getRawApiUrl = () => {
-  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080';
-  const cleanUrl = envUrl.replace(/\/$/, '');
-  return cleanUrl.endsWith('/api/v1') ? cleanUrl : `${cleanUrl}/api/v1`;
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim() !== '') {
+    const cleanUrl = envUrl.replace(/\/$/, '');
+    return cleanUrl.endsWith('/api/v1') ? cleanUrl : `${cleanUrl}/api/v1`;
+  }
+  if (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost:3000')) {
+    return `${window.location.origin}/api/v1`;
+  }
+  return 'http://localhost:8080/api/v1';
 };
 
 const API_BASE_URL = getRawApiUrl();
