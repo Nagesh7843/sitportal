@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { NoticeItem, NoticeCategory, NoticePriority, NoticeStatus, AcademicYear, Division, BatchGroup, UploadAsset, UserRole } from '@/types';
+import { NoticeItem, NoticeCategory, NoticePriority, NoticeStatus, AcademicYear, Division, BatchGroup, UploadAsset, UserRole, StudentRecord } from '@/types';
 
 interface NoticePublishModalProps {
   isOpen: boolean;
@@ -7,6 +7,7 @@ interface NoticePublishModalProps {
   onPublishNotice: (notice: NoticeItem) => void;
   currentUserName: string;
   currentUserRoleTitle: string;
+  studentsList?: StudentRecord[];
 }
 
 export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
@@ -14,7 +15,8 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
   onClose,
   onPublishNotice,
   currentUserName,
-  currentUserRoleTitle
+  currentUserRoleTitle,
+  studentsList = []
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -23,6 +25,12 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
   const [status, setStatus] = useState<NoticeStatus>('PUBLISHED');
   const [scheduledFor, setScheduledFor] = useState('');
   
+  // Target Audience State
+  const [audienceType, setAudienceType] = useState<'GLOBAL' | 'YEARS' | 'INDIVIDUAL'>('GLOBAL');
+  const [selectedYears, setSelectedYears] = useState<AcademicYear[]>([]);
+  const [selectedStudentEmails, setSelectedStudentEmails] = useState<string[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
+
   // Auto-Delete / Expiry Timer State
   const [expiryPreset, setExpiryPreset] = useState<'none' | '12h' | '24h' | '3d' | '7d' | 'custom'>('none');
   const [customExpiryDate, setCustomExpiryDate] = useState('');
@@ -33,6 +41,12 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const toggleYear = (year: AcademicYear) => {
+    setSelectedYears((prev) =>
+      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
+    );
+  };
 
   const handleAddAttachment = () => {
     if (attachmentName.trim()) {
@@ -82,7 +96,24 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
+    if (audienceType === 'YEARS' && selectedYears.length === 0) {
+      alert('Please select at least one Academic Year target.');
+      return;
+    }
+
+    if (audienceType === 'INDIVIDUAL' && selectedStudentEmails.length === 0) {
+      alert('Please select at least one individual student recipient.');
+      return;
+    }
+
     const expiresAt = calculateExpiresAt();
+
+    const targetAudience: any = {};
+    if (audienceType === 'YEARS') {
+      targetAudience.academicYear = selectedYears;
+    } else if (audienceType === 'INDIVIDUAL') {
+      targetAudience.studentEmails = selectedStudentEmails;
+    }
 
     const newNotice: NoticeItem = {
       title: title.trim(),
@@ -92,7 +123,7 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
       category,
       priority,
       status,
-      targetAudience: {},
+      targetAudience,
       attachments: attachmentsList.length > 0 ? attachmentsList : undefined,
       scheduledFor: status === 'SCHEDULED' ? scheduledFor : undefined,
       expiresAt,
@@ -107,6 +138,9 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
     setAttachmentsList([]);
     setExpiryPreset('none');
     setCustomExpiryDate('');
+    setSelectedYears([]);
+    setSelectedStudentEmails([]);
+    setAudienceType('GLOBAL');
     onClose();
   };
 
@@ -222,6 +256,178 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
                   onChange={(e) => setCustomExpiryDate(e.target.value)}
                   className="bg-white border border-[#c6c5d4] rounded-lg px-3 py-1.5 text-xs text-[#071e27] font-medium outline-none focus:ring-2 focus:ring-[#ba1a1a]"
                 />
+              </div>
+            )}
+          </div>
+
+          {/* Target Audience Targeting Section */}
+          <div className="bg-[#e6f6ff] p-4 rounded-xl border border-[#c6c5d4] space-y-3">
+            <div className="flex justify-between items-center">
+              <h4 className="text-[12px] font-bold text-[#000666] uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px]">groups</span>
+                Target Audience
+              </h4>
+              <span className="text-[11px] text-[#454652]">Who should receive this notice</span>
+            </div>
+
+            {/* Audience Tabs */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAudienceType('GLOBAL')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  audienceType === 'GLOBAL'
+                    ? 'bg-[#000666] text-white shadow-xs'
+                    : 'bg-white text-[#454652] border border-[#c6c5d4]'
+                }`}
+              >
+                🌐 Global Notice (All Department)
+              </button>
+              <button
+                type="button"
+                onClick={() => setAudienceType('YEARS')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  audienceType === 'YEARS'
+                    ? 'bg-[#000666] text-white shadow-xs'
+                    : 'bg-white text-[#454652] border border-[#c6c5d4]'
+                }`}
+              >
+                🏛️ Specific Academic Years ({selectedYears.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setAudienceType('INDIVIDUAL')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  audienceType === 'INDIVIDUAL'
+                    ? 'bg-[#000666] text-white shadow-xs'
+                    : 'bg-white text-[#454652] border border-[#c6c5d4]'
+                }`}
+              >
+                👤 Individual Student(s) ({selectedStudentEmails.length})
+              </button>
+            </div>
+
+            {/* Academic Years Selector */}
+            {audienceType === 'YEARS' && (
+              <div className="bg-white p-3 rounded-xl border border-[#c6c5d4] space-y-2">
+                <p className="text-[11px] font-bold text-[#454652]">Select target academic cohorts:</p>
+                <div className="flex flex-wrap gap-2">
+                  {(['FE', 'SE', 'TE', 'BE'] as AcademicYear[]).map((y) => (
+                    <button
+                      key={y}
+                      type="button"
+                      onClick={() => toggleYear(y)}
+                      className={`px-3.5 py-1.5 rounded-lg text-[12px] font-bold border transition-colors ${
+                        selectedYears.includes(y)
+                          ? 'bg-[#000666] text-white border-[#000666]'
+                          : 'bg-[#f3faff] text-[#454652] border-[#c6c5d4]'
+                      }`}
+                    >
+                      {y} CSE
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Individual Student Target Selector */}
+            {audienceType === 'INDIVIDUAL' && (
+              <div className="bg-white p-3 rounded-xl border border-[#c6c5d4] space-y-3">
+                {/* Selected Student Cards */}
+                {selectedStudentEmails.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-bold text-[#000666]">
+                      Selected Recipients ({selectedStudentEmails.length}):
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {selectedStudentEmails.map((email) => {
+                        const st = studentsList.find((s) => s.email.toLowerCase() === email.toLowerCase()) || {
+                          id: email,
+                          name: email.split('@')[0].replace('.', ' ').toUpperCase(),
+                          rollNo: 'Student',
+                          email: email,
+                          academicYear: 'SE' as AcademicYear,
+                          avatarBg: 'bg-[#d9e2ff] text-[#00429c]',
+                          initials: email.slice(0, 2).toUpperCase()
+                        };
+
+                        return (
+                          <div
+                            key={email}
+                            className="bg-[#f3faff] border border-[#000666]/30 rounded-lg p-2 flex items-center justify-between gap-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className={`w-7 h-7 ${st.avatarBg || 'bg-[#d9e2ff] text-[#00429c]'} rounded-full flex items-center justify-center font-bold text-[11px] shrink-0`}>
+                                {st.initials || st.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-[12px] text-[#071e27] truncate">{st.name}</p>
+                                <p className="text-[10px] text-[#454652] truncate">{st.rollNo} • {st.email}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStudentEmails((prev) => prev.filter((e) => e !== email))}
+                              className="text-[#767683] hover:text-red-600 p-1"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                    ⚠️ No students selected. Search below to select specific student recipients.
+                  </p>
+                )}
+
+                {/* Search Input */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Search student by Name, Roll No, or Email..."
+                    className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-lg pl-8 pr-3 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-[#000666]"
+                  />
+                  <span className="material-symbols-outlined absolute left-2 top-2 text-[#767683] text-[16px]">
+                    search
+                  </span>
+                </div>
+
+                {/* Matching Candidates */}
+                <div className="max-h-36 overflow-y-auto space-y-1">
+                  {studentsList
+                    .filter((st) => {
+                      if (!studentSearch.trim()) return true;
+                      const q = studentSearch.toLowerCase();
+                      return st.name.toLowerCase().includes(q) || st.rollNo.toLowerCase().includes(q) || st.email.toLowerCase().includes(q);
+                    })
+                    .slice(0, 5)
+                    .map((st) => {
+                      const isSel = selectedStudentEmails.includes(st.email);
+                      return (
+                        <div
+                          key={st.id}
+                          onClick={() => {
+                            if (isSel) {
+                              setSelectedStudentEmails((prev) => prev.filter((e) => e !== st.email));
+                            } else {
+                              setSelectedStudentEmails((prev) => [...prev, st.email]);
+                            }
+                          }}
+                          className={`flex items-center justify-between p-1.5 rounded-lg border cursor-pointer text-[11px] ${
+                            isSel ? 'bg-[#d9e2ff] border-[#000666]' : 'bg-white border-[#c6c5d4] hover:bg-[#f3faff]'
+                          }`}
+                        >
+                          <span className="font-bold text-[#071e27] truncate">{st.name} ({st.rollNo})</span>
+                          <span className="text-[10px] font-bold text-[#000666]">{isSel ? '✓ Added' : '+ Add'}</span>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
             )}
           </div>

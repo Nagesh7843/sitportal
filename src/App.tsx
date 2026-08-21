@@ -613,6 +613,7 @@ export default function App() {
             <BulkEmailPanel
               emailLogs={emailLogs}
               facultyList={facultyList}
+              studentsList={studentsList}
               onSendBroadcast={handleSendBroadcast}
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="STUDENT"
@@ -624,6 +625,7 @@ export default function App() {
             <BulkEmailPanel
               emailLogs={emailLogs}
               facultyList={facultyList}
+              studentsList={studentsList}
               onSendBroadcast={handleSendBroadcast}
               onNavigate={handleProtectedNavigate}
               defaultTargetRole="FACULTY"
@@ -698,6 +700,7 @@ export default function App() {
         onPublishNotice={handlePublishNotice}
         currentUserName={currentProfile?.name || 'Unknown Author'}
         currentUserRoleTitle={currentProfile?.roleTitle || 'Authorized Personnel'}
+        studentsList={studentsList}
       />
 
       <EditProfileModal

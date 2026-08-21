@@ -12,6 +12,7 @@ export interface AudienceTarget {
   batchGroup?: BatchGroup[];
   role?: UserRole[];
   department?: string;
+  studentEmails?: string[];
 }
 
 export interface NoticeItem {

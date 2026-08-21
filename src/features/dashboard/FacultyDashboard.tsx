@@ -3,7 +3,7 @@ import { ViewMode, UploadAsset, StudentRecord, DepartmentEvent } from '@/types';
 import hodProfile from '@/assets/hod-profile.jpeg';
 
 interface FacultyDashboardProps {
-  onNavigate: (view: ViewMode) => void;
+  onNavigate: (view: ViewMode, emailContext?: string) => void;
   uploads: UploadAsset[];
   students: StudentRecord[];
   events: DepartmentEvent[];
@@ -334,12 +334,14 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({
               </button>
               <button
                 onClick={() => {
+                  const studentEmail = selectedStudent.email;
                   setSelectedStudent(null);
-                  onNavigate('bulk-email');
+                  onNavigate('bulk-email', studentEmail);
                 }}
-                className="px-4 py-2 bg-[#000666] text-white rounded-lg text-[13px] font-semibold hover:bg-[#1a237e]"
+                className="px-4 py-2 bg-[#000666] text-white rounded-lg text-[13px] font-semibold hover:bg-[#1a237e] flex items-center gap-1.5"
               >
-                Send Direct Email
+                <span className="material-symbols-outlined text-[16px]">send</span>
+                <span>Send Direct Email</span>
               </button>
             </div>
           </div>

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember, StudentRecord } from '@/types';
 
 interface BulkEmailPanelProps {
   emailLogs: EmailLog[];
   facultyList?: FacultyMember[];
+  studentsList?: StudentRecord[];
   onSendBroadcast: (newLog: any) => void;
   onNavigate: (view: ViewMode, emailContext?: string) => void;
   defaultTargetRole?: 'STUDENT' | 'FACULTY';
@@ -13,6 +14,7 @@ interface BulkEmailPanelProps {
 export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   emailLogs,
   facultyList = [],
+  studentsList = [],
   onSendBroadcast,
   onNavigate,
   defaultTargetRole = 'STUDENT',
@@ -27,13 +29,26 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   const [requestReceipts, setRequestReceipts] = useState(true);
   const [attachments, setAttachments] = useState<{ name: string; size: string }[]>([]);
 
-  // Targeted Audience Filters (Students) - Step by step selection
+  // Student Targeting Mode: 'CLASS' (by Year/Div/Batch) or 'INDIVIDUAL' (specific students)
+  const [studentTargetMode, setStudentTargetMode] = useState<'CLASS' | 'INDIVIDUAL'>(prefilledEmail ? 'INDIVIDUAL' : 'CLASS');
+  const [selectedStudentEmails, setSelectedStudentEmails] = useState<string[]>(prefilledEmail ? [prefilledEmail] : []);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
+
+  // Targeted Audience Filters (Students Class Mode)
   const [selectedYears, setSelectedYears] = useState<AcademicYear[]>([]);
   const [selectedDivs, setSelectedDivs] = useState<Division[]>([]);
   const [selectedBatches, setSelectedBatches] = useState<BatchGroup[]>([]);
 
   // Targeted Audience Filters (Faculty)
   const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
+
+  // Sync prefilledEmail if navigation brings a new student
+  useEffect(() => {
+    if (prefilledEmail) {
+      setSelectedStudentEmails((prev) => prev.includes(prefilledEmail) ? prev : [...prev, prefilledEmail]);
+      setStudentTargetMode('INDIVIDUAL');
+    }
+  }, [prefilledEmail]);
 
   // Sending Simulation State
   const [isSending, setIsSending] = useState(false);
@@ -122,6 +137,21 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
       return;
     }
 
+    if (targetRole === 'STUDENT' && studentTargetMode === 'INDIVIDUAL' && selectedStudentEmails.length === 0) {
+      alert('Please select at least one individual student recipient.');
+      return;
+    }
+
+    if (targetRole === 'STUDENT' && studentTargetMode === 'CLASS' && selectedYears.length === 0) {
+      alert('Please select at least one Academic Year to broadcast to students.');
+      return;
+    }
+
+    if (targetRole === 'FACULTY' && selectedFacultyIds.length === 0) {
+      alert('Please select at least one faculty member recipient.');
+      return;
+    }
+
     setIsSending(true);
     setSendProgress(10);
 
@@ -130,16 +160,24 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            const count = targetRole === 'STUDENT'
-              ? (prefilledEmail ? 1 : selectedYears.length * 60 + selectedDivs.length * 40)
-              : selectedFacultyIds.length; // Use exact manual count
-
+            let count = 0;
             let groupName = '';
-            if (prefilledEmail) {
-              groupName = `Individual Student: ${prefilledEmail}`;
-            } else if (targetRole === 'STUDENT') {
-              groupName = `Students (${selectedYears.join(', ')})`;
+
+            if (targetRole === 'STUDENT') {
+              if (studentTargetMode === 'INDIVIDUAL') {
+                count = selectedStudentEmails.length;
+                if (count === 1) {
+                  const singleStudent = studentsList.find(s => s.email === selectedStudentEmails[0]);
+                  groupName = singleStudent ? `Student: ${singleStudent.name} (${singleStudent.rollNo})` : `Individual Student: ${selectedStudentEmails[0]}`;
+                } else {
+                  groupName = `Individual Students (${count} Selected)`;
+                }
+              } else {
+                count = selectedYears.length * 60 + selectedDivs.length * 40;
+                groupName = `Students (${selectedYears.join(', ')}${selectedDivs.length > 0 ? ' - ' + selectedDivs.join(', ') : ''})`;
+              }
             } else {
+              count = selectedFacultyIds.length;
               groupName = `Faculty (Manual Selection: ${selectedFacultyIds.length} members)`;
             }
 
@@ -150,10 +188,10 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               priority: priority,
               scheduledAt: scheduleForLater ? scheduledTime : null,
               filters: {
-                studentEmails: prefilledEmail ? [prefilledEmail] : [],
-                academicYears: targetRole === 'STUDENT' ? selectedYears : [],
-                divisions: targetRole === 'STUDENT' ? selectedDivs : [],
-                batches: targetRole === 'STUDENT' ? selectedBatches : [],
+                studentEmails: targetRole === 'STUDENT' && studentTargetMode === 'INDIVIDUAL' ? selectedStudentEmails : [],
+                academicYears: targetRole === 'STUDENT' && studentTargetMode === 'CLASS' ? selectedYears : [],
+                divisions: targetRole === 'STUDENT' && studentTargetMode === 'CLASS' ? selectedDivs : [],
+                batches: targetRole === 'STUDENT' && studentTargetMode === 'CLASS' ? selectedBatches : [],
                 facultyIds: targetRole === 'FACULTY' ? selectedFacultyIds : []
               }
             };
@@ -163,7 +201,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
             setSendProgress(0);
             setSubject('');
             setMessage('');
-            alert(`Email process completed for ${count} recipients!`);
+            alert(`Email dispatched successfully to ${count} recipient(s)!`);
           }, 300);
           return 100;
         }
@@ -347,103 +385,317 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
 
             {/* Student Filters */}
             {targetRole === 'STUDENT' && (
-              <>
-              {prefilledEmail ? (
-                <div className="bg-white p-3 rounded-lg border border-[#c6c5d4] flex items-center gap-3">
-                  <span className="material-symbols-outlined text-[#000666]">person</span>
-                  <div>
-                    <p className="text-[11px] text-[#767683] font-bold uppercase">Sending to Individual Student</p>
-                    <p className="text-[14px] font-bold text-[#454652]">{prefilledEmail}</p>
-                  </div>
-                </div>
-              ) : (
-              <div className="space-y-4 pt-2">
-                {/* Step 1: Academic Year Selection */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-5 h-5 rounded-full bg-[#000666] text-white text-[11px] font-bold flex items-center justify-center">1</span>
-                    <p className="text-[12px] font-bold text-[#454652]">Step 1: Select Academic Years</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pl-7">
-                    {(['FE', 'SE', 'TE', 'BE'] as AcademicYear[]).map((y) => (
-                      <button
-                        type="button"
-                        key={y}
-                        onClick={() => toggleYear(y)}
-                        className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedYears.includes(y)
-                          ? 'bg-[#000666] text-white border-[#000666]'
-                          : 'bg-white text-[#454652] border-[#c6c5d4]'
-                          }`}
-                      >
-                        {y}
-                      </button>
-                    ))}
-                  </div>
+              <div className="space-y-4 pt-1">
+                {/* Mode Selector Tabs */}
+                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-[#c6c5d4] w-fit shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setStudentTargetMode('CLASS')}
+                    className={`px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                      studentTargetMode === 'CLASS'
+                        ? 'bg-[#000666] text-white shadow-xs'
+                        : 'text-[#454652] hover:bg-[#f3faff]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">domain</span>
+                    <span>Target by Class / Batch</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudentTargetMode('INDIVIDUAL')}
+                    className={`px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                      studentTargetMode === 'INDIVIDUAL'
+                        ? 'bg-[#000666] text-white shadow-xs'
+                        : 'text-[#454652] hover:bg-[#f3faff]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">person_search</span>
+                    <span>Individual Student(s)</span>
+                    {selectedStudentEmails.length > 0 && (
+                      <span className="bg-[#e6f6ff] text-[#000666] px-2 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">
+                        {selectedStudentEmails.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
 
-                {/* Step 2: Division Selection */}
-                {selectedYears.length > 0 ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="w-5 h-5 rounded-full bg-[#2b5bb5] text-white text-[11px] font-bold flex items-center justify-center">2</span>
-                      <p className="text-[12px] font-bold text-[#454652]">Step 2: Select Divisions</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pl-7">
-                      {(['Div A', 'Div B', 'Div C'] as Division[]).map((d) => (
+                {/* MODE 1: Individual Student Selection */}
+                {studentTargetMode === 'INDIVIDUAL' && (
+                  <div className="space-y-3 bg-white p-4 rounded-xl border border-[#c6c5d4] shadow-2xs">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h5 className="text-[13px] font-bold text-[#071e27] flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[#000666] text-[18px]">verified_user</span>
+                          Selected Student Recipients ({selectedStudentEmails.length})
+                        </h5>
+                        <p className="text-[11px] text-[#454652]">
+                          Notice/Email will be directly sent to these specific students.
+                        </p>
+                      </div>
+                      {selectedStudentEmails.length > 0 && (
                         <button
                           type="button"
-                          key={d}
-                          onClick={() => toggleDiv(d)}
-                          className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedDivs.includes(d)
-                            ? 'bg-[#2b5bb5] text-white border-[#2b5bb5]'
-                            : 'bg-white text-[#454652] border-[#c6c5d4]'
-                            }`}
+                          onClick={() => {
+                            setSelectedStudentEmails([]);
+                            onNavigate('bulk-email', '');
+                          }}
+                          className="text-[11px] font-bold text-red-600 hover:text-red-800 hover:underline flex items-center gap-1"
                         >
-                          {d}
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          Clear All
                         </button>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-[#767683] italic pl-7">Select an academic year above to see division options.</p>
-                )}
 
-                {/* Step 3: Batch Selection */}
-                {selectedDivs.length > 0 ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="w-5 h-5 rounded-full bg-[#003909] text-[#a3f69c] text-[11px] font-bold flex items-center justify-center">3</span>
-                      <p className="text-[12px] font-bold text-[#454652]">Step 3: Select Batches (Optional)</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pl-7">
-                      {(['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'] as BatchGroup[])
-                        .filter(b => {
-                          if (selectedDivs.includes('Div A') && b.startsWith('A')) return true;
-                          if (selectedDivs.includes('Div B') && b.startsWith('B')) return true;
-                          if (selectedDivs.includes('Div C') && b.startsWith('C')) return true;
-                          return false;
-                        })
-                        .map((b) => (
+                    {/* Selected Student Cards List */}
+                    {selectedStudentEmails.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {selectedStudentEmails.map((email) => {
+                          const st = studentsList.find((s) => s.email.toLowerCase() === email.toLowerCase()) || {
+                            id: email,
+                            name: email.split('@')[0].replace('.', ' ').toUpperCase(),
+                            rollNo: 'Individual',
+                            email: email,
+                            academicYear: 'Student' as AcademicYear,
+                            division: 'Div A' as Division,
+                            batchGroup: 'A1' as BatchGroup,
+                            prn: '',
+                            gpa: 3.5,
+                            cohortBatch: 'Current',
+                            avatarBg: 'bg-[#d9e2ff] text-[#00429c]',
+                            initials: email.slice(0, 2).toUpperCase(),
+                            status: 'Active'
+                          };
+
+                          return (
+                            <div
+                              key={email}
+                              className="bg-[#f3faff] border-2 border-[#000666]/30 rounded-xl p-3 flex items-center justify-between gap-3 shadow-xs hover:border-[#000666] transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`w-9 h-9 ${st.avatarBg || 'bg-[#d9e2ff] text-[#00429c]'} rounded-full flex items-center justify-center font-bold text-[13px] shrink-0`}
+                                >
+                                  {st.initials || st.name.slice(0, 2).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-[13px] text-[#071e27] truncate">{st.name}</p>
+                                  <p className="text-[11px] text-[#454652] truncate">
+                                    <span className="font-semibold text-[#000666]">{st.rollNo}</span> • {st.academicYear} {st.division ? `(${st.division})` : ''}
+                                  </p>
+                                  <p className="text-[10px] text-[#767683] font-mono truncate">{st.email}</p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedStudentEmails((prev) => prev.filter((e) => e !== email));
+                                  if (prefilledEmail === email) {
+                                    onNavigate('bulk-email', '');
+                                  }
+                                }}
+                                className="text-[#767683] hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors shrink-0"
+                                title="Remove student"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="bg-[#fff8f6] border border-[#ffdad6] rounded-xl p-4 text-center">
+                        <span className="material-symbols-outlined text-[28px] text-[#ba1a1a] mb-1">person_off</span>
+                        <p className="text-[12px] font-bold text-[#ba1a1a]">No Individual Student Selected</p>
+                        <p className="text-[11px] text-[#767683] mt-0.5">
+                          Use the search bar below or click on any student from the roster to select them.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Student Search & Quick Picker */}
+                    <div className="pt-2 border-t border-[#c6c5d4]/40 space-y-2">
+                      <label className="block text-[11px] font-bold text-[#454652] uppercase">
+                        Search & Add Students from Roster
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={studentSearchTerm}
+                          onChange={(e) => setStudentSearchTerm(e.target.value)}
+                          placeholder="Search student by Name, Roll Number, PRN, or Email..."
+                          className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl pl-9 pr-3 py-2 text-[12px] font-medium text-[#071e27] outline-none focus:ring-2 focus:ring-[#000666]"
+                        />
+                        <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-[#767683] text-[18px]">
+                          search
+                        </span>
+                        {studentSearchTerm && (
                           <button
                             type="button"
-                            key={b}
-                            onClick={() => toggleBatch(b)}
-                            className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedBatches.includes(b)
-                              ? 'bg-[#003909] text-[#a3f69c] border-[#003909]'
+                            onClick={() => setStudentSearchTerm('')}
+                            className="absolute right-2.5 top-2.5 text-[#767683] hover:text-[#071e27]"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">clear</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Matching Students List */}
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                        {studentsList
+                          .filter((st) => {
+                            if (!studentSearchTerm.trim()) return true;
+                            const query = studentSearchTerm.toLowerCase();
+                            return (
+                              st.name.toLowerCase().includes(query) ||
+                              st.rollNo.toLowerCase().includes(query) ||
+                              st.email.toLowerCase().includes(query) ||
+                              (st.prn && st.prn.toLowerCase().includes(query))
+                            );
+                          })
+                          .slice(0, 8)
+                          .map((st) => {
+                            const isSelected = selectedStudentEmails.includes(st.email);
+                            return (
+                              <div
+                                key={st.id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedStudentEmails((prev) => prev.filter((e) => e !== st.email));
+                                  } else {
+                                    setSelectedStudentEmails((prev) => [...prev, st.email]);
+                                  }
+                                }}
+                                className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#d9e2ff] border-[#000666] text-[#000666]'
+                                    : 'bg-white border-[#c6c5d4]/60 hover:bg-[#f3faff] hover:border-[#000666]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div
+                                    className={`w-7 h-7 ${st.avatarBg || 'bg-[#d9e2ff] text-[#00429c]'} rounded-full flex items-center justify-center font-bold text-[11px] shrink-0`}
+                                  >
+                                    {st.initials || st.name.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[12px] text-[#071e27] truncate leading-tight">
+                                      {st.name} <span className="font-mono text-[#454652] font-semibold">({st.rollNo})</span>
+                                    </p>
+                                    <p className="text-[10px] text-[#454652] truncate">
+                                      {st.academicYear} • {st.division || 'Div A'} • {st.email}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 ${
+                                    isSelected
+                                      ? 'bg-[#000666] text-white'
+                                      : 'bg-[#e6f6ff] text-[#000666] border border-[#c6c5d4]'
+                                  }`}
+                                >
+                                  <span className="material-symbols-outlined text-[13px]">
+                                    {isSelected ? 'check' : 'add'}
+                                  </span>
+                                  <span>{isSelected ? 'Selected' : 'Select'}</span>
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 2: Target Academic Class / Cohort */}
+                {studentTargetMode === 'CLASS' && (
+                  <div className="space-y-4 bg-white p-4 rounded-xl border border-[#c6c5d4] shadow-2xs">
+                    {/* Step 1: Academic Year Selection */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-5 h-5 rounded-full bg-[#000666] text-white text-[11px] font-bold flex items-center justify-center">1</span>
+                        <p className="text-[12px] font-bold text-[#454652]">Step 1: Select Academic Years</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pl-7">
+                        {(['FE', 'SE', 'TE', 'BE'] as AcademicYear[]).map((y) => (
+                          <button
+                            type="button"
+                            key={y}
+                            onClick={() => toggleYear(y)}
+                            className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedYears.includes(y)
+                              ? 'bg-[#000666] text-white border-[#000666]'
                               : 'bg-white text-[#454652] border-[#c6c5d4]'
                               }`}
                           >
-                            Batch {b}
+                            {y}
                           </button>
                         ))}
+                      </div>
                     </div>
+
+                    {/* Step 2: Division Selection */}
+                    {selectedYears.length > 0 ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="w-5 h-5 rounded-full bg-[#2b5bb5] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                          <p className="text-[12px] font-bold text-[#454652]">Step 2: Select Divisions</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pl-7">
+                          {(['Div A', 'Div B', 'Div C'] as Division[]).map((d) => (
+                            <button
+                              type="button"
+                              key={d}
+                              onClick={() => toggleDiv(d)}
+                              className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedDivs.includes(d)
+                                ? 'bg-[#2b5bb5] text-white border-[#2b5bb5]'
+                                : 'bg-white text-[#454652] border-[#c6c5d4]'
+                                }`}
+                            >
+                              {d}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#767683] italic pl-7">Select an academic year above to see division options.</p>
+                    )}
+
+                    {/* Step 3: Batch Selection */}
+                    {selectedDivs.length > 0 ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="w-5 h-5 rounded-full bg-[#003909] text-[#a3f69c] text-[11px] font-bold flex items-center justify-center">3</span>
+                          <p className="text-[12px] font-bold text-[#454652]">Step 3: Select Batches (Optional)</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pl-7">
+                          {(['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'] as BatchGroup[])
+                            .filter(b => {
+                              if (selectedDivs.includes('Div A') && b.startsWith('A')) return true;
+                              if (selectedDivs.includes('Div B') && b.startsWith('B')) return true;
+                              if (selectedDivs.includes('Div C') && b.startsWith('C')) return true;
+                              return false;
+                            })
+                            .map((b) => (
+                              <button
+                                type="button"
+                                key={b}
+                                onClick={() => toggleBatch(b)}
+                                className={`px-3 py-1 rounded-lg text-[12px] font-bold border transition-colors ${selectedBatches.includes(b)
+                                  ? 'bg-[#003909] text-[#a3f69c] border-[#003909]'
+                                  : 'bg-white text-[#454652] border-[#c6c5d4]'
+                                  }`}
+                              >
+                                Batch {b}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    ) : selectedYears.length > 0 ? (
+                      <p className="text-[11px] text-[#767683] italic pl-7">Select at least one division above to see batch options.</p>
+                    ) : null}
                   </div>
-                ) : selectedYears.length > 0 ? (
-                  <p className="text-[11px] text-[#767683] italic pl-7">Select at least one division above to see batch options.</p>
-                ) : null}
+                )}
               </div>
-              )}
-              </>
             )}
 
             {/* Faculty Manual Selection */}

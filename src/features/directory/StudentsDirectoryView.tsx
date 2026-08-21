@@ -4,7 +4,7 @@ import { StudentRecord, ViewMode, AcademicYear, Division, BatchGroup } from '@/t
 interface StudentsDirectoryViewProps {
   students: StudentRecord[];
   onAddStudent?: () => void;
-  onNavigate: (view: ViewMode) => void;
+  onNavigate: (view: ViewMode, emailContext?: string) => void;
   onAddStudentsBulk?: (students: StudentRecord[]) => void;
   onDeleteStudent?: (id: string | number) => void;
 }
@@ -268,10 +268,12 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                   </td>
                   <td className="py-3 px-4 text-right flex justify-end items-center gap-4">
                     <button
-                      onClick={() => onNavigate('bulk-email')}
-                      className="text-[#000666] font-bold text-[12px] hover:underline"
+                      onClick={() => onNavigate('bulk-email', st.email)}
+                      className="text-[#000666] font-bold text-[12px] hover:underline flex items-center gap-1"
+                      title={`Send targeted notice to ${st.name}`}
                     >
-                      Send Notice
+                      <span className="material-symbols-outlined text-[15px]">send</span>
+                      <span>Send Notice</span>
                     </button>
                     {onDeleteStudent && (
                       <button
