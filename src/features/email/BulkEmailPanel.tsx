@@ -36,13 +36,16 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   const [selectedStudentEmails, setSelectedStudentEmails] = useState<string[]>(prefilledEmail ? [prefilledEmail] : []);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
+  // Faculty Targeting Mode: 'INDIVIDUAL' (one professor) vs 'ALL' (staff broadcast)
+  const isStudentRole = currentProfile?.role === 'student';
+  const [facultyTargetMode, setFacultyTargetMode] = useState<'INDIVIDUAL' | 'ALL'>('INDIVIDUAL');
+  const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
+  const [facultySearchTerm, setFacultySearchTerm] = useState('');
+
   // Targeted Audience Filters (Students Class Mode)
   const [selectedYears, setSelectedYears] = useState<AcademicYear[]>([]);
   const [selectedDivs, setSelectedDivs] = useState<Division[]>([]);
   const [selectedBatches, setSelectedBatches] = useState<BatchGroup[]>([]);
-
-  // Targeted Audience Filters (Faculty)
-  const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
 
   // Sync prefilledEmail if navigation brings a new student
   useEffect(() => {
@@ -88,7 +91,11 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   };
 
   const toggleFaculty = (id: string) => {
-    setSelectedFacultyIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    if (isStudentRole || facultyTargetMode === 'INDIVIDUAL') {
+      setSelectedFacultyIds((prev) => (prev.includes(id) ? [] : [id]));
+    } else {
+      setSelectedFacultyIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    }
   };
 
   const applyTemplate = (templateType: 'EXAM' | 'LAB' | 'EVENT' | 'EMERGENCY') => {
@@ -195,8 +202,18 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                 groupName = `Students (${selectedYears.join(', ')}${selectedDivs.length > 0 ? ' - ' + selectedDivs.join(', ') : ''})`;
               }
             } else {
-              count = selectedFacultyIds.length;
-              groupName = `Faculty (Manual Selection: ${selectedFacultyIds.length} members)`;
+              if (facultyTargetMode === 'INDIVIDUAL') {
+                count = selectedFacultyIds.length;
+                if (count === 1) {
+                  const singleFaculty = facultyList.find(f => String(f.id) === selectedFacultyIds[0]);
+                  groupName = singleFaculty ? `Faculty: ${singleFaculty.name} (${singleFaculty.designation || singleFaculty.rank})` : `Individual Faculty`;
+                } else {
+                  groupName = `Individual Faculty (${count} Selected)`;
+                }
+              } else {
+                count = facultyList.length;
+                groupName = `All Department Faculty (${count} Members)`;
+              }
             }
 
             const payload: any = {
@@ -721,42 +738,200 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               </div>
             )}
 
-            {/* Faculty Manual Selection */}
+            {/* Faculty Selection */}
             {targetRole === 'FACULTY' && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold text-[#454652] mb-1">Select Faculty Members Manually:</p>
-                  <div className="text-[10px] font-bold text-[#000666] cursor-pointer hover:underline" onClick={() => setSelectedFacultyIds(facultyList.map(f => String(f.id)))}>
-                    Select All
-                  </div>
-                  <div className="text-[10px] font-bold text-red-600 cursor-pointer hover:underline ml-2" onClick={() => setSelectedFacultyIds([])}>
-                    Clear All
-                  </div>
-                </div>
-
-                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-1">
-                  {facultyList.length === 0 ? (
-                    <div className="text-xs text-slate-500 text-center p-4">No faculty records found.</div>
+                {/* Mode Selector for Staff (Locked to Individual for Students) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <p className="text-[12px] font-bold text-[#454652] uppercase tracking-wider">
+                    Target Faculty Mode:
+                  </p>
+                  {!isStudentRole ? (
+                    <div className="flex gap-2 bg-[#f3faff] p-1 rounded-xl border border-[#c6c5d4]/40">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFacultyTargetMode('INDIVIDUAL');
+                          if (selectedFacultyIds.length > 1) {
+                            setSelectedFacultyIds(selectedFacultyIds.slice(0, 1));
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-lg text-[12px] font-bold transition-all ${
+                          facultyTargetMode === 'INDIVIDUAL'
+                            ? 'bg-[#000666] text-white shadow-xs'
+                            : 'text-[#454652] hover:text-[#071e27]'
+                        }`}
+                      >
+                        Individual Faculty
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFacultyTargetMode('ALL');
+                          setSelectedFacultyIds(facultyList.map(f => String(f.id)));
+                        }}
+                        className={`px-3 py-1 rounded-lg text-[12px] font-bold transition-all ${
+                          facultyTargetMode === 'ALL'
+                            ? 'bg-[#000666] text-white shadow-xs'
+                            : 'text-[#454652] hover:text-[#071e27]'
+                        }`}
+                      >
+                        All Department Faculty ({facultyList.length})
+                      </button>
+                    </div>
                   ) : (
-                    facultyList.map((fac) => (
-                      <label key={fac.id} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-200">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded text-[#000666] focus:ring-[#000666]"
-                          checked={selectedFacultyIds.includes(String(fac.id))}
-                          onChange={() => toggleFaculty(String(fac.id))}
-                        />
-                        <div className="flex-1 flex justify-between items-center">
-                          <div>
-                            <p className="text-xs font-bold text-slate-900">{fac.name}</p>
-                            <p className="text-[10px] text-slate-500">{fac.designation || fac.rank || 'Faculty'} • {fac.specialization}</p>
-                          </div>
-                          <span className="text-[10px] font-mono text-slate-400">{fac.email}</span>
-                        </div>
-                      </label>
-                    ))
+                    <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                      Individual Faculty Direct Contact Only
+                    </span>
                   )}
                 </div>
+
+                {isStudentRole && (
+                  <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-[11px] text-blue-950 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-700 shrink-0">info</span>
+                    <span>Students can send direct messages to an individual faculty member. Mass department broadcasts are restricted to staff.</span>
+                  </div>
+                )}
+
+                {facultyTargetMode === 'INDIVIDUAL' ? (
+                  <div className="space-y-3">
+                    {/* Selected Faculty Card */}
+                    {selectedFacultyIds.length === 1 ? (
+                      (() => {
+                        const selectedFac = facultyList.find(f => String(f.id) === selectedFacultyIds[0]);
+                        if (!selectedFac) return null;
+                        return (
+                          <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-[#000666] text-white font-bold flex items-center justify-center text-[15px] shrink-0">
+                                {selectedFac.name.replace('Dr.', '').replace('Prof.', '').trim().charAt(0)}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="font-bold text-[14px] text-[#071e27] truncate">{selectedFac.name}</h4>
+                                <p className="text-[11px] text-[#2b5bb5] font-semibold truncate">
+                                  {selectedFac.designation || selectedFac.rank} &bull; {selectedFac.specialization}
+                                </p>
+                                <p className="text-[11px] text-[#64748b] truncate">{selectedFac.email}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedFacultyIds([])}
+                              className="text-[11px] font-bold text-red-600 hover:text-red-800 bg-white px-2.5 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors shrink-0"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="bg-[#fff8f6] border border-[#ffdad6] rounded-xl p-4 text-center">
+                        <span className="material-symbols-outlined text-[28px] text-[#ba1a1a] mb-1">person_off</span>
+                        <p className="text-[12px] font-bold text-[#ba1a1a]">No Individual Faculty Selected</p>
+                        <p className="text-[11px] text-[#767683] mt-0.5">
+                          Search and pick a faculty member from the list below to send your direct email.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Faculty Search & Picker */}
+                    <div className="pt-2 border-t border-[#c6c5d4]/40 space-y-2">
+                      <label className="block text-[11px] font-bold text-[#454652] uppercase">
+                        Search & Select Faculty Member
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={facultySearchTerm}
+                          onChange={(e) => setFacultySearchTerm(e.target.value)}
+                          placeholder="Search faculty by Name, Specialization, or Designation..."
+                          className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl pl-9 pr-3 py-2 text-[12px] font-medium text-[#071e27] outline-none focus:ring-2 focus:ring-[#000666]"
+                        />
+                        <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-[#767683] text-[18px]">
+                          search
+                        </span>
+                        {facultySearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setFacultySearchTerm('')}
+                            className="absolute right-2.5 top-2.5 text-[#767683] hover:text-[#071e27]"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">clear</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-1">
+                        {facultyList.filter(f =>
+                          !facultySearchTerm.trim() ||
+                          f.name.toLowerCase().includes(facultySearchTerm.toLowerCase()) ||
+                          f.specialization.toLowerCase().includes(facultySearchTerm.toLowerCase()) ||
+                          f.email.toLowerCase().includes(facultySearchTerm.toLowerCase()) ||
+                          (f.designation && f.designation.toLowerCase().includes(facultySearchTerm.toLowerCase()))
+                        ).map((fac) => {
+                          const isSelected = selectedFacultyIds.includes(String(fac.id));
+                          return (
+                            <div
+                              key={fac.id}
+                              onClick={() => setSelectedFacultyIds([String(fac.id)])}
+                              className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
+                                isSelected
+                                  ? 'bg-blue-50 border-[#000666] shadow-xs'
+                                  : 'bg-white border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] ${
+                                  isSelected ? 'bg-[#000666] text-white' : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                  {fac.name.replace('Dr.', '').replace('Prof.', '').trim().charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[12px] font-bold text-slate-900 truncate">{fac.name}</p>
+                                  <p className="text-[10px] text-slate-500 truncate">{fac.designation || fac.rank} &bull; {fac.specialization}</p>
+                                </div>
+                              </div>
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                                isSelected ? 'bg-[#000666] text-white' : 'text-[#000666] bg-blue-50'
+                              }`}>
+                                {isSelected ? 'Selected' : 'Select'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-semibold text-[#454652] mb-1">All Department Faculty ({facultyList.length} members selected):</p>
+                      <div className="text-[10px] font-bold text-red-600 cursor-pointer hover:underline ml-2" onClick={() => setSelectedFacultyIds([])}>
+                        Clear All
+                      </div>
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-1">
+                      {facultyList.map((fac) => (
+                        <label key={fac.id} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-200">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded text-[#000666] focus:ring-[#000666]"
+                            checked={selectedFacultyIds.includes(String(fac.id))}
+                            onChange={() => toggleFaculty(String(fac.id))}
+                          />
+                          <div className="flex-1 flex justify-between items-center">
+                            <div>
+                              <p className="text-xs font-bold text-slate-900">{fac.name}</p>
+                              <p className="text-[10px] text-slate-500">{fac.designation || fac.rank || 'Faculty'} • {fac.specialization}</p>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-400">{fac.email}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
