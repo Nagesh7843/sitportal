@@ -42,10 +42,11 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
               {!isLoggedIn ? (
                 <button
                   onClick={() => onNavigate('login')}
-                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95"
+                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
+                  aria-label="Sign In to Portal"
                 >
                   <span>Sign In</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </button>
               ) : (
                 <button
@@ -53,24 +54,27 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
                     const view: ViewMode = userRole === 'admin' ? 'dashboard' : userRole === 'hod' ? 'hod-dashboard' : userRole === 'faculty' ? 'faculty-portal' : 'notices';
                     onNavigate(view);
                   }}
-                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95"
+                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
+                  aria-label="Go to Dashboard"
                 >
                   <span>Dashboard</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </button>
               )}
               <button
                 onClick={() => onNavigate('notices')}
-                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md"
+                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-white outline-none"
+                aria-label="View Notices"
               >
-                <Megaphone className="w-3 h-3 text-cyan-300" />
+                <Megaphone className="w-3 h-3 text-cyan-300" aria-hidden="true" />
                 <span>Notices</span>
               </button>
               <button
                 onClick={() => onNavigate('curriculum')}
-                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md"
+                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-white outline-none"
+                aria-label="View Curriculum"
               >
-                <BookOpen className="w-3 h-3 text-cyan-300" />
+                <BookOpen className="w-3 h-3 text-cyan-300" aria-hidden="true" />
                 <span>Curriculum</span>
               </button>
             </div>
@@ -96,20 +100,22 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
 
           <button
             onClick={() => onNavigate('notices')}
-            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none rounded-md px-1"
+            aria-label="View all circulars"
           >
             <span>All Circulars</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Live Notices Stream */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {notices.slice(0, 4).map((notice) => (
-            <div
+            <button
               key={notice.id}
               onClick={() => setSelectedNotice(notice)}
-              className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-indigo-300 hover:bg-slate-100/60 transition-all cursor-pointer space-y-2 flex flex-col justify-between"
+              className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-indigo-300 hover:bg-slate-100/60 transition-all cursor-pointer space-y-2 flex flex-col justify-between text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+              aria-label={`Read notice: ${notice.title}`}
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -139,7 +145,7 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
                   Read Notice
                 </span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -152,38 +158,38 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div 
+          <button 
             onClick={() => onNavigate('notices')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group"
+            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
             <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
-              <Megaphone className="w-4 h-4" />
+              <Megaphone className="w-4 h-4" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-xs text-slate-900">Digital Notice Board</h3>
             <p className="text-[11px] text-slate-500 leading-relaxed">Targeted circulars by Year, Division, and Batch.</p>
-          </div>
+          </button>
 
-          <div 
+          <button 
             onClick={() => onNavigate('curriculum')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group"
+            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-              <BookOpen className="w-4 h-4" />
+              <BookOpen className="w-4 h-4" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-xs text-slate-900">Curriculum & Syllabus</h3>
             <p className="text-[11px] text-slate-500 leading-relaxed">Course structures, credit schemes, and official syllabus.</p>
-          </div>
+          </button>
 
-          <div 
+          <button 
             onClick={() => onNavigate('faculty')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group"
+            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-              <Users className="w-4 h-4" />
+              <Users className="w-4 h-4" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-xs text-slate-900">Faculty Directory</h3>
             <p className="text-[11px] text-slate-500 leading-relaxed">Faculty profiles, availability status, and office hours.</p>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -206,8 +212,12 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
                   </p>
                 )}
               </div>
-              <button onClick={() => setSelectedNotice(null)} className="text-slate-400 hover:text-slate-700">
-                <span className="material-symbols-outlined">close</span>
+              <button 
+                onClick={() => setSelectedNotice(null)} 
+                className="text-slate-400 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none rounded-lg p-1"
+                aria-label="Close Notice Dialog"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">close</span>
               </button>
             </div>
 

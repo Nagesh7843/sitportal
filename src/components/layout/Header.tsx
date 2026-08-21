@@ -41,20 +41,23 @@ export const Header: React.FC<HeaderProps> = ({
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
-            className="lg:hidden p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors"
+            className="lg:hidden p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
             title="Toggle Navigation Menu"
+            aria-label="Toggle Navigation Menu"
+            aria-expanded="false"
           >
-            <span className="material-symbols-outlined text-[24px]">menu</span>
+            <span className="material-symbols-outlined text-[24px]" aria-hidden="true">menu</span>
           </button>
         )}
 
         {canGoBack && onGoBack && (
           <button
             onClick={onGoBack}
-            className="p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors"
+            className="p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
             title="Go Back"
+            aria-label="Go Back"
           >
-            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[24px]" aria-hidden="true">arrow_back</span>
           </button>
         )}
 
@@ -73,9 +76,10 @@ export const Header: React.FC<HeaderProps> = ({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#767683] hover:text-[#071e27]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#767683] hover:text-[#071e27] focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
+              aria-label="Clear Search"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>
             </button>
           )}
         </div>
@@ -85,22 +89,24 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Notifications Icon */}
         <button
           onClick={onOpenNotifications}
-          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666] transition-colors"
+          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
           title="Notifications"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         >
-          <span className="material-symbols-outlined text-[22px]">notifications</span>
+          <span className="material-symbols-outlined text-[22px]" aria-hidden="true">notifications</span>
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#ba1a1a] rounded-full border border-white"></span>
+            <span className="absolute top-2 right-2 w-2 h-2 bg-[#ba1a1a] rounded-full border border-white" aria-hidden="true"></span>
           )}
         </button>
 
         {/* Help Center Icon */}
         <button
           onClick={onOpenHelp}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666] transition-colors hidden sm:flex"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666] transition-colors hidden sm:flex focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
           title="Help & Guidelines"
+          aria-label="Help and Guidelines"
         >
-          <span className="material-symbols-outlined text-[22px]">help</span>
+          <span className="material-symbols-outlined text-[22px]" aria-hidden="true">help</span>
         </button>
 
         <div className="h-7 w-px bg-[#c6c5d4] mx-0.5 sm:mx-1 hidden sm:block"></div>
@@ -116,9 +122,12 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         ) : (
           <div className="relative">
-            <div
+            <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer p-1 rounded-xl hover:bg-[#d5ecf8] transition-colors"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer p-1 rounded-xl hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
+              aria-label="Profile Menu"
+              aria-expanded={showProfileMenu}
+              aria-haspopup="true"
             >
               <div className="text-right hidden sm:block">
                 <p className="text-[13px] font-bold text-[#071e27] leading-none">
@@ -130,10 +139,10 @@ export const Header: React.FC<HeaderProps> = ({
                 alt={currentProfile.name}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-[#000666] object-cover shadow-xs"
               />
-              <span className="material-symbols-outlined text-[#454652] text-[18px]">
+              <span className="material-symbols-outlined text-[#454652] text-[18px]" aria-hidden="true">
                 expand_more
               </span>
-            </div>
+            </button>
 
             {/* Profile Dropdown Menu */}
             {showProfileMenu && (

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { registerWebPushDevice, isWebPushSubscribed, unsubscribeWebPushDevice } from '@/utils/webPush';
+import { apiService } from '@/services/api';
+import { NoticeItem } from '@/types';
 
 interface NotificationsDrawerProps {
   isOpen: boolean;
@@ -12,10 +14,18 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
 }) => {
   const [fcmEnabled, setFcmEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       isWebPushSubscribed().then(setFcmEnabled).catch(() => setFcmEnabled(false));
+      apiService.fetchNotices()
+        .then(data => {
+          // Sort by publishedAt descending, take top 3
+          const sorted = data.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+          setNotices(sorted.slice(0, 3));
+        })
+        .catch(err => console.error('Failed to fetch notices for drawer:', err));
     }
   }, [isOpen]);
 
@@ -97,38 +107,28 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
           <div className="space-y-3">
             <h4 className="text-[12px] font-bold text-[#454652] uppercase tracking-wider">Recent Portal Alerts</h4>
 
-            <div className="p-3.5 bg-[#e6f6ff] rounded-xl border border-[#dbf1fe] space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-[13px] text-[#071e27]">TY CSE Mid-Sem Schedule</span>
-                <span className="text-[10px] text-[#767683]">10 mins ago</span>
-              </div>
-              <p className="text-[11px] text-[#454652]">Exam timetable released for Div A & Div B in Hall 3.</p>
-              <span className="bg-[#d9e2ff] text-[#00429c] text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1">
-                Exam Directive
-              </span>
-            </div>
-
-            <div className="p-3.5 bg-[#e6f6ff] rounded-xl border border-[#dbf1fe] space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-[13px] text-[#071e27]">Lab 2 GPU Cluster Maintenance</span>
-                <span className="text-[10px] text-[#767683]">1 hour ago</span>
-              </div>
-              <p className="text-[11px] text-[#454652]">Restricted access on Friday evening for workstation upgrade.</p>
-              <span className="bg-[#e2ffd9] text-[#0a4d00] text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1">
-                Lab Maintenance
-              </span>
-            </div>
-
-            <div className="p-3.5 bg-[#e6f6ff] rounded-xl border border-[#dbf1fe] space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-[13px] text-[#071e27]">Hack-SIT 2024 Registration</span>
-                <span className="text-[10px] text-[#767683]">3 hours ago</span>
-              </div>
-              <p className="text-[11px] text-[#454652]">Team registrations open for SE, TE, and BE students.</p>
-              <span className="bg-[#ffe9c7] text-[#7a4b00] text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1">
-                Department Event
-              </span>
-            </div>
+            {notices.length === 0 ? (
+              <p className="text-[12px] text-[#767683] italic">No recent alerts found.</p>
+            ) : (
+              notices.map((notice) => (
+                <div key={notice.id} className="p-3.5 bg-[#e6f6ff] rounded-xl border border-[#dbf1fe] space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-[13px] text-[#071e27] truncate max-w-[180px]">{notice.title}</span>
+                    <span className="text-[10px] text-[#767683] shrink-0">
+                      {new Date(notice.publishedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#454652] line-clamp-2">{notice.content}</p>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1 ${
+                    notice.priority === 'URGENT' ? 'bg-[#ffe9c7] text-[#7a4b00]' :
+                    notice.priority === 'HIGH' ? 'bg-[#e2ffd9] text-[#0a4d00]' :
+                    'bg-[#d9e2ff] text-[#00429c]'
+                  }`}>
+                    {notice.category}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

@@ -20,9 +20,31 @@ public class ActivityLogController {
         return activityLogRepository.findTop20ByOrderByIdDesc();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ActivityLog> getActivityById(@PathVariable Long id) {
+        return activityLogRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<ActivityLog> createActivity(@RequestBody ActivityLog activityLog) {
         ActivityLog savedActivity = activityLogRepository.save(activityLog);
-        return ResponseEntity.ok(savedActivity);
+        return ResponseEntity.status(201).body(savedActivity);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteActivity(@PathVariable Long id) {
+        if (!activityLogRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        activityLogRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> clearAllActivities() {
+        activityLogRepository.deleteAll();
+        return ResponseEntity.noContent().build();
     }
 }

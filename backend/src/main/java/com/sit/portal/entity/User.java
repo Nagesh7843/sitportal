@@ -37,7 +37,7 @@ public class User {
 
     private String phone;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 
     @Column(length = 1000)

@@ -7,3 +7,5 @@ coverage/
 .env*
 !.env.example
 backend/target/
+playwright-report/
+test-results/

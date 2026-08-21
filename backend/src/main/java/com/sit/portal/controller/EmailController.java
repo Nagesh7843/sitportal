@@ -23,9 +23,25 @@ public class EmailController {
         return emailLogRepository.findByOrderBySentAtDesc();
     }
 
+    @GetMapping("/logs/{id}")
+    public ResponseEntity<EmailLogEntity> getEmailLogById(@PathVariable Long id) {
+        return emailLogRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/broadcast")
     public ResponseEntity<EmailLogEntity> recordBroadcast(@RequestBody com.sit.portal.dto.BroadcastRequest request) {
         EmailLogEntity savedLog = emailService.processBroadcast(request);
-        return ResponseEntity.ok(savedLog);
+        return ResponseEntity.status(201).body(savedLog);
+    }
+
+    @DeleteMapping("/logs/{id}")
+    public ResponseEntity<Void> deleteEmailLog(@PathVariable Long id) {
+        if (!emailLogRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        emailLogRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

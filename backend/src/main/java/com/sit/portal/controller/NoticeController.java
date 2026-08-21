@@ -20,14 +20,33 @@ public class NoticeController {
         return noticeService.getAllNotices();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Notice> getNoticeById(@PathVariable Long id) {
+        return noticeService.getNoticeById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<Notice> createNotice(@RequestBody Notice notice) {
         Notice savedNotice = noticeService.createNotice(notice);
-        return ResponseEntity.ok(savedNotice);
+        return ResponseEntity.status(201).body(savedNotice);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Notice> updateNotice(@PathVariable Long id, @RequestBody Notice notice) {
+        Notice updated = noticeService.updateNotice(id, notice);
+        if (updated != null) {
+            return ResponseEntity.ok(updated);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotice(@PathVariable Long id) {
+        if (noticeService.getNoticeById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         noticeService.deleteNotice(id);
         return ResponseEntity.noContent().build();
     }

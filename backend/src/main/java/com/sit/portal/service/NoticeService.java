@@ -59,8 +59,34 @@ public class NoticeService {
         return savedNotice;
     }
 
+    public java.util.Optional<Notice> getNoticeById(Long id) {
+        return noticeRepository.findById(id);
+    }
+
+    @CacheEvict(value = "notices", allEntries = true)
+    public Notice updateNotice(Long id, Notice updatedNotice) {
+        return noticeRepository.findById(id).map(existing -> {
+            if (updatedNotice.getTitle() != null) existing.setTitle(updatedNotice.getTitle());
+            if (updatedNotice.getContent() != null) existing.setContent(updatedNotice.getContent());
+            if (updatedNotice.getCategory() != null) existing.setCategory(updatedNotice.getCategory());
+            if (updatedNotice.getTargetAudience() != null) existing.setTargetAudience(updatedNotice.getTargetAudience());
+            if (updatedNotice.getAuthorName() != null) existing.setAuthorName(updatedNotice.getAuthorName());
+            if (updatedNotice.getAuthorRole() != null) existing.setAuthorRole(updatedNotice.getAuthorRole());
+            if (updatedNotice.getPriority() != null) existing.setPriority(updatedNotice.getPriority());
+            if (updatedNotice.getStatus() != null) existing.setStatus(updatedNotice.getStatus());
+            if (updatedNotice.getAttachments() != null) existing.setAttachments(updatedNotice.getAttachments());
+            if (updatedNotice.getReadBy() != null) existing.setReadBy(updatedNotice.getReadBy());
+            if (updatedNotice.getPublishedAt() != null) existing.setPublishedAt(updatedNotice.getPublishedAt());
+            if (updatedNotice.getScheduledAt() != null) existing.setScheduledAt(updatedNotice.getScheduledAt());
+            if (updatedNotice.getExpiresAt() != null) existing.setExpiresAt(updatedNotice.getExpiresAt());
+            if (updatedNotice.getViewsCount() != null) existing.setViewsCount(updatedNotice.getViewsCount());
+            return noticeRepository.save(existing);
+        }).orElse(null);
+    }
+
     @CacheEvict(value = "notices", allEntries = true)
     public void deleteNotice(Long id) {
         noticeRepository.deleteById(id);
     }
 }
+

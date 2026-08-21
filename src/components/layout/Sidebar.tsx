@@ -108,9 +108,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onCloseMobile && (
             <button 
               onClick={onCloseMobile}
-              className="lg:hidden p-1 text-[#767683] hover:text-[#071e27] rounded-lg"
+              className="lg:hidden p-1 text-[#767683] hover:text-[#071e27] rounded-lg focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
+              aria-label="Close Navigation Menu"
             >
-              <span className="material-symbols-outlined text-[22px]">close</span>
+              <span className="material-symbols-outlined text-[22px]" aria-hidden="true">close</span>
             </button>
           )}
         </div>
@@ -123,13 +124,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left text-[13px] font-semibold transition-all duration-200 ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left text-[13px] font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#000666] outline-none ${
                   isActive
                     ? 'bg-[#759efd] text-[#00337c] border-l-4 border-[#2b5bb5] shadow-xs'
                     : 'text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666]'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-[#00337c]' : 'text-[#454652]'}`}>
+                <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-[#00337c]' : 'text-[#454652]'}`} aria-hidden="true">
                   {item.icon}
                 </span>
                 <span>{item.label}</span>
@@ -148,13 +150,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {userRole === 'admin' && (
               <button
                 onClick={() => handleNavClick('settings')}
-                className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none ${
                   activeView === 'settings'
                     ? 'bg-[#cfe6f2] text-[#000666]'
                     : 'text-[#454652] hover:bg-[#d5ecf8]'
                 }`}
+                aria-current={activeView === 'settings' ? 'page' : undefined}
               >
-                <span className="material-symbols-outlined text-[18px]">settings</span>
+                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">settings</span>
                 <span>Settings</span>
               </button>
             )}

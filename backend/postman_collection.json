@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "sit-cse-portal-api-collection",
-		"name": "SIT CSE Department Portal - Complete REST API Collection (Person Name Emails)",
+		"name": "SIT CSE Department Portal - Complete REST API Collection",
 		"description": "Comprehensive Postman Collection for Siddaganga Institute of Technology (SITCOE) CSE Department Communication Portal REST API endpoints running on Spring Boot 3 & PostgreSQL sitportaldb.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -48,19 +48,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"nagesh@sitcoe.org.in\",\n  \"password\": \"N@gesh7843\",\n  \"role\": \"admin\"\n}"
+							"raw": "{\n  \"email\": \"nagesh@sitcoe.org.in\",\n  \"password\": \"N@gesh7843\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"login"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
 						},
 						"description": "Authenticate Super Admin Nagesh and automatically store JWT token into collection variables."
 					},
@@ -78,19 +71,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"poornima@sitcoe.org.in\",\n  \"password\": \"Hod@1234\",\n  \"role\": \"hod\"\n}"
+							"raw": "{\n  \"email\": \"poornima@sitcoe.org.in\",\n  \"password\": \"Hod@1234\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"login"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
 						}
 					},
 					"response": []
@@ -107,19 +93,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"veena@sitcoe.org.in\",\n  \"password\": \"Faculty@1234\",\n  \"role\": \"faculty\"\n}"
+							"raw": "{\n  \"email\": \"veena@sitcoe.org.in\",\n  \"password\": \"Faculty@1234\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"login"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
 						}
 					},
 					"response": []
@@ -136,19 +115,34 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"rahul@sitcoe.org.in\",\n  \"password\": \"Student@1234\",\n  \"role\": \"student\"\n}"
+							"raw": "{\n  \"email\": \"rahul@sitcoe.org.in\",\n  \"password\": \"Student@1234\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"login"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Google OAuth Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nagesh@sitcoe.org.in\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/google",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "google"]
 						}
 					},
 					"response": []
@@ -165,19 +159,115 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Prof. Rajesh Kumar\",\n  \"email\": \"rajesh@sitcoe.org.in\",\n  \"password\": \"Rajesh@1234\",\n  \"role\": \"faculty\",\n  \"department\": \"CSE\"\n}"
+							"raw": "{\n  \"name\": \"Prof. Rajesh Kumar\",\n  \"email\": \"rajesh@sitcoe.org.in\",\n  \"password\": \"Rajesh@1234\",\n  \"role\": \"faculty\",\n  \"department\": \"Computer Science & Engineering\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"register"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Authenticated User Session (/auth/me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "me"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Prof. Nagesh\",\n  \"phone\": \"+91 9876543210\",\n  \"roleTitle\": \"Senior Associate Professor\",\n  \"department\": \"Computer Science & Engineering\",\n  \"bio\": \"Specialist in Distributed Systems & Web Push Systems.\",\n  \"officeLocation\": \"CSE Dept Cabin 302\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change User Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"N@gesh7843\",\n  \"newPassword\": \"N@gesh7843NewPass\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/change-password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "change-password"]
 						}
 					},
 					"response": []
@@ -190,45 +280,36 @@
 				{
 					"name": "Get All Notices",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/notices",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"notices"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices"]
 						},
-						"description": "Fetch all digital circulars ordered by creation timestamp."
+						"description": "Fetch all notices. Publicly accessible."
 					},
 					"response": []
 				},
 				{
-					"name": "Create Official Notice (With Auto-Delete Expiry)",
+					"name": "Get Notice by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notices/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Official Notice",
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -239,18 +320,38 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"End-Semester Practical Exam Schedule for TE CSE\",\n  \"content\": \"All TE CSE students are instructed to present in Lab 3 at 9:30 AM with verified practical journals.\",\n  \"authorName\": \"Dr. A. S. Poornima\",\n  \"authorRole\": \"Head of Department (HOD CSE)\",\n  \"category\": \"Exam\",\n  \"priority\": \"HIGH\",\n  \"status\": \"PUBLISHED\",\n  \"targetYears\": \"TE\",\n  \"targetDivisions\": \"Div A, Div B\",\n  \"targetBatches\": \"B1, B2, B3\",\n  \"publishedAt\": \"Just now\",\n  \"expiresAt\": \"24 Hours\",\n  \"viewsCount\": 0\n}"
+							"raw": "{\n  \"title\": \"End-Semester Practical Exam Schedule for TE CSE\",\n  \"content\": \"All TE CSE students are instructed to present in Lab 3 at 9:30 AM with verified practical journals.\",\n  \"authorName\": \"Dr. A. S. Poornima\",\n  \"authorRole\": \"Head of Department (HOD CSE)\",\n  \"category\": \"Exam\",\n  \"priority\": \"HIGH\",\n  \"status\": \"PUBLISHED\",\n  \"targetAudience\": {\"years\": [\"TE\"], \"divisions\": [\"Div A\", \"Div B\"]},\n  \"publishedAt\": \"May 15, 2026 at 10:00 AM\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/notices",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"notices"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notice by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated: End-Semester Practical Exam Schedule\",\n  \"priority\": \"URGENT\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notices/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices", "1"]
 						}
 					},
 					"response": []
@@ -260,27 +361,14 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/notices/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"notices",
-								"1"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices", "1"]
 						}
 					},
 					"response": []
@@ -293,28 +381,25 @@
 				{
 					"name": "Get All Faculty Roster",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/faculty",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"faculty"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Faculty by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/faculty/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty", "1"]
 						}
 					},
 					"response": []
@@ -324,13 +409,7 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -341,34 +420,22 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"specialization\": \"Artificial Intelligence & Data Science\",\n  \"rankTitle\": \"Associate Professor\",\n  \"status\": \"ON CAMPUS\",\n  \"officeHours\": \"Mon-Fri 2:00 PM - 4:00 PM\",\n  \"publicationsCount\": 12\n}"
+							"raw": "{\n  \"name\": \"Dr. Priya Nair\",\n  \"email\": \"priya@sitcoe.org.in\",\n  \"specialization\": \"Cloud Computing & DevOps\",\n  \"rankTitle\": \"Assistant Professor\",\n  \"status\": \"ON CAMPUS\",\n  \"officeHours\": \"Mon-Wed 10:00 AM - 12:00 PM\",\n  \"publicationsCount\": 8\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/faculty",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"faculty"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Add Bulk Faculty Members",
+					"name": "Bulk Add Faculty Members",
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -379,19 +446,38 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n  {\n    \"name\": \"Dr. Jane Doe\",\n    \"email\": \"jane.doe@sitcoe.org.in\",\n    \"specialization\": \"Machine Learning\",\n    \"rank\": \"Professor\",\n    \"designation\": \"Professor\",\n    \"qualification\": \"Ph.D.\",\n    \"teachingExperience\": \"15 Years\",\n    \"industrialExperience\": \"\",\n    \"department\": \"CSE\",\n    \"status\": \"ON CAMPUS\"\n  }\n]"
+							"raw": "[\n  {\n    \"name\": \"Prof. Sandeep R\",\n    \"email\": \"sandeep@sitcoe.org.in\",\n    \"specialization\": \"Cybersecurity\",\n    \"rankTitle\": \"Associate Professor\",\n    \"status\": \"ON CAMPUS\",\n    \"officeHours\": \"Daily 3 PM - 5 PM\",\n    \"publicationsCount\": 15\n  }\n]"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/faculty/bulk",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"faculty",
-								"bulk"
-							]
+							"raw": "{{base_url}}/api/v1/faculty",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty", "bulk"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Faculty Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"IN LAB\",\n  \"officeHours\": \"Tue-Thu 2 PM - 4 PM\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/faculty/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty", "1"]
 						}
 					},
 					"response": []
@@ -401,34 +487,15 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "PUT",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/faculty/1/status?status=IN LAB",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"faculty",
-								"1",
-								"status"
-							],
-							"query": [
-								{
-									"key": "status",
-									"value": "IN LAB"
-								}
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty", "1", "status"],
+							"query": [{"key": "status", "value": "IN LAB"}]
 						}
 					},
 					"response": []
@@ -438,27 +505,14 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/faculty/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"faculty",
-								"1"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "faculty", "1"]
 						}
 					},
 					"response": []
@@ -473,26 +527,31 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/students",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"students"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Student by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/students/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students", "1"]
 						}
 					},
 					"response": []
@@ -502,13 +561,7 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -519,18 +572,64 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"rollNo\": \"2024CSE045\",\n  \"name\": \"John Doe\",\n  \"email\": \"johndoe@sitcoe.org.in\",\n  \"academicYear\": \"TE\",\n  \"division\": \"Div A\",\n  \"batchGroup\": \"B2\",\n  \"cohortBatch\": \"2023 - 2027\",\n  \"prn\": \"2024CSE12345\",\n  \"gpa\": 3.85,\n  \"status\": \"Active\"\n}"
+							"raw": "{\n  \"name\": \"Aarav Patel\",\n  \"rollNo\": \"2024CSE045\",\n  \"academicYear\": \"TE\",\n  \"division\": \"Div A\",\n  \"batchGroup\": \"A1\",\n  \"cohortBatch\": \"2023 - 2027\",\n  \"prn\": \"PRN20240045\",\n  \"gpa\": 3.85,\n  \"email\": \"aarav.patel@sitcoe.org.in\",\n  \"status\": \"Active\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/students",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"students"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Add Students",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"name\": \"Ananya Sen\",\n    \"rollNo\": \"2024CSE046\",\n    \"academicYear\": \"TE\",\n    \"division\": \"Div A\",\n    \"batchGroup\": \"A2\",\n    \"cohortBatch\": \"2023 - 2027\",\n    \"prn\": \"PRN20240046\",\n    \"gpa\": 3.92,\n    \"email\": \"ananya.sen@sitcoe.org.in\",\n    \"status\": \"Active\"\n  }\n]"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/students/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students", "bulk"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Student Record",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"gpa\": 3.95,\n  \"status\": \"Active\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/students/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students", "1"]
 						}
 					},
 					"response": []
@@ -540,27 +639,14 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/students/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"students",
-								"1"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "students", "1"]
 						}
 					},
 					"response": []
@@ -571,30 +657,27 @@
 			"name": "📁 5. Document Repository Module",
 			"item": [
 				{
-					"name": "Get All Uploaded Documents",
+					"name": "Get All Documents",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/documents",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"documents"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "documents"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/documents/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "documents", "1"]
 						}
 					},
 					"response": []
@@ -604,13 +687,7 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -621,18 +698,38 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"fileName\": \"Syllabus_BTech_CSE_2024.pdf\",\n  \"fileUrl\": \"https://sitcoe.org.in/syllabus/2024.pdf\",\n  \"fileSize\": \"3.2 MB\",\n  \"category\": \"Syllabus\",\n  \"uploaderRole\": \"HOD\",\n  \"uploadedAt\": \"Today\"\n}"
+							"raw": "{\n  \"title\": \"Operating Systems Lab Manual 2026\",\n  \"category\": \"Lab Guide\",\n  \"fileSize\": \"4.8 MB\",\n  \"fileType\": \"PDF\",\n  \"uploadedBy\": \"Prof. Veena K\",\n  \"downloadUrl\": \"https://sitcoe.org.in/docs/os-lab-2026.pdf\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/documents",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"documents"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "documents"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Document Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Operating Systems Lab Manual (Revised 2026)\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/documents/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "documents", "1"]
 						}
 					},
 					"response": []
@@ -642,27 +739,14 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/documents/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"documents",
-								"1"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "documents", "1"]
 						}
 					},
 					"response": []
@@ -670,85 +754,40 @@
 			]
 		},
 		{
-			"name": "📊 6. System Analytics & Department Stats",
+			"name": "📚 6. Academic Courses & Curriculum",
 			"item": [
 				{
-					"name": "Get Department Statistics",
+					"name": "Get All Courses",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/analytics/stats",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"analytics",
-								"stats"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "✉️ 7. Bulk Email Broadcast Module",
-			"item": [
-				{
-					"name": "Get Sent Email Logs",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/email/logs",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"email",
-								"logs"
-							]
+							"raw": "{{base_url}}/api/v1/courses",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Send Bulk Email Broadcast",
+					"name": "Get Course by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/courses/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Course",
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
 						"method": "POST",
 						"header": [
@@ -759,19 +798,55 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"subject\": \"Urgent: End Semester Project Submission Deadline\",\n  \"recipientGroup\": \"TE CSE Students\",\n  \"recipientCount\": 180,\n  \"priority\": \"URGENT\",\n  \"status\": \"SENT\",\n  \"openRate\": \"94.2%\",\n  \"content\": \"All TE CSE students must submit final project documentation on the department portal by Friday 5:00 PM.\"\n}"
+							"raw": "{\n  \"code\": \"CS501\",\n  \"title\": \"Cloud Computing & Microservices\",\n  \"semester\": 5,\n  \"credits\": 4,\n  \"type\": \"Core\",\n  \"instructor\": \"Prof. Rajesh Kumar\",\n  \"description\": \"Architecture of scalable cloud native systems and containerization.\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/email/broadcast",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"email",
-								"broadcast"
-							]
+							"raw": "{{base_url}}/api/v1/courses",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"credits\": 4,\n  \"instructor\": \"Dr. Priya Nair\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/courses/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/courses/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses", "1"]
 						}
 					},
 					"response": []
@@ -779,21 +854,363 @@
 			]
 		},
 		{
-			"name": "🔔 8. FCM Push Notifications Module",
+			"name": "🔬 7. Laboratories & Research Labs",
 			"item": [
 				{
-					"name": "Register FCM Device Token",
+					"name": "Get All Laboratories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/laboratories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "laboratories"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Laboratory by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/laboratories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "laboratories", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Laboratory",
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
 						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"roomNumber\": \"Lab 4\",\n  \"name\": \"Artificial Intelligence & Deep Learning Lab\",\n  \"computers\": \"40 High-End Workstations\",\n  \"processor\": \"Intel Core i9 14th Gen\",\n  \"ram\": \"64GB DDR5\",\n  \"storage\": \"2TB NVMe SSD + NVIDIA RTX 4090 24GB GPU\",\n  \"additionalEquipment\": \"4K Smart Displays, VR Headsets\",\n  \"totalCost\": \"₹65,00,000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/laboratories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "laboratories"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Laboratory",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"computers\": \"45 Workstations\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/laboratories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "laboratories", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Laboratory",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/laboratories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "laboratories", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Research Labs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/research-labs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "research-labs"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Research Lab by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/research-labs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "research-labs", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Research Lab",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"externalId\": \"lab-ai-iot\",\n  \"name\": \"Center for IoT & Edge Computing\",\n  \"head\": \"Dr. A. S. Poornima\",\n  \"location\": \"CSE Block 3rd Floor\",\n  \"activeProjects\": 6,\n  \"grantsAmount\": \"₹45,00,000\",\n  \"description\": \"Focused on edge intelligence and sensor networks for smart cities.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/research-labs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "research-labs"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Research Lab",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"activeProjects\": 8,\n  \"grantsAmount\": \"₹55,00,000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/research-labs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "research-labs", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Research Lab",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/research-labs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "research-labs", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 8. System Analytics & Department Stats",
+			"item": [
+				{
+					"name": "Get Department Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "stats"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "✉️ 9. Bulk Email Broadcast Module",
+			"item": [
+				{
+					"name": "Get Sent Email Logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/logs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "logs"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Email Log by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/logs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "logs", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Bulk Email Broadcast",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subject\": \"Urgent: End Semester Project Submission Deadline\",\n  \"recipientGroup\": \"TE CSE Students\",\n  \"recipientCount\": 180,\n  \"priority\": \"URGENT\",\n  \"content\": \"All TE CSE students must submit final project documentation on the department portal by Friday 5:00 PM.\",\n  \"targetAudience\": {\"years\": [\"TE\"], \"divisions\": [\"Div A\", \"Div B\"]}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/broadcast",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "broadcast"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Email Log by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/email/logs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "email", "logs", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔔 10. Web Push & FCM Notifications Module",
+			"item": [
+				{
+					"name": "Get VAPID Public Key",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/push/vapid-public-key",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "push", "vapid-public-key"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe to Web Push",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"endpoint\": \"https://fcm.googleapis.com/fcm/send/sample-subscription-endpoint\",\n  \"p256dh\": \"sample-p256dh-key\",\n  \"auth\": \"sample-auth-secret\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/push/subscribe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "push", "subscribe"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unsubscribe from Web Push",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"endpoint\": \"https://fcm.googleapis.com/fcm/send/sample-subscription-endpoint\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/push/unsubscribe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "push", "unsubscribe"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register FCM Device Token",
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -807,15 +1224,107 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/notifications/register-token",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"notifications",
-								"register-token"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notifications", "register-token"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📋 11. Activity Logs Module",
+			"item": [
+				{
+					"name": "Get All Activity Logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activity Log by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Activity Log",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Notice Published\",\n  \"subtitle\": \"Target: TE\",\n  \"icon\": \"campaign\",\n  \"type\": \"notice\",\n  \"timeAgo\": \"Just now\",\n  \"colorBg\": \"bg-blue-50\",\n  \"colorIcon\": \"text-blue-600\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Activity Log by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear All Activity Logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities"]
 						}
 					},
 					"response": []

@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,11 @@ public class AsyncEmailWorker {
      * Dispatches emails in batches to avoid SMTP limits and blocking threads.
      */
     @Async
+    @Retryable(
+        value = { Exception.class },
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 5000, multiplier = 2)
+    )
     public void dispatchEmailsAsync(List<String> targetEmails, BroadcastRequest request) {
         if (javaMailSender == null || targetEmails.isEmpty()) {
             System.out.println("Simulated email broadcast to " + targetEmails.size() + " recipients (JavaMailSender not configured or no recipients).");
@@ -58,6 +65,8 @@ public class AsyncEmailWorker {
                 }
             } catch (Exception e) {
                 System.err.println("Failed to dispatch email batch starting at index " + i + ": " + e.getMessage());
+                // Rethrow to trigger Spring Retry
+                throw new RuntimeException("Email dispatch failed, triggering retry", e);
             }
         }
         

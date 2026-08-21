@@ -43,6 +43,47 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select a valid image file.' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 250;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Compress aggressively to keep base64 string small for DB
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setAvatar(dataUrl);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -204,13 +245,24 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       </button>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    value={avatar}
-                    onChange={(e) => setAvatar(e.target.value)}
-                    placeholder="Or enter custom Image URL..."
-                    className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl px-3 py-1.5 text-[12px] outline-none"
-                  />
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="avatar-upload"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className="inline-block cursor-pointer px-4 py-1.5 bg-[#f3faff] border border-[#c6c5d4] rounded-lg text-[11px] font-bold text-[#000666] hover:bg-[#e6f6ff] transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">upload</span>
+                        Upload from Gallery
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

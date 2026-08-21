@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem } from '@/types';
 import { apiService } from '@/services/api';
 import { registerWebPushDevice } from '@/utils/webPush';
+import { useUrlRouter } from '@/hooks/useUrlRouter';
 
 
 import { Sidebar, Header, Footer } from '@/components/layout';
@@ -27,6 +28,10 @@ export default function App() {
   const [userRole, setUserRole] = useState<UserRole>('public');
   const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
+  const [intendedView, setIntendedView] = useState<ViewMode | null>(null);
+
+  // Hook in the URL Router (Fixes BUG-004 & BUG-005)
+  useUrlRouter(activeView, setActiveView);
 
   // 100% Database-driven state initialized to empty arrays (No local storage)
   const [facultyList, setFacultyList] = useState<FacultyMember[]>([]);
@@ -111,6 +116,7 @@ export default function App() {
 
     if (!isLoggedIn && !publicViews.includes(targetView)) {
       alert('Authentication Required: Please sign in to access this portal section.');
+      setIntendedView(targetView);
       setActiveView('login');
       return;
     }
@@ -186,6 +192,15 @@ export default function App() {
       defaultView = role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : 'notices';
     }
 
+    // Fix BUG-001: Restore intended view if it exists
+    if (intendedView) {
+      const adminViews: ViewMode[] = ['bulk-email', 'faculty-email', 'analytics', 'settings'];
+      if (!adminViews.includes(intendedView) || role === 'admin' || (role === 'hod' && intendedView !== 'settings')) {
+        defaultView = intendedView;
+      }
+      setIntendedView(null);
+    }
+
     // Seed history so dashboards can always go back to home
     if ((defaultView as string) !== 'public-landing') {
       setViewHistory(['public-landing']);
@@ -223,6 +238,7 @@ export default function App() {
   const requireAuthAction = (action: () => void) => {
     if (!isLoggedIn) {
       alert('Authentication Required: Please sign in to perform this activity.');
+      setIntendedView(activeView);
       setActiveView('login');
       return;
     }

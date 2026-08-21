@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,6 +22,13 @@ public class UserController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        users.forEach(u -> u.setPassword(null));
+        return ResponseEntity.ok(users);
+    }
 
     @GetMapping("/profile")
     public ResponseEntity<?> getCurrentUserProfile(Authentication authentication) {
@@ -47,16 +55,22 @@ public class UserController {
 
     @PutMapping("/profile")
     public ResponseEntity<?> updateUserProfile(Authentication authentication, @RequestBody Map<String, Object> updates) {
+        System.out.println("USER_CONTROLLER: Entered updateUserProfile");
+        
         if (authentication == null || authentication.getName() == null) {
+            System.out.println("USER_CONTROLLER: Auth is null");
             Map<String, String> err = new HashMap<>();
             err.put("message", "User is not authenticated.");
             return ResponseEntity.status(401).body(err);
         }
 
         String email = authentication.getName().trim().toLowerCase();
+        System.out.println("USER_CONTROLLER: Email is " + email);
+        
         Optional<User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
+            System.out.println("USER_CONTROLLER: User not found in DB");
             Map<String, String> err = new HashMap<>();
             err.put("message", "User profile not found in database.");
             return ResponseEntity.status(404).body(err);
@@ -89,14 +103,24 @@ public class UserController {
             user.setDepartment((String) updates.get("department"));
         }
 
-        User savedUser = userRepository.save(user);
-        savedUser.setPassword(null);
+        System.out.println("USER_CONTROLLER: Saving user...");
+        try {
+            User savedUser = userRepository.save(user);
+            System.out.println("USER_CONTROLLER: Saved successfully!");
+            savedUser.setPassword(null);
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("status", "success");
-        res.put("message", "User profile updated successfully.");
-        res.put("user", savedUser);
-        return ResponseEntity.ok(res);
+            Map<String, Object> res = new HashMap<>();
+            res.put("status", "success");
+            res.put("message", "User profile updated successfully.");
+            res.put("user", savedUser);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            System.out.println("USER_CONTROLLER: Save failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "Failed to update user profile due to server error: " + e.getMessage());
+            return ResponseEntity.status(500).body(err);
+        }
     }
 
     @PutMapping("/change-password")

@@ -151,4 +151,30 @@ public class AuthController {
             return ResponseEntity.status(401).body(err);
         }
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getAuthenticatedUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "Not authenticated");
+            return ResponseEntity.status(401).body(err);
+        }
+
+        String email = authentication.getName().trim().toLowerCase();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isEmpty()) {
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "User not found");
+            return ResponseEntity.status(404).body(err);
+        }
+
+        User user = userOpt.get();
+        user.setPassword(null);
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", user);
+        response.put("role", user.getRole());
+        response.put("email", user.getEmail());
+        return ResponseEntity.ok(response);
+    }
 }

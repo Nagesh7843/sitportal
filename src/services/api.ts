@@ -1,7 +1,7 @@
 import { NoticeItem, StudentRecord, FacultyMember, EmailLog, UploadAsset, ActivityLog } from '@/types';
 
 const getRawApiUrl = () => {
-  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://sitportal.onrender.com';
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080';
   const cleanUrl = envUrl.replace(/\/$/, '');
   return cleanUrl.endsWith('/api/v1') ? cleanUrl : `${cleanUrl}/api/v1`;
 };
@@ -36,7 +36,7 @@ export const apiService = {
     return data;
   },
 
-  async registerUser(userData: { name: string; email: string; password: string; role: string; roleTitle: string }) {
+  async registerUser(userData: { name: string; email: string; password: string; role: string; roleTitle: string; department?: string }) {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,10 +70,22 @@ export const apiService = {
     return data;
   },
 
+  async getMe() {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch authenticated user session');
+    return await response.json();
+  },
+
   // Notice Endpoints (PostgreSQL sitportaldb)
   async fetchNotices(): Promise<NoticeItem[]> {
     const response = await fetch(`${API_BASE_URL}/notices`, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch notices from database');
+    return await response.json();
+  },
+
+  async fetchNoticeById(id: string | number): Promise<NoticeItem> {
+    const response = await fetch(`${API_BASE_URL}/notices/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch notice');
     return await response.json();
   },
 
@@ -87,7 +99,17 @@ export const apiService = {
     return await response.json();
   },
 
-  async deleteNotice(id: string): Promise<void> {
+  async updateNotice(id: string | number, notice: Partial<NoticeItem>): Promise<NoticeItem> {
+    const response = await fetch(`${API_BASE_URL}/notices/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(notice),
+    });
+    if (!response.ok) throw new Error('Failed to update notice');
+    return await response.json();
+  },
+
+  async deleteNotice(id: string | number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/notices/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
@@ -102,6 +124,12 @@ export const apiService = {
     return await response.json();
   },
 
+  async fetchStudentById(id: string | number): Promise<StudentRecord> {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch student');
+    return await response.json();
+  },
+
   async addStudent(student: StudentRecord): Promise<StudentRecord> {
     const response = await fetch(`${API_BASE_URL}/students`, {
       method: 'POST',
@@ -109,6 +137,16 @@ export const apiService = {
       body: JSON.stringify(student),
     });
     if (!response.ok) throw new Error('Failed to save student to database');
+    return await response.json();
+  },
+
+  async updateStudent(id: string | number, student: Partial<StudentRecord>): Promise<StudentRecord> {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(student),
+    });
+    if (!response.ok) throw new Error('Failed to update student');
     return await response.json();
   },
 
@@ -137,6 +175,12 @@ export const apiService = {
     return await response.json();
   },
 
+  async fetchFacultyById(id: string | number): Promise<FacultyMember> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch faculty member');
+    return await response.json();
+  },
+
   async createFaculty(faculty: Omit<FacultyMember, 'id'>): Promise<FacultyMember> {
     const response = await fetch(`${API_BASE_URL}/faculty`, {
       method: 'POST',
@@ -144,6 +188,25 @@ export const apiService = {
       body: JSON.stringify(faculty),
     });
     if (!response.ok) throw new Error('Failed to create faculty record');
+    return await response.json();
+  },
+
+  async updateFaculty(id: string | number, faculty: Partial<FacultyMember>): Promise<FacultyMember> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(faculty),
+    });
+    if (!response.ok) throw new Error('Failed to update faculty member');
+    return await response.json();
+  },
+
+  async updateFacultyStatus(id: string | number, status: string): Promise<FacultyMember> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${id}/status?status=${encodeURIComponent(status)}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to update faculty status');
     return await response.json();
   },
 
@@ -172,6 +235,12 @@ export const apiService = {
     return await response.json();
   },
 
+  async fetchDocumentById(id: string | number): Promise<UploadAsset> {
+    const response = await fetch(`${API_BASE_URL}/documents/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch document');
+    return await response.json();
+  },
+
   async createDocument(doc: Partial<UploadAsset>): Promise<UploadAsset> {
     const response = await fetch(`${API_BASE_URL}/documents`, {
       method: 'POST',
@@ -179,6 +248,16 @@ export const apiService = {
       body: JSON.stringify(doc),
     });
     if (!response.ok) throw new Error('Failed to save document to database');
+    return await response.json();
+  },
+
+  async updateDocument(id: string | number, doc: Partial<UploadAsset>): Promise<UploadAsset> {
+    const response = await fetch(`${API_BASE_URL}/documents/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(doc),
+    });
+    if (!response.ok) throw new Error('Failed to update document');
     return await response.json();
   },
 
@@ -197,6 +276,40 @@ export const apiService = {
     return await response.json();
   },
 
+  async fetchCourseById(id: string | number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch course');
+    return await response.json();
+  },
+
+  async createCourse(course: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(course),
+    });
+    if (!response.ok) throw new Error('Failed to save course');
+    return await response.json();
+  },
+
+  async updateCourse(id: string | number, course: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(course),
+    });
+    if (!response.ok) throw new Error('Failed to update course');
+    return await response.json();
+  },
+
+  async deleteCourse(id: string | number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete course');
+  },
+
   // Research & Lab Endpoints
   async fetchLaboratories(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/laboratories`, { headers: getAuthHeaders() });
@@ -204,10 +317,78 @@ export const apiService = {
     return await response.json();
   },
 
+  async fetchLaboratoryById(id: string | number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/laboratories/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch laboratory');
+    return await response.json();
+  },
+
+  async createLaboratory(lab: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/laboratories`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lab),
+    });
+    if (!response.ok) throw new Error('Failed to save laboratory');
+    return await response.json();
+  },
+
+  async updateLaboratory(id: string | number, lab: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/laboratories/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lab),
+    });
+    if (!response.ok) throw new Error('Failed to update laboratory');
+    return await response.json();
+  },
+
+  async deleteLaboratory(id: string | number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/laboratories/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete laboratory');
+  },
+
   async fetchResearchLabs(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/research-labs`, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch research labs from database');
     return await response.json();
+  },
+
+  async fetchResearchLabById(id: string | number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/research-labs/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch research lab');
+    return await response.json();
+  },
+
+  async createResearchLab(lab: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/research-labs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lab),
+    });
+    if (!response.ok) throw new Error('Failed to create research lab');
+    return await response.json();
+  },
+
+  async updateResearchLab(id: string | number, lab: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/research-labs/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lab),
+    });
+    if (!response.ok) throw new Error('Failed to update research lab');
+    return await response.json();
+  },
+
+  async deleteResearchLab(id: string | number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/research-labs/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete research lab');
   },
 
   // Email Log Endpoints (PostgreSQL sitportaldb)
@@ -244,6 +425,22 @@ export const apiService = {
     return await response.json();
   },
 
+  async deleteActivity(id: string | number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete activity log');
+  },
+
+  async clearAllActivities(): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/activities`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to clear activity logs');
+  },
+
   // FCM Device Token Registration for Push Notifications
   async registerFcmToken(token: string, email?: string) {
     const response = await fetch(`${API_BASE_URL}/notifications/register-token`, {
@@ -263,7 +460,6 @@ export const apiService = {
   },
 
   async subscribeToWebPush(subscription: any): Promise<string> {
-    // The Web Push API standard `PushSubscription.toJSON()` outputs endpoint and keys object
     const payload = {
       endpoint: subscription.endpoint,
       p256dh: subscription.keys ? subscription.keys.p256dh : '',
@@ -299,6 +495,12 @@ export const apiService = {
   },
 
   // User Profile & Password Management
+  async fetchAllUsers() {
+    const response = await fetch(`${API_BASE_URL}/users`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return await response.json();
+  },
+
   async fetchUserProfile() {
     const response = await fetch(`${API_BASE_URL}/users/profile`, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch user profile');

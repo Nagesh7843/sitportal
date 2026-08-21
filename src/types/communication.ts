@@ -25,7 +25,7 @@ export interface EmailLog {
   recipientGroup: string;
   recipientCount: number;
   sentAt: string;
-  status: 'SUCCESS' | 'FAILED' | 'SCHEDULED' | 'SENDING';
+  status: 'SUCCESS' | 'FAILED' | 'SCHEDULED' | 'SENDING' | 'SIMULATED' | 'NO_RECIPIENTS';
   priority: 'URGENT' | 'NORMAL';
   openRate?: string;
   content?: string;
