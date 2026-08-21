@@ -50,4 +50,16 @@ public class NoticeController {
         noticeService.deleteNotice(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/cleanup-expired")
+    public ResponseEntity<java.util.Map<String, Object>> cleanupExpiredNotices(
+            @RequestParam(defaultValue = "20") int days) {
+        int deletedCount = noticeService.cleanupNoticesOlderThanDays(days);
+        return ResponseEntity.ok(java.util.Map.of(
+                "status", "SUCCESS",
+                "retentionDays", days,
+                "deletedCount", deletedCount,
+                "message", "Cleaned up " + deletedCount + " notices older than " + days + " days."
+        ));
+    }
 }

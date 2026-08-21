@@ -1384,6 +1384,31 @@
 						"description": "Returns scraper operational metrics, last sync timestamp, and total synced count."
 					},
 					"response": []
+				},
+				{
+					"name": "Cleanup Expired Notices Older Than Retention Days",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notices/cleanup-expired?days=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "notices", "cleanup-expired"],
+							"query": [
+								{
+									"key": "days",
+									"value": "20",
+									"description": "Retention threshold in days (e.g. 15 or 20 days)"
+								}
+							]
+						},
+						"description": "Deletes notices published or created older than the specified retention window (default: 20 days)."
+					},
+					"response": []
 				}
 			]
 		}

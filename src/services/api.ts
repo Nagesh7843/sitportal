@@ -145,6 +145,15 @@ export const apiService = {
     return await response.json();
   },
 
+  async cleanupExpiredNotices(days = 20): Promise<{ status: string; deletedCount: number; retentionDays: number; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/notices/cleanup-expired?days=${days}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to cleanup expired notices');
+    return await response.json();
+  },
+
   // Student Endpoints (PostgreSQL sitportaldb)
   async fetchStudents(): Promise<StudentRecord[]> {
     const response = await fetch(`${API_BASE_URL}/students`, { headers: getAuthHeaders() });

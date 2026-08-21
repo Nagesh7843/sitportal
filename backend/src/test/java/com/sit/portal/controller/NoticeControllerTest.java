@@ -115,4 +115,17 @@ class NoticeControllerTest {
         assertEquals(404, response.getStatusCode().value());
         verify(noticeService, never()).deleteNotice(999L);
     }
+
+    @Test
+    void cleanupExpiredNoticesReturnsSuccess() {
+        when(noticeService.cleanupNoticesOlderThanDays(20)).thenReturn(5);
+
+        ResponseEntity<java.util.Map<String, Object>> response = controller.cleanupExpiredNotices(20);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("SUCCESS", response.getBody().get("status"));
+        assertEquals(5, response.getBody().get("deletedCount"));
+        verify(noticeService).cleanupNoticesOlderThanDays(20);
+    }
 }

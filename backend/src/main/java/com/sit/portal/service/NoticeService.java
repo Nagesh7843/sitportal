@@ -25,7 +25,35 @@ public class NoticeService {
 
     @Cacheable(value = "notices")
     public List<Notice> getAllNotices() {
-        return noticeRepository.findByOrderByCreatedAtDesc();
+        return noticeRepository.findAllPrioritizedAndLatest();
+    }
+
+    /**
+     * Automated Scheduler: Deletes notices published older than 20 days (runs hourly).
+     */
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 * * * *")
+    @CacheEvict(value = "notices", allEntries = true)
+    public int autoCleanupExpiredNotices() {
+        int retentionDays = 20;
+        java.time.LocalDateTime cutoffDate = java.time.LocalDateTime.now().minusDays(retentionDays);
+        int deleted = noticeRepository.deleteNoticesOlderThan(cutoffDate);
+        if (deleted > 0) {
+            System.out.println("Automated Notice Expiry Scheduler: Successfully cleaned up " + deleted + " notices older than " + retentionDays + " days.");
+        }
+        return deleted;
+    }
+
+    /**
+     * Custom cleanup with specific retention days (e.g. 15 or 20 days).
+     */
+    @CacheEvict(value = "notices", allEntries = true)
+    public int cleanupNoticesOlderThanDays(int days) {
+        java.time.LocalDateTime cutoffDate = java.time.LocalDateTime.now().minusDays(days);
+        int deleted = noticeRepository.deleteNoticesOlderThan(cutoffDate);
+        if (deleted > 0) {
+            System.out.println("Notice Expiry Cleanup: Removed " + deleted + " notices older than " + days + " days.");
+        }
+        return deleted;
     }
 
     @CacheEvict(value = "notices", allEntries = true)

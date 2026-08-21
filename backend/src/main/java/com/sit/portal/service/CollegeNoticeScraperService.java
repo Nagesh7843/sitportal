@@ -168,9 +168,9 @@ public class CollegeNoticeScraperService {
     }
 
     /**
-     * Periodic background auto-scraper scheduled every 6 hours.
+     * Periodic background auto-scraper scheduled every 30 minutes.
      */
-    @Scheduled(cron = "0 0 */6 * * *")
+    @Scheduled(cron = "0 */30 * * * *")
     public void scheduledAutoSync() {
         System.out.println("Executing automated scheduled college notice scraper...");
         try {
