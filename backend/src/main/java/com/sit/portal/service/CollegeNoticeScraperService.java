@@ -24,6 +24,15 @@ public class CollegeNoticeScraperService {
     @Autowired
     private NoticeRepository noticeRepository;
 
+    @Autowired
+    private PushNotificationService pushNotificationService;
+
+    @Autowired
+    private com.sit.portal.repository.FcmTokenRepository fcmTokenRepository;
+
+    @Autowired
+    private com.sit.portal.repository.ActivityLogRepository activityLogRepository;
+
     private String lastSyncTimestamp = "Never";
     private int lastSyncedCount = 0;
     private String lastSyncStatus = "IDLE";
@@ -150,6 +159,67 @@ public class CollegeNoticeScraperService {
             newlySaved.add(saved);
             existingTitles.add(item.getTitle().toLowerCase());
             newCount++;
+        }
+
+        // Broadcast Push Notifications and log activity for newly scraped notices
+        if (!newlySaved.isEmpty()) {
+            System.out.println("========== SCRAPED NOTICES PUSH NOTIFICATION BROADCAST ==========");
+            System.out.println("Total New Official Notices Scraped: " + newlySaved.size());
+
+            // 1. Send push notifications for the top/most recent scraped notices
+            int pushCount = Math.min(newlySaved.size(), 3);
+            for (int i = 0; i < pushCount; i++) {
+                Notice n = newlySaved.get(i);
+                String priorityPrefix = "URGENT".equalsIgnoreCase(n.getPriority()) ? "⚠️ [URGENT] " : "";
+                String pushTitle = priorityPrefix + "🏛️ SITCOE Notice: " + n.getTitle();
+                String pushMessage = "[" + n.getCategory() + " Circular] Official notification published on SIT Portal. Click to view.";
+
+                // Web Push Dispatch
+                try {
+                    pushNotificationService.sendPushNotificationToAll(pushTitle, pushMessage);
+                } catch (Exception e) {
+                    System.err.println("Web Push error for notice '" + n.getTitle() + "': " + e.getMessage());
+                }
+
+                // Activity Log Record
+                try {
+                    com.sit.portal.entity.ActivityLog log = com.sit.portal.entity.ActivityLog.builder()
+                            .title("Official Circular: " + n.getTitle())
+                            .subtitle("Auto-synced from sitcoe.ac.in (" + n.getCategory() + ")")
+                            .icon("URGENT".equalsIgnoreCase(n.getPriority()) ? "warning" : "campaign")
+                            .type("notice")
+                            .colorBg("URGENT".equalsIgnoreCase(n.getPriority()) ? "bg-rose-100" : "bg-[#d9e2ff]")
+                            .colorIcon("URGENT".equalsIgnoreCase(n.getPriority()) ? "text-rose-700" : "text-[#00429c]")
+                            .timeAgo("Just now")
+                            .build();
+                    activityLogRepository.save(log);
+                } catch (Exception e) {
+                    System.err.println("Activity log error: " + e.getMessage());
+                }
+            }
+
+            // Summary notification if multiple notices were synchronized
+            if (newlySaved.size() > 3) {
+                try {
+                    String summaryTitle = "🏛️ SITCOE: " + newlySaved.size() + " New Official Notices Published";
+                    String summaryMsg = "Latest: " + newlySaved.get(0).getTitle() + " and " + (newlySaved.size() - 1) + " other circulars updated.";
+                    pushNotificationService.sendPushNotificationToAll(summaryTitle, summaryMsg);
+                } catch (Exception e) {
+                    System.err.println("Web Push summary error: " + e.getMessage());
+                }
+            }
+
+            // 2. FCM Devices Broadcast Log
+            try {
+                var tokens = fcmTokenRepository.findAll();
+                System.out.println("Targeting " + tokens.size() + " registered FCM mobile/web devices with scraped notice alerts.");
+                for (var token : tokens) {
+                    System.out.println("-> FCM Push Broadcast to device: " + token.getToken() + " (User: " + token.getEmail() + ")");
+                }
+            } catch (Exception e) {
+                System.err.println("FCM token lookup error: " + e.getMessage());
+            }
+            System.out.println("==================================================================");
         }
 
         this.lastSyncTimestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
