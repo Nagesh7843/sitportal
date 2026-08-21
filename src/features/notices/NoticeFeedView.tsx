@@ -78,27 +78,6 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
     }
   };
 
-  const handleCleanupExpired = async () => {
-    if (!confirm('Run Automated Retention Cleanup? Notices older than 20 days will be removed.')) return;
-    setIsSyncing(true);
-    try {
-      const res = await apiService.cleanupExpiredNotices(20);
-      setSyncToast({
-        message: `🧹 Retention Cleanup Complete: Removed ${res.deletedCount} notices older than 20 days.`,
-        type: 'success'
-      });
-      if (onRefreshNotices) onRefreshNotices();
-    } catch (err: any) {
-      setSyncToast({
-        message: `❌ Cleanup Failed: ${err.message || 'Error executing cleanup'}`,
-        type: 'error'
-      });
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncToast(null), 6000);
-    }
-  };
-
   const isCollegeOfficialNotice = (item: NoticeItem) => {
     return (
       item.authorRole?.toLowerCase().includes('sitcoe') ||
@@ -176,11 +155,7 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-cyan-200 font-semibold text-xs border border-white/20">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              Auto-Sync: Every 30 Mins
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 font-semibold text-xs border border-white/20">
-              <span className="material-symbols-outlined text-[13px]">auto_delete</span>
-              Auto-Retention: 20 Days
+              Official Institutional Notice Board
             </div>
             {scraperStatus && scraperStatus.lastSyncTimestamp !== 'Never' && (
               <span className="text-[11px] text-cyan-200/80 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10">
@@ -209,26 +184,13 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
                 ? 'bg-cyan-900/60 text-cyan-200 cursor-not-allowed border border-cyan-500/30'
                 : 'bg-white/10 hover:bg-white/20 text-cyan-200 border border-cyan-400/40 hover:border-cyan-300'
             }`}
-            title="Scrape and synchronize official notices from sitcoe.ac.in (Runs automatically every 30 mins)"
+            title="Scrape and synchronize official notices from sitcoe.ac.in"
           >
             <span className={`material-symbols-outlined text-[18px] ${isSyncing ? 'animate-spin text-cyan-300' : ''}`}>
               sync
             </span>
             <span>{isSyncing ? 'Syncing...' : 'Sync College Notices'}</span>
           </button>
-
-          {/* Cleanup Expired Button (Admins / HOD) */}
-          {canManageNotices && (
-            <button
-              onClick={handleCleanupExpired}
-              disabled={isSyncing}
-              className="px-3.5 py-2.5 rounded-xl text-[13px] font-bold bg-white/10 hover:bg-red-500/20 text-rose-200 border border-rose-400/30 flex items-center gap-1.5 transition-all shadow-md"
-              title="Delete notices published more than 20 days ago"
-            >
-              <span className="material-symbols-outlined text-[17px]">auto_delete</span>
-              <span>Clean &gt;20d</span>
-            </button>
-          )}
 
           {/* Live Preview Button */}
           <button
