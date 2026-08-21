@@ -8,5 +8,6 @@ export * from './HelpModal';
 export * from './ActivityLogModal';
 export * from './EditProfileModal';
 export * from './ContactFacultyModal';
+export * from './AddEditCourseModal';
 export { ModalsContainer as Modals } from './ModalsContainer';
 export * from './ModalsContainer';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem } from '@/types';
+import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem, CourseItem } from '@/types';
 import { apiService } from '@/services/api';
 import { registerWebPushDevice } from '@/utils/webPush';
 import { useUrlRouter } from '@/hooks/useUrlRouter';
@@ -19,7 +19,7 @@ import { AnalyticsView } from '@/features/analytics';
 import { SettingsView } from '@/features/settings';
 import { NoticeFeedView, NoticePublishModal } from '@/features/notices';
 import { DocumentLibraryView } from '@/features/documents';
-import { EditProfileModal, ContactFacultyModal } from '@/components/modals';
+import { EditProfileModal, ContactFacultyModal, AddEditCourseModal } from '@/components/modals';
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
 export default function App() {
@@ -56,6 +56,8 @@ export default function App() {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showContactFacultyModal, setShowContactFacultyModal] = useState(false);
   const [selectedFacultyForContact, setSelectedFacultyForContact] = useState<FacultyMember | null>(null);
+  const [showAddEditCourseModal, setShowAddEditCourseModal] = useState(false);
+  const [selectedCourseForEdit, setSelectedCourseForEdit] = useState<CourseItem | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Lazy Fetch Database Records based on active view
@@ -333,6 +335,81 @@ export default function App() {
         
       } catch (err) {
         alert('Failed to save notice to PostgreSQL database.');
+      }
+    });
+  };
+
+  // Curriculum Management Handlers (Faculty, Admin, HOD)
+  const handleOpenAddCourse = () => {
+    requireAuthAction(() => {
+      setSelectedCourseForEdit(null);
+      setShowAddEditCourseModal(true);
+    });
+  };
+
+  const handleOpenEditCourse = (course: CourseItem) => {
+    requireAuthAction(() => {
+      setSelectedCourseForEdit(course);
+      setShowAddEditCourseModal(true);
+    });
+  };
+
+  const handleSaveCourse = async (courseData: Partial<CourseItem>) => {
+    try {
+      if (courseData.id) {
+        const updated = await apiService.updateCourse(courseData.id, courseData);
+        setCoursesList((prev) => prev.map((c) => (c.id === courseData.id ? updated : c)));
+        apiService.createActivity({
+          title: `Curriculum Course Updated: ${courseData.code}`,
+          subtitle: `${courseData.title} by ${currentProfile?.name || 'Faculty'}`,
+          icon: 'edit_note',
+          type: 'system'
+        }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
+      } else {
+        const created = await apiService.createCourse(courseData);
+        setCoursesList((prev) => [created, ...prev]);
+        apiService.createActivity({
+          title: `New Course Added: ${courseData.code}`,
+          subtitle: `${courseData.title} by ${currentProfile?.name || 'Faculty'}`,
+          icon: 'menu_book',
+          type: 'system'
+        }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
+      }
+    } catch (err) {
+      alert('Failed to save course to PostgreSQL database.');
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string | number) => {
+    requireAuthAction(async () => {
+      try {
+        await apiService.deleteCourse(courseId);
+        setCoursesList((prev) => prev.filter((c) => c.id !== courseId && c.code !== courseId));
+        apiService.createActivity({
+          title: `Course Removed from Curriculum`,
+          subtitle: `Action by ${currentProfile?.name || 'Faculty'}`,
+          icon: 'delete',
+          type: 'system'
+        }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
+      } catch (err) {
+        alert('Failed to delete course from database.');
+      }
+    });
+  };
+
+  const handleDeleteAllCourses = async () => {
+    requireAuthAction(async () => {
+      try {
+        await apiService.deleteAllCourses();
+        setCoursesList([]);
+        apiService.createActivity({
+          title: `All Curriculum Courses Cleared`,
+          subtitle: `Database reset by ${currentProfile?.name || 'Administrator'}`,
+          icon: 'delete_sweep',
+          type: 'system'
+        }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
+      } catch (err) {
+        alert('Failed to clear curriculum courses from database.');
       }
     });
   };
@@ -639,7 +716,16 @@ export default function App() {
           )}
 
           {activeView === 'curriculum' && (
-            <CurriculumView courses={coursesList} onNavigate={handleProtectedNavigate} />
+            <CurriculumView
+              courses={coursesList}
+              userRole={userRole}
+              currentProfile={currentProfile}
+              onAddCourse={['faculty', 'admin', 'hod'].includes(userRole) ? handleOpenAddCourse : undefined}
+              onEditCourse={['faculty', 'admin', 'hod'].includes(userRole) ? handleOpenEditCourse : undefined}
+              onDeleteCourse={['faculty', 'admin', 'hod'].includes(userRole) ? handleDeleteCourse : undefined}
+              onDeleteAllCourses={['faculty', 'admin', 'hod'].includes(userRole) ? handleDeleteAllCourses : undefined}
+              onNavigate={handleProtectedNavigate}
+            />
           )}
 
           {activeView === 'faculty' && (
@@ -749,6 +835,18 @@ export default function App() {
           }
           alert(msg);
         }}
+      />
+
+      <AddEditCourseModal
+        isOpen={showAddEditCourseModal}
+        onClose={() => {
+          setShowAddEditCourseModal(false);
+          setSelectedCourseForEdit(null);
+        }}
+        onSave={handleSaveCourse}
+        initialCourse={selectedCourseForEdit}
+        facultyList={facultyList}
+        currentProfile={currentProfile}
       />
 
       {/* Embedded AI Department Helpdesk & Summarizer Widget */}

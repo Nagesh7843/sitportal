@@ -39,11 +39,12 @@ export interface StudentRecord {
 }
 
 export interface CourseItem {
+  id?: string | number;
   code: string;
   title: string;
   semester: number;
   credits: number;
-  type: 'Core' | 'Elective' | 'Lab';
+  type: 'Core' | 'Elective' | 'Lab' | 'Audit' | string;
   instructor: string;
   description: string;
 }

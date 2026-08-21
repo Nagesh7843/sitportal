@@ -55,4 +55,10 @@ public class CourseController {
         courseRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteAllCourses() {
+        courseRepository.deleteAll();
+        return ResponseEntity.noContent().build();
+    }
 }

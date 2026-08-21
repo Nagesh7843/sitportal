@@ -347,6 +347,14 @@ export const apiService = {
     if (!response.ok) throw new Error('Failed to delete course');
   },
 
+  async deleteAllCourses(): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/courses`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete all courses');
+  },
+
   // Research & Lab Endpoints
   async fetchLaboratories(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/laboratories`, { headers: getAuthHeaders() });

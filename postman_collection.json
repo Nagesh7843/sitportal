@@ -850,6 +850,24 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Delete All Courses (Clear Curriculum)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/courses",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "courses"]
+						},
+						"description": "Deletes all courses from the database to start with a fresh curriculum."
+					},
+					"response": []
 				}
 			]
 		},
