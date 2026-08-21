@@ -43,6 +43,9 @@ public class EmailLogEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(columnDefinition = "TEXT")
+    private String attachments;
+
     @Column(name = "sent_at", insertable = false, updatable = false)
     private LocalDateTime sentAt;
 }

@@ -226,17 +226,40 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
 
             {selectedNotice.attachments && selectedNotice.attachments.length > 0 && (
               <div className="mb-4">
-                <h4 className="text-[12px] font-bold text-[#454652] uppercase mb-2">Attachments:</h4>
+                <h4 className="text-[12px] font-bold text-[#454652] uppercase mb-2 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-[#000666]">attach_file</span>
+                  Official Attached Documents ({selectedNotice.attachments.length}):
+                </h4>
                 <div className="space-y-2">
-                  {selectedNotice.attachments.map((att) => (
-                    <div key={att.id} className="p-3 bg-[#e6f6ff] rounded-xl border border-[#c6c5d4] flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[13px] font-bold text-[#071e27]">
-                        <span className="material-symbols-outlined text-[#000666]">picture_as_pdf</span>
-                        <span>{att.title}</span>
+                  {selectedNotice.attachments.map((att, idx) => (
+                    <div key={att.id || idx} className="p-3 bg-[#e6f6ff] rounded-xl border border-[#c6c5d4] flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center gap-2 text-[13px] font-bold text-[#071e27] min-w-0">
+                        <span className="material-symbols-outlined text-[#000666] text-[20px] shrink-0">
+                          {att.title.endsWith('.pdf') ? 'picture_as_pdf' : 'description'}
+                        </span>
+                        <div className="truncate">
+                          <p className="truncate text-[12px] font-bold text-[#071e27]">{att.title}</p>
+                          {att.fileSize && <p className="text-[10px] text-[#454652] font-mono">{att.fileSize}</p>}
+                        </div>
                       </div>
-                      <button className="text-[#000666] font-bold text-[12px] hover:underline flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          if (att.downloadUrl) {
+                            window.open(att.downloadUrl, '_blank');
+                          } else {
+                            const blob = new Blob([`Official Attachment for SIT CSE Notice: ${selectedNotice.title}\nDocument: ${att.title}\nDate: ${selectedNotice.publishedAt}`], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = att.title;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }
+                        }}
+                        className="text-[#000666] font-bold text-[12px] hover:underline flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-[#c6c5d4] shadow-2xs shrink-0"
+                      >
                         <span>Download</span>
-                        <span className="material-symbols-outlined text-[16px]">download</span>
+                        <span className="material-symbols-outlined text-[15px]">download</span>
                       </button>
                     </div>
                   ))}

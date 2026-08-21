@@ -30,6 +30,7 @@ export interface EmailLog {
   openRate?: string;
   content?: string;
   recipientEmails?: string;
+  attachments?: string | string[];
 }
 
 export interface DepartmentEvent {

@@ -1119,7 +1119,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"subject\": \"Urgent: End Semester Project Submission Deadline\",\n  \"recipientGroup\": \"TE CSE Students\",\n  \"recipientCount\": 180,\n  \"priority\": \"URGENT\",\n  \"content\": \"All TE CSE students must submit final project documentation on the department portal by Friday 5:00 PM.\",\n  \"targetAudience\": {\"years\": [\"TE\"], \"divisions\": [\"Div A\", \"Div B\"]}\n}"
+							"raw": "{\n  \"subject\": \"Urgent: End Semester Project Submission Deadline\",\n  \"targetRole\": \"STUDENT\",\n  \"priority\": \"URGENT\",\n  \"content\": \"All TE CSE students must submit final project documentation on the department portal by Friday 5:00 PM.\",\n  \"attachments\": [\"Project_Guidelines_2024.pdf\", \"Submission_Format.docx\"],\n  \"filters\": {\n    \"studentEmails\": [\"aarav.patel@sitcoe.org.in\"],\n    \"academicYears\": [\"TE\"],\n    \"divisions\": [\"Div A\"]\n  }\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/email/broadcast",

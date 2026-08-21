@@ -114,6 +114,22 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
     }
   };
 
+  const filePickerRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: { name: string; size: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const sizeStr = file.size > 1024 * 1024 
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+      newItems.push({ name: file.name, size: sizeStr });
+    }
+    setAttachments((prev) => [...prev, ...newItems]);
+    if (filePickerRef.current) filePickerRef.current.value = '';
+  };
+
   const handleRemoveAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
@@ -186,6 +202,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               subject: subject,
               content: message,
               priority: priority,
+              attachments: attachments.map(a => a.name),
               scheduledAt: scheduleForLater ? scheduledTime : null,
               filters: {
                 studentEmails: targetRole === 'STUDENT' && studentTargetMode === 'INDIVIDUAL' ? selectedStudentEmails : [],
@@ -201,6 +218,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
             setSendProgress(0);
             setSubject('');
             setMessage('');
+            setAttachments([]);
             alert(`Email dispatched successfully to ${count} recipient(s)!`);
           }, 300);
           return 100;
@@ -800,20 +818,46 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
 
           {/* Attached Documents */}
           <div>
-            <label className="block text-[12px] font-bold text-[#454652] uppercase tracking-wider mb-2">
-              Attached Documents ({attachments.length})
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-[12px] font-bold text-[#454652] uppercase tracking-wider">
+                Attached Documents ({attachments.length})
+              </label>
+              {attachments.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAttachments([])}
+                  className="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-0.5"
+                >
+                  <span className="material-symbols-outlined text-[14px]">delete</span>
+                  Clear All Files
+                </button>
+              )}
+            </div>
+
+            <input
+              type="file"
+              ref={filePickerRef}
+              multiple
+              onChange={(e) => handleFilesSelected(e.target.files)}
+              className="hidden"
+            />
+
             <div className="flex flex-wrap gap-2.5 items-center">
               {attachments.map((att, idx) => (
                 <div
                   key={idx}
-                  className="bg-[#e6f6ff] text-[#000666] px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-[#c6c5d4] flex items-center gap-2"
+                  className="bg-[#e6f6ff] text-[#000666] px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#000666]/30 flex items-center gap-2 shadow-2xs"
                 >
                   <span className="material-symbols-outlined text-[16px] text-[#2b5bb5]">attach_file</span>
-                  <span>{att.name} ({att.size})</span>
+                  <span>{att.name}</span>
+                  <span className="text-[10px] text-[#454652] font-mono bg-white px-1.5 py-0.5 rounded">
+                    {att.size}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => handleRemoveAttachment(idx)}
-                    className="text-[#767683] hover:text-[#ba1a1a]"
+                    className="text-[#767683] hover:text-[#ba1a1a] p-0.5 rounded transition-colors"
+                    title="Remove attachment"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
@@ -822,11 +866,20 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
 
               <button
                 type="button"
-                onClick={() => setShowAttachModal(true)}
-                className="px-3 py-1.5 rounded-lg border border-dashed border-[#000666] text-[#000666] text-[12px] font-bold hover:bg-[#e6f6ff] transition-colors flex items-center gap-1"
+                onClick={() => filePickerRef.current?.click()}
+                className="px-3.5 py-2 rounded-xl border-2 border-dashed border-[#000666] text-[#000666] text-[12px] font-bold hover:bg-[#e6f6ff] transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>Attach Files</span>
+                <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                <span>Select / Upload Files</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAttachModal(true)}
+                className="px-3 py-2 rounded-xl bg-white border border-[#c6c5d4] text-[#454652] text-[11px] font-semibold hover:bg-slate-50 transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                <span>Add by Name</span>
               </button>
             </div>
           </div>
@@ -1057,6 +1110,28 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                 <div className="pt-2 border-t border-[#c6c5d4] mt-2">
                   <p className="font-bold mb-1">Raw Recipient Emails:</p>
                   <p className="text-[11px] font-mono break-words">{selectedLog.recipientEmails}</p>
+                </div>
+              )}
+              {selectedLog.attachments && (
+                <div className="pt-2 border-t border-[#c6c5d4] mt-2">
+                  <p className="font-bold mb-1 flex items-center gap-1 text-[#000666]">
+                    <span className="material-symbols-outlined text-[15px]">attach_file</span>
+                    Attached Documents:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {(Array.isArray(selectedLog.attachments) 
+                      ? selectedLog.attachments 
+                      : String(selectedLog.attachments).split(', ')
+                    ).map((att: any, i: number) => (
+                      <span
+                        key={i}
+                        className="bg-white border border-[#c6c5d4] text-[#000666] text-[11px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">description</span>
+                        {typeof att === 'string' ? att : att?.name || att?.title || 'Document'}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

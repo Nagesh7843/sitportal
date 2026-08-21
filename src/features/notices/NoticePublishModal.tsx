@@ -48,22 +48,48 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
     );
   };
 
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: UploadAsset[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const sizeStr = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+      newItems.push({
+        id: `att-${Date.now()}-${i}`,
+        title: file.name,
+        category: 'Notice',
+        uploadedAt: new Date().toISOString(),
+        status: 'Published',
+        fileSize: sizeStr
+      });
+    }
+    setAttachmentsList((prev) => [...prev, ...newItems]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleAddAttachment = () => {
     if (attachmentName.trim()) {
       const name = attachmentName.includes('.') ? attachmentName : `${attachmentName}.pdf`;
       const newAtt: UploadAsset = {
+        id: `att-${Date.now()}`,
         title: name,
         category: 'Notice',
         uploadedAt: new Date().toISOString(),
         status: 'Published',
         fileSize: '2.4 MB'
       };
-      setAttachmentsList([...attachmentsList, newAtt]);
+      setAttachmentsList((prev) => [...prev, newAtt]);
       setAttachmentName('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleRemoveAttachment = (idx: number) => {
+    setAttachmentsList((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const calculateExpiresAt = (): string | undefined => {
@@ -447,37 +473,60 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
 
           {/* File Attachments Uploader */}
           <div>
-            <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Notice Attachments</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    setAttachmentName(e.target.files[0].name);
-                  }
-                }}
-                className="flex-1 border border-[#c6c5d4] rounded-xl px-3 py-1.5 text-[12px] outline-none file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-[#e6f6ff] file:text-[#000666] hover:file:bg-[#d9e2ff] cursor-pointer"
-              />
-              <button
-                type="button"
-                onClick={handleAddAttachment}
-                className="px-4 py-2 bg-[#e6f6ff] text-[#000666] font-bold text-[12px] rounded-xl border border-[#c6c5d4] hover:bg-[#d9e2ff] transition-colors"
-              >
-                Upload
-              </button>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-[12px] font-bold text-[#454652] uppercase">
+                Notice Attachments ({attachmentsList.length})
+              </label>
+              {attachmentsList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAttachmentsList([])}
+                  className="text-[11px] font-bold text-red-600 hover:underline"
+                >
+                  Clear All
+                </button>
+              )}
             </div>
 
-            {attachmentsList.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {attachmentsList.map((att, idx) => (
-                  <span key={idx} className="bg-[#d9e2ff] text-[#00429c] text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[14px]">attach_file</span>
-                    {att.title}
-                  </span>
-                ))}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  multiple
+                  onChange={(e) => handleFilesSelected(e.target.files)}
+                  className="flex-1 border border-[#c6c5d4] bg-[#f3faff] rounded-xl px-3 py-1.5 text-[12px] outline-none file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-[#000666] file:text-white hover:file:bg-[#000666]/90 cursor-pointer"
+                />
               </div>
-            )}
+
+              {/* Attached Files List */}
+              {attachmentsList.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {attachmentsList.map((att, idx) => (
+                    <div
+                      key={att.id || idx}
+                      className="bg-[#d9e2ff] text-[#00429c] text-[11px] font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 border border-[#000666]/20 shadow-2xs"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">description</span>
+                      <span className="truncate max-w-[200px]">{att.title}</span>
+                      {att.fileSize && (
+                        <span className="text-[10px] bg-white/70 px-1 rounded text-slate-700 font-mono">
+                          {att.fileSize}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(idx)}
+                        className="text-[#00429c] hover:text-red-600 p-0.5 rounded transition-colors"
+                        title="Remove attachment"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Publishing Mode */}

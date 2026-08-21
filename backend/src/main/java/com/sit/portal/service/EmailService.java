@@ -80,6 +80,9 @@ public class EmailService {
         log.setRecipientCount(targetEmails.size());
         log.setOpenRate("0.0%");
         log.setRecipientEmails(String.join(", ", targetEmails));
+        if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
+            log.setAttachments(String.join(", ", request.getAttachments()));
+        }
 
         if (isScheduled) {
             log.setStatus("SCHEDULED");

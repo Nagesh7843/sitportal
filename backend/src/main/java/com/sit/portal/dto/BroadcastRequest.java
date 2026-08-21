@@ -12,6 +12,7 @@ public class BroadcastRequest {
     private String content;
     private String priority;
     private String scheduledAt;
+    private List<String> attachments;
     private Filters filters;
 
     @Data

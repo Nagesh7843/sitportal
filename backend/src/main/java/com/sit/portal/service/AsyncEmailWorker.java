@@ -54,7 +54,11 @@ public class AsyncEmailWorker {
                 message.setTo(fromAddr);
                 message.setBcc(batch.toArray(new String[0]));
                 message.setSubject(request.getSubject());
-                message.setText(request.getContent());
+                String emailBody = request.getContent();
+                if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
+                    emailBody += "\n\n---\n📎 Attached Documents:\n" + String.join("\n", request.getAttachments().stream().map(a -> "• " + a).toList());
+                }
+                message.setText(emailBody);
                 
                 javaMailSender.send(message);
                 totalSent += batch.size();
