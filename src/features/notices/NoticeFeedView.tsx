@@ -152,18 +152,6 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
         <div className="space-y-2 z-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-cyan-200 font-semibold text-xs border border-white/20">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              Official Institutional Notice Board
-            </div>
-            {scraperStatus && scraperStatus.lastSyncTimestamp !== 'Never' && (
-              <span className="text-[11px] text-cyan-200/80 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10">
-                Last Sync: {scraperStatus.lastSyncTimestamp}
-              </span>
-            )}
-          </div>
-
           <h1 className="text-[24px] sm:text-[28px] font-black text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[32px] text-[#759efd]">campaign</span>
             SIT CSE Central Notice Board
