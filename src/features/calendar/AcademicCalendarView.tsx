@@ -436,8 +436,11 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
                 const found = calendars.find((c) => c.id === Number(e.target.value));
                 if (found) setSelectedCalendar(found);
               }}
-              className="px-3 py-1.5 border border-[#c6c5d4] rounded-xl text-xs font-bold text-[#071e27] focus:ring-2 focus:ring-[#000666] focus:outline-none bg-[#f8fafc] shadow-2xs cursor-pointer"
+              className="px-3 py-1.5 border border-[#c6c5d4] rounded-xl text-xs font-bold text-[#071e27] focus:ring-2 focus:ring-[#000666] focus:outline-none bg-[#f8fafc] shadow-2xs cursor-pointer min-w-[240px] sm:min-w-[300px]"
             >
+              {calendars.length === 0 && (
+                <option value="">Academic Calendar 2026-2027 (Active Term)</option>
+              )}
               {calendars.map((cal) => (
                 <option key={cal.id} value={cal.id}>
                   {cal.title} {cal.isActive ? '★ (ACTIVE)' : ''}
