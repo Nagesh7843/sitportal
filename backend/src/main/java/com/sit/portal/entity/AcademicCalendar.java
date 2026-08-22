@@ -30,6 +30,9 @@ public class AcademicCalendar {
     @Column(name = "semester_type", nullable = false)
     private String semesterType; // EVEN, ODD
 
+    @Column(name = "semester")
+    private String semester; // EVEN, ODD, Even Semester
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
@@ -49,9 +52,16 @@ public class AcademicCalendar {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PrePersist
+    @PreUpdate
     protected void onCreate() {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
+        }
+        if (this.semester == null || this.semester.isBlank()) {
+            this.semester = (this.semesterType != null && !this.semesterType.isBlank()) ? this.semesterType : "EVEN";
+        }
+        if (this.semesterType == null || this.semesterType.isBlank()) {
+            this.semesterType = (this.semester != null && !this.semester.isBlank()) ? this.semester : "EVEN";
         }
     }
 }

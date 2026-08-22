@@ -99,6 +99,7 @@ public class AcademicCalendarController {
                     .title(title)
                     .academicYear(academicYear)
                     .semesterType(semesterType)
+                    .semester(semesterType)
                     .startDate(extracted.get(0).getStartDate())
                     .endDate(extracted.get(extracted.size() - 1).getStartDate().plusDays(15))
                     .isActive(true)

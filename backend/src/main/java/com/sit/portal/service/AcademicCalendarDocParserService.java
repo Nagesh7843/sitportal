@@ -61,6 +61,7 @@ public class AcademicCalendarDocParserService {
                 .title(resolvedTitle)
                 .academicYear(resolvedYear)
                 .semesterType(resolvedSem)
+                .semester(resolvedSem)
                 .startDate(semStart)
                 .endDate(semEnd)
                 .isActive(true)
