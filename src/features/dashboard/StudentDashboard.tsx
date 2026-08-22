@@ -140,39 +140,55 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="max-h-[420px] overflow-y-auto custom-scrollbar space-y-2.5 p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner">
             {notices.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-xs font-semibold">
                 No notices published yet.
               </div>
             ) : (
-              notices.slice(0, 5).map((notice) => (
+              notices.map((notice) => (
                 <div
                   key={notice.id}
-                  className="bg-white rounded-xl border border-[#d6d9e0] p-4.5 hover:shadow-xs transition-shadow"
+                  className="bg-white rounded-lg border border-[#c6c5d4] p-3 shadow-2xs hover:shadow-xs transition-all space-y-1.5"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase tracking-wider ${
-                          notice.priority === 'URGENT' ? 'bg-red-100 text-red-700' :
-                          notice.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-700'
-                        }`}>
-                          {notice.category || 'Academic'}
-                        </span>
-                        <span className="text-[11px] text-gray-500 font-medium">{notice.publishedAt}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 w-full">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-1.5 py-0.1 text-[8px] font-bold rounded uppercase tracking-wider ${
+                            notice.priority === 'URGENT' ? 'bg-red-100 text-red-700 border border-red-200' :
+                            notice.priority === 'HIGH' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}>
+                            {notice.category || 'Academic'}
+                          </span>
+                          {!notice.readBy?.includes(currentProfile?.email || '') && (
+                            <span className="bg-[#ba1a1a] text-white font-bold text-[8px] uppercase px-1 py-0.1 rounded">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-[#767683] font-semibold">{notice.publishedAt}</span>
                       </div>
-                      <h3 className="font-bold text-gray-900 text-sm hover:text-[#00337c] transition-colors">
+                      <h3
+                        onClick={() => onNavigate('notices')}
+                        className="font-bold text-[#071e27] text-[12px] sm:text-[13px] hover:text-[#000666] transition-colors leading-snug cursor-pointer"
+                      >
                         {notice.title}
                       </h3>
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-[10px] text-[#454652] leading-normal line-clamp-1">
                         {notice.content}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-                    <span>Issued by: {notice.authorName} ({notice.authorRole})</span>
-                    <span className="font-semibold text-[#00337c]">Official Communication</span>
+                  <div className="pt-1 border-t border-[#c6c5d4]/40 flex items-center justify-between text-[9px] text-[#454652]">
+                    <span>Issued by: <strong>{notice.authorName}</strong> ({notice.authorRole})</span>
+                    <button
+                      onClick={() => onNavigate('notices')}
+                      className="font-bold text-[#000666] hover:underline flex items-center gap-0.5"
+                    >
+                      <span>View Notice</span>
+                      <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+                    </button>
                   </div>
                 </div>
               ))
