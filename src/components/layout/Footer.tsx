@@ -13,8 +13,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-4">
           <img src={sitLogo} alt="Sharad Institute of Technology" className="h-12 w-auto object-contain shrink-0" />
           <div>
-            <span className="font-bold text-[18px] text-[#f3faff]">CSE Department Portal</span>
-            <p className="text-[11px] text-[#cfe6f2]/80">Computer Science & Engineering Department</p>
+            <span className="font-bold text-[18px] text-[#f3faff]">SITCOE Institutional Portal</span>
+            <p className="text-[11px] text-[#cfe6f2]/80">Sharad Institute of Technology College of Engineering</p>
           </div>
 
         </div>

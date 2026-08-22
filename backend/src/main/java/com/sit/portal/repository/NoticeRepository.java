@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
     
-    @Query("SELECT n FROM Notice n ORDER BY CASE WHEN n.priority = 'URGENT' THEN 1 WHEN n.priority = 'HIGH' THEN 2 WHEN n.priority = 'NORMAL' THEN 3 ELSE 4 END ASC, n.id DESC")
+    @Query("SELECT n FROM Notice n ORDER BY n.id DESC")
     List<Notice> findAllPrioritizedAndLatest();
 
     List<Notice> findByOrderByCreatedAtDesc();

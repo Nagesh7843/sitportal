@@ -1531,6 +1531,691 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "👨‍👩‍👧 12. Parent Portal Module",
+			"item": [
+				{
+					"name": "Get Authenticated Parent Profile & Child Info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "me"]
+						},
+						"description": "Fetch parent profile and linked child student academic metrics (GPA, attendance, division, batch)."
+					},
+					"response": []
+				},
+				{
+					"name": "Link Student to Parent Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentRollNo\": \"21CS001\",\n  \"relationship\": \"Father\",\n  \"alternatePhone\": \"+91 9876543210\",\n  \"occupation\": \"Software Engineer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/link-student",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "link-student"]
+						},
+						"description": "Link student roll number to logged in parent profile."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Category Notices for Parent Feed",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/notices",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "notices"]
+						},
+						"description": "Retrieve all student category notices for parent dashboard feed."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Registered Parents (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents"]
+						},
+						"description": "List all parent records in department."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "❓ 13. Central Question System Module",
+			"item": [
+				{
+					"name": "Get All Public Questions (With Filters)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions?category=Academics&status=OPEN",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"],
+							"query": [
+								{ "key": "category", "value": "Academics" },
+								{ "key": "status", "value": "OPEN" }
+							]
+						},
+						"description": "Fetch public central Q&A list with answers."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Question Details & Answers",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1"]
+						},
+						"description": "Get question by ID with views count increment."
+					},
+					"response": []
+				},
+				{
+					"name": "Post Question (Student / Parent)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"What are the eligibility requirements for Capstone Project Phase 2?\",\n  \"content\": \"Respected Faculty, Could you please clarify if CIE 1 minimum scores are mandatory before project approval?\",\n  \"category\": \"Academics\",\n  \"authorName\": \"Rohit Sharma\",\n  \"authorRole\": \"student\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						},
+						"description": "Create a public question on central board."
+					},
+					"response": []
+				},
+				{
+					"name": "Post Official Response (Faculty / HOD)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Dear Students, Yes, students must secure at least 40% aggregate in CIE-1 and complete the project synopsis submission by March 25th.\",\n  \"responderName\": \"Dr. S. K. Patil\",\n  \"responderRole\": \"faculty\",\n  \"responderTitle\": \"Project Committee Coordinator\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/answers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "answers"]
+						},
+						"description": "Submit verified official answer to a public question."
+					},
+					"response": []
+				},
+				{
+					"name": "Upvote / Helpful Question",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/upvote",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "upvote"]
+						},
+						"description": "Increment upvote counter on a question."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Question Status (Mark Resolved)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"RESOLVED\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "status"]
+						},
+						"description": "Change question status to RESOLVED or OPEN."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📅 14. Academic Calendar Module",
+			"item": [
+				{
+					"name": "Get All Academic Calendars",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars"]
+						},
+						"description": "Fetch all semester-wise academic calendars."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Semester Calendar & Events",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "active"]
+						},
+						"description": "Get currently active semester calendar driving automated scheduling."
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Semester Calendar (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Odd Semester Academic Calendar 2026-27\",\n  \"academicYear\": \"2026-2027\",\n  \"semesterType\": \"ODD\",\n  \"startDate\": \"2026-08-01\",\n  \"endDate\": \"2026-12-31\",\n  \"isActive\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars"]
+						},
+						"description": "Create a new semester calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Set Calendar as Active (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/1/activate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "1", "activate"]
+						},
+						"description": "Activate target calendar as the operational semester calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Event to Calendar with Notice Plan",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Continuous Internal Evaluation (CIE - 2)\",\n  \"eventType\": \"EXAM\",\n  \"startDate\": \"2026-04-20\",\n  \"endDate\": \"2026-04-24\",\n  \"description\": \"Second internal assessment examination covering Units 3 and 4.\",\n  \"targetAudience\": \"ALL\",\n  \"location\": \"Department Examination Halls\",\n  \"isNoticePlanned\": true,\n  \"daysBeforeNotice\": 7\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/1/events",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "1", "events"]
+						},
+						"description": "Add an event with notice plan to the calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Calendar Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/events/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "events", "1"]
+						},
+						"description": "Delete calendar event."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "⏰ 15. Automatic Notice Scheduler Module",
+			"item": [
+				{
+					"name": "Trigger Manual Notice Scheduler Scan",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/run-now",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "run-now"]
+						},
+						"description": "Immediately scans active calendar events and auto-generates notices for upcoming events whose notice plan trigger threshold is reached."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notice Scheduler Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "status"]
+						},
+						"description": "Get current status of active semester calendar, pending notice plans, and generated notices."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📰 16. SIT Portal News & Campus Events Module",
+			"item": [
+				{
+					"name": "Get All SIT Portal News & Campus Events",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/news-events",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "news-events"]
+						},
+						"description": "Fetches curated & live scraped campus news, hackathons, placement drives, symposiums, and event photo stories from the SIT Portal."
+					},
+					"response": []
+				},
+				{
+					"name": "Publish New Campus Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"National Level AI & Quantum Computing Hackathon 2026\",\n  \"category\": \"HACKATHON & INNOVATION\",\n  \"date\": \"August 28, 2026\",\n  \"description\": \"48-hour continuous national hackathon with industry mentoring from Google & Microsoft architects.\",\n  \"imageUrl\": \"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80\",\n  \"sourceUrl\": \"https://www.sitcoe.ac.in/ptbtypes_of_news_events/event/\",\n  \"location\": \"CSE High Performance Computing Lab\",\n  \"organizer\": \"Department of CSE & AI Research Group\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/news-events",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "news-events"]
+						},
+						"description": "Admin/Faculty publishes a new campus event, saves to PostgreSQL, and broadcasts Chrome desktop notifications to all users."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Campus Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/news-events/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "news-events", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trigger 3-Hour News & Events Scraper Check",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/news-events/check-now",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "news-events", "check-now"]
+						},
+						"description": "Scrapes sitcoe.ac.in/ptbtypes_of_news_events/event/ and news/ for newly published items and dispatches Chrome push notifications to all users."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "💼 17. Training & Placement (T&P) Hub Module",
+			"item": [
+				{
+					"name": "Get Placement Summary (Stats, Recruiters & Drives)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/summary",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "summary"]
+						},
+						"description": "Fetches live placement metrics, active recruiting companies, and upcoming drives."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Placement Key Metrics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"highestPackage\": \"₹21.0 LPA\",\n  \"averagePackage\": \"₹6.20 LPA\",\n  \"placementRatio\": \"92.4%\",\n  \"totalOffers\": \"140+\",\n  \"batchYear\": \"2025-2026\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "stats"]
+						},
+						"description": "Admin/HOD updates official placement packages and statistics in database."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Recruiting Partner",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"TCS Digital\",\n  \"packageBand\": \"₹7.5 - 11.5 LPA\",\n  \"roleTag\": \"Product & Digital Dev\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recruiting Partner",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Schedule Placement Drive",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"companyName\": \"Persistent Systems Ltd.\",\n  \"role\": \"Software Engineer\",\n  \"packageLpa\": \"₹8.5 LPA\",\n  \"driveDate\": \"March 28, 2026\",\n  \"eligibility\": \"BE CSE • CGPA ≥ 7.0\",\n  \"location\": \"SIT Placement Auditorium\",\n  \"applyDeadline\": \"March 24, 2026\",\n  \"status\": \"UPCOMING\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/drives",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "drives"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Placement Drive",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/drives/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "drives", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset All Placement Data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/reset",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "reset"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📅 18. Academic Calendar & Notice Scheduler Module",
+			"item": [
+				{
+					"name": "Upload and Parse Academic Calendar (DOCX/PDF)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "file", "type": "file", "src": ""},
+								{"key": "title", "value": "Academic Calendar 2025-2026 (Even Semester)", "type": "text"},
+								{"key": "academicYear", "value": "2025-2026", "type": "text"},
+								{"key": "semesterType", "value": "EVEN", "type": "text"}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/upload-doc",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "upload-doc"]
+						},
+						"description": "Uploads official Word DOCX or PDF calendar, parses all milestones with POI/PDFBox, saves to PostgreSQL, and connects to the automated notice scheduler."
+					},
+					"response": []
+				},
+				{
+					"name": "Parse Academic Calendar Text",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Academic Calendar 2025-2026 (Even Semester)\",\n  \"academicYear\": \"2025-2026\",\n  \"semesterType\": \"EVEN\",\n  \"text\": \"1 | 12/01/2026 | Commencement of Classes\\n2 | 16/02/2026 | Unit Test - I\\n3 | 23/03/2026 | In-Semester Exam\\n4 | 28/04/2026 | University Practical Exams\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/parse-text",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "parse-text"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Academic Calendar",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Run Notice Scheduler Job Now",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/run-now",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "run-now"]
+						},
+						"description": "Executes the notice scheduler on active academic calendar events, publishing notices and broadcasting Chrome desktop push notifications for milestone events."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notice Scheduler Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "status"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 19. System Analytics & Track Records Module",
+			"item": [
+				{
+					"name": "Get Full System Overview Analytics (Real PostgreSQL Data)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/analytics/system-overview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analytics", "system-overview"]
+						},
+						"description": "Calculates real-time delivery audits, notice views, cohort breakdown, and activity audit logs directly from PostgreSQL."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Top Activity Audit Logs",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/activities",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "activities"]
+						},
+						"description": "Fetches recent live audit track records of notices generated, drives added, and scraper synchronizations."
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

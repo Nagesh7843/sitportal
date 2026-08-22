@@ -172,7 +172,11 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
           </div>
 
           <div className="space-y-3">
-            {notices.slice(0, 4).map((notice) => (
+            {[...notices].sort((a, b) => {
+              const idA = typeof a.id === 'number' ? a.id : parseInt(String(a.id || 0), 10) || 0;
+              const idB = typeof b.id === 'number' ? b.id : parseInt(String(b.id || 0), 10) || 0;
+              return idB - idA;
+            }).slice(0, 4).map((notice) => (
               <div key={notice.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${

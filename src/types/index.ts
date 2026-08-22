@@ -5,3 +5,6 @@ export * from './research';
 export * from './communication';
 export * from './notice';
 export * from './dashboard';
+export * from './qa';
+export * from './calendar';
+export * from './news';

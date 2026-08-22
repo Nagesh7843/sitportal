@@ -105,16 +105,44 @@ public class CollegeNoticeScraperService {
     }
 
     /**
-     * Scrapes official college website and automatically creates/syncs new notices in PostgreSQL database.
+     * Scrapes official college website, purges old notices (>30 days), and inserts ONLY newly discovered circulars.
+     * Prevents any re-extraction or duplicate insertion of existing notices in the database.
      */
     public Map<String, Object> syncCollegeNoticesToDatabase() {
         this.lastSyncStatus = "SYNCING";
+
+        // 1. Automatically purge notices older than 30 days to keep the database fresh and uncluttered
+        int purgedOldCount = 0;
+        try {
+            LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30);
+            purgedOldCount = noticeRepository.deleteNoticesOlderThan(cutoffDate);
+            if (purgedOldCount > 0) {
+                System.out.println("Auto-Purge: Cleaned up " + purgedOldCount + " outdated notices older than 30 days.");
+            }
+        } catch (Exception e) {
+            System.err.println("Notice auto-purge warning: " + e.getMessage());
+        }
+
+        // 2. Fetch fresh notices from SITCOE portal
         List<ScrapedNoticeDto> scraped = previewScrapedNotices();
 
+        // 3. Build comprehensive existing fingerprint index from database (normalized titles & PDF URLs)
         List<Notice> existingNotices = noticeRepository.findAll();
-        Set<String> existingTitles = new HashSet<>();
+        Set<String> existingTitleFingerprints = new HashSet<>();
+        Set<String> existingPdfUrls = new HashSet<>();
+
         for (Notice n : existingNotices) {
-            if (n.getTitle() != null) existingTitles.add(n.getTitle().trim().toLowerCase());
+            if (n.getTitle() != null) {
+                existingTitleFingerprints.add(normalizeFingerprint(n.getTitle()));
+            }
+            if (n.getAttachments() != null) {
+                for (Map<String, String> att : n.getAttachments()) {
+                    String url = att.get("downloadUrl");
+                    if (url != null && !url.trim().isEmpty()) {
+                        existingPdfUrls.add(url.trim().toLowerCase());
+                    }
+                }
+            }
         }
 
         int newCount = 0;
@@ -123,11 +151,19 @@ public class CollegeNoticeScraperService {
         String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"));
 
         for (ScrapedNoticeDto item : scraped) {
-            if (existingTitles.contains(item.getTitle().toLowerCase())) {
+            String itemFingerprint = normalizeFingerprint(item.getTitle());
+            String itemPdf = (item.getPdfUrl() != null) ? item.getPdfUrl().trim().toLowerCase() : "";
+
+            // Check if notice already exists in database by title fingerprint OR PDF URL
+            boolean isDuplicate = existingTitleFingerprints.contains(itemFingerprint) ||
+                    (!itemPdf.isEmpty() && existingPdfUrls.contains(itemPdf));
+
+            if (isDuplicate) {
                 existedCount++;
-                continue;
+                continue; // DO NOT sync old/existing notice that is already in our DB
             }
 
+            // Genuinely NEW notice found -> Insert into PostgreSQL
             Map<String, String> attachmentMap = new HashMap<>();
             attachmentMap.put("title", item.getTitle() + ".pdf");
             attachmentMap.put("category", "Notice");
@@ -157,16 +193,16 @@ public class CollegeNoticeScraperService {
 
             Notice saved = noticeRepository.save(notice);
             newlySaved.add(saved);
-            existingTitles.add(item.getTitle().toLowerCase());
+            existingTitleFingerprints.add(itemFingerprint);
+            if (!itemPdf.isEmpty()) existingPdfUrls.add(itemPdf);
             newCount++;
         }
 
-        // Broadcast Push Notifications and log activity for newly scraped notices
+        // 4. Broadcast Push Notifications ONLY for genuinely newly added notices
         if (!newlySaved.isEmpty()) {
-            System.out.println("========== SCRAPED NOTICES PUSH NOTIFICATION BROADCAST ==========");
-            System.out.println("Total New Official Notices Scraped: " + newlySaved.size());
+            System.out.println("========== NEW SITCOE NOTICES DISPATCHED ==========");
+            System.out.println("Total Fresh Notices Added to DB: " + newlySaved.size());
 
-            // 1. Send push notifications for the top/most recent scraped notices
             int pushCount = Math.min(newlySaved.size(), 3);
             for (int i = 0; i < pushCount; i++) {
                 Notice n = newlySaved.get(i);
@@ -174,18 +210,18 @@ public class CollegeNoticeScraperService {
                 String pushTitle = priorityPrefix + "🏛️ SITCOE Notice: " + n.getTitle();
                 String pushMessage = "[" + n.getCategory() + " Circular] Official notification published on SIT Portal. Click to view.";
 
-                // Web Push Dispatch
+                // Web Push Notification
                 try {
                     pushNotificationService.sendPushNotificationToAll(pushTitle, pushMessage);
                 } catch (Exception e) {
                     System.err.println("Web Push error for notice '" + n.getTitle() + "': " + e.getMessage());
                 }
 
-                // Activity Log Record
+                // Activity Audit Log
                 try {
                     com.sit.portal.entity.ActivityLog log = com.sit.portal.entity.ActivityLog.builder()
-                            .title("Official Circular: " + n.getTitle())
-                            .subtitle("Auto-synced from sitcoe.ac.in (" + n.getCategory() + ")")
+                            .title("New Official Circular: " + n.getTitle())
+                            .subtitle("Auto-synced fresh notice from sitcoe.ac.in (" + n.getCategory() + ")")
                             .icon("URGENT".equalsIgnoreCase(n.getPriority()) ? "warning" : "campaign")
                             .type("notice")
                             .colorBg("URGENT".equalsIgnoreCase(n.getPriority()) ? "bg-rose-100" : "bg-[#d9e2ff]")
@@ -197,29 +233,7 @@ public class CollegeNoticeScraperService {
                     System.err.println("Activity log error: " + e.getMessage());
                 }
             }
-
-            // Summary notification if multiple notices were synchronized
-            if (newlySaved.size() > 3) {
-                try {
-                    String summaryTitle = "🏛️ SITCOE: " + newlySaved.size() + " New Official Notices Published";
-                    String summaryMsg = "Latest: " + newlySaved.get(0).getTitle() + " and " + (newlySaved.size() - 1) + " other circulars updated.";
-                    pushNotificationService.sendPushNotificationToAll(summaryTitle, summaryMsg);
-                } catch (Exception e) {
-                    System.err.println("Web Push summary error: " + e.getMessage());
-                }
-            }
-
-            // 2. FCM Devices Broadcast Log
-            try {
-                var tokens = fcmTokenRepository.findAll();
-                System.out.println("Targeting " + tokens.size() + " registered FCM mobile/web devices with scraped notice alerts.");
-                for (var token : tokens) {
-                    System.out.println("-> FCM Push Broadcast to device: " + token.getToken() + " (User: " + token.getEmail() + ")");
-                }
-            } catch (Exception e) {
-                System.err.println("FCM token lookup error: " + e.getMessage());
-            }
-            System.out.println("==================================================================");
+            System.out.println("==================================================");
         }
 
         this.lastSyncTimestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -230,11 +244,19 @@ public class CollegeNoticeScraperService {
         result.put("status", "SUCCESS");
         result.put("syncedAt", this.lastSyncTimestamp);
         result.put("totalScraped", scraped.size());
+        result.put("purgedOldCount", purgedOldCount);
         result.put("newlyAdded", newCount);
-        result.put("alreadyExisted", existedCount);
-        result.put("notices", newlySaved);
+        result.put("alreadyExistedSkipped", existedCount);
+        result.put("message", newCount > 0
+                ? "Synchronized " + newCount + " new notice(s). " + existedCount + " existing notice(s) skipped (no duplicates)."
+                : "No new notices found on SITCOE website. " + existedCount + " existing notice(s) already up to date in database.");
 
         return result;
+    }
+
+    private String normalizeFingerprint(String text) {
+        if (text == null) return "";
+        return text.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
     /**
@@ -242,10 +264,10 @@ public class CollegeNoticeScraperService {
      */
     @Scheduled(cron = "0 */30 * * * *")
     public void scheduledAutoSync() {
-        System.out.println("Executing automated scheduled college notice scraper...");
+        System.out.println("Executing automated scheduled college notice scraper with deduplication...");
         try {
             Map<String, Object> res = syncCollegeNoticesToDatabase();
-            System.out.println("Scheduled scraper finished: " + res);
+            System.out.println("Scheduled scraper finished: " + res.get("message"));
         } catch (Exception e) {
             System.err.println("Scheduled scraper error: " + e.getMessage());
         }

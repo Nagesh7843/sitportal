@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "sit-cse-portal-api-collection",
-		"name": "SIT CSE Department Portal - Complete REST API Collection",
-		"description": "Comprehensive Postman Collection for Siddaganga Institute of Technology (SITCOE) CSE Department Communication Portal REST API endpoints running on Spring Boot 3 & PostgreSQL sitportaldb.",
+		"name": "SITCOE Institutional Portal - Complete REST API Collection",
+		"description": "Comprehensive Postman Collection for Sharad Institute of Technology College of Engineering (SITCOE) Institutional Communication Portal REST API endpoints running on Spring Boot 3 & PostgreSQL sitportaldb.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -1527,6 +1527,368 @@
 							"path": ["api", "v1", "email", "contact-faculty"]
 						},
 						"description": "Transmits a direct student inquiry email to a faculty member with Reply-To set to the student's email."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👨‍👩‍👧 12. Parent Portal Module",
+			"item": [
+				{
+					"name": "Get Authenticated Parent Profile & Child Info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "me"]
+						},
+						"description": "Fetch parent profile and linked child student academic metrics (GPA, attendance, division, batch)."
+					},
+					"response": []
+				},
+				{
+					"name": "Link Student to Parent Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentRollNo\": \"21CS001\",\n  \"relationship\": \"Father\",\n  \"alternatePhone\": \"+91 9876543210\",\n  \"occupation\": \"Software Engineer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/link-student",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "link-student"]
+						},
+						"description": "Link student roll number to logged in parent profile."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Category Notices for Parent Feed",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents/notices",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents", "notices"]
+						},
+						"description": "Retrieve all student category notices for parent dashboard feed."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Registered Parents (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/parents",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parents"]
+						},
+						"description": "List all parent records in department."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "❓ 13. Central Question System Module",
+			"item": [
+				{
+					"name": "Get All Public Questions (With Filters)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions?category=Academics&status=OPEN",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"],
+							"query": [
+								{ "key": "category", "value": "Academics" },
+								{ "key": "status", "value": "OPEN" }
+							]
+						},
+						"description": "Fetch public central Q&A list with answers."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Question Details & Answers",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1"]
+						},
+						"description": "Get question by ID with views count increment."
+					},
+					"response": []
+				},
+				{
+					"name": "Post Question (Student / Parent)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"What are the eligibility requirements for Capstone Project Phase 2?\",\n  \"content\": \"Respected Faculty, Could you please clarify if CIE 1 minimum scores are mandatory before project approval?\",\n  \"category\": \"Academics\",\n  \"authorName\": \"Rohit Sharma\",\n  \"authorRole\": \"student\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						},
+						"description": "Create a public question on central board."
+					},
+					"response": []
+				},
+				{
+					"name": "Post Official Response (Faculty / HOD)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Dear Students, Yes, students must secure at least 40% aggregate in CIE-1 and complete the project synopsis submission by March 25th.\",\n  \"responderName\": \"Dr. S. K. Patil\",\n  \"responderRole\": \"faculty\",\n  \"responderTitle\": \"Project Committee Coordinator\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/answers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "answers"]
+						},
+						"description": "Submit verified official answer to a public question."
+					},
+					"response": []
+				},
+				{
+					"name": "Upvote / Helpful Question",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/upvote",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "upvote"]
+						},
+						"description": "Increment upvote counter on a question."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Question Status (Mark Resolved)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"RESOLVED\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "1", "status"]
+						},
+						"description": "Change question status to RESOLVED or OPEN."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📅 14. Academic Calendar Module",
+			"item": [
+				{
+					"name": "Get All Academic Calendars",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars"]
+						},
+						"description": "Fetch all semester-wise academic calendars."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Semester Calendar & Events",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "active"]
+						},
+						"description": "Get currently active semester calendar driving automated scheduling."
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Semester Calendar (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Odd Semester Academic Calendar 2026-27\",\n  \"academicYear\": \"2026-2027\",\n  \"semesterType\": \"ODD\",\n  \"startDate\": \"2026-08-01\",\n  \"endDate\": \"2026-12-31\",\n  \"isActive\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars"]
+						},
+						"description": "Create a new semester calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Set Calendar as Active (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/1/activate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "1", "activate"]
+						},
+						"description": "Activate target calendar as the operational semester calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Event to Calendar with Notice Plan",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Continuous Internal Evaluation (CIE - 2)\",\n  \"eventType\": \"EXAM\",\n  \"startDate\": \"2026-04-20\",\n  \"endDate\": \"2026-04-24\",\n  \"description\": \"Second internal assessment examination covering Units 3 and 4.\",\n  \"targetAudience\": \"ALL\",\n  \"location\": \"Department Examination Halls\",\n  \"isNoticePlanned\": true,\n  \"daysBeforeNotice\": 7\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/1/events",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "1", "events"]
+						},
+						"description": "Add an event with notice plan to the calendar."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Calendar Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/academic-calendars/events/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "academic-calendars", "events", "1"]
+						},
+						"description": "Delete calendar event."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "⏰ 15. Automatic Notice Scheduler Module",
+			"item": [
+				{
+					"name": "Trigger Manual Notice Scheduler Scan",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/run-now",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "run-now"]
+						},
+						"description": "Immediately scans active calendar events and auto-generates notices for upcoming events whose notice plan trigger threshold is reached."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notice Scheduler Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/scheduler/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "scheduler", "status"]
+						},
+						"description": "Get current status of active semester calendar, pending notice plans, and generated notices."
 					},
 					"response": []
 				}

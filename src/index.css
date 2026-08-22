@@ -23,6 +23,13 @@
     --error-container: #ffdad6;
     --on-error-container: #93000a;
   }
+
+  html, body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
 }
 
 .material-symbols-outlined {

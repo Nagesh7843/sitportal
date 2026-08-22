@@ -87,28 +87,6 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
         </div>
       </div>
 
-      {/* Official Syllabus Reference Banner */}
-      <section className="bg-white p-5 rounded-2xl border border-[#c6c5d4] shadow-xs flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#000666] flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[24px]">picture_as_pdf</span>
-          </div>
-          <div>
-            <h2 className="font-bold text-[16px] text-[#071e27]">Third-Year CSE Syllabus Reference</h2>
-            <p className="text-[12px] text-[#454652] mt-0.5">Official autonomous curriculum structure for Third Year Computer Science &amp; Engineering.</p>
-          </div>
-        </div>
-        <div className="flex gap-3 shrink-0">
-          <a href={THIRD_YEAR_CSE_SYLLABUS} target="_blank" rel="noreferrer" className="px-3.5 py-1.5 bg-[#f0f8ff] text-[#000666] border border-[#c6c5d4] font-bold text-[12px] rounded-lg hover:bg-[#cfe6f2] transition-colors">
-            View PDF
-          </a>
-          <a href={THIRD_YEAR_CSE_SYLLABUS} download="TY-CSE_0001-2.pdf" className="px-3.5 py-1.5 bg-[#000666] text-white font-bold text-[12px] rounded-lg hover:bg-[#1a237e] transition-colors flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px]">file_download</span>
-            Download
-          </a>
-        </div>
-      </section>
-
       {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-[#c6c5d4] shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex flex-wrap items-center gap-1.5">

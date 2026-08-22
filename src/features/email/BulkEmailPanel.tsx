@@ -1148,40 +1148,44 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
       </div>
 
       {/* Audit Logs Table */}
-      <div className="bg-white p-6 rounded-2xl border border-[#c6c5d4] shadow-xs">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#c6c5d4] shadow-xs space-y-3">
+        <div className="flex justify-between items-center">
           <div>
-            <h2 className="font-bold text-[18px] text-[#071e27]">Recent Transmission Audit Logs</h2>
-            <p className="text-[12px] text-[#454652]">History of sent emails</p>
+            <h2 className="font-extrabold text-base text-[#071e27]">Recent Transmission Audit Logs</h2>
+            <p className="text-xs text-[#454652]">History of broadcast emails and transmission statuses</p>
           </div>
+          <span className="text-[10px] font-bold bg-[#e6f6ff] text-[#000666] px-2.5 py-1 rounded-full border border-[#c6c5d4]">
+            {emailLogs.length} Records
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
-            <thead className="bg-[#e6f6ff] text-[#454652] font-semibold border-b border-[#c6c5d4]">
+        {/* Compact Scrollable Table Window */}
+        <div className="overflow-x-auto rounded-xl border border-[#c6c5d4] max-h-[300px] overflow-y-auto custom-scrollbar shadow-inner">
+          <table className="w-full text-left text-[11px] relative">
+            <thead className="bg-[#e6f6ff] text-[#000666] font-bold border-b border-[#c6c5d4] sticky top-0 z-10 shadow-xs">
               <tr>
-                <th className="py-3 px-4">Subject</th>
-                <th className="py-3 px-4">Target Recipients</th>
-                <th className="py-3 px-4">Recipients</th>
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Priority</th>
-                <th className="py-3 px-4 text-right">Status</th>
+                <th className="py-2 px-3">Subject</th>
+                <th className="py-2 px-3">Target Recipients</th>
+                <th className="py-2 px-3">Recipients</th>
+                <th className="py-2 px-3">Timestamp</th>
+                <th className="py-2 px-3">Priority</th>
+                <th className="py-2 px-3 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#c6c5d4]/40">
+            <tbody className="divide-y divide-[#c6c5d4]/40 bg-white">
               {emailLogs.map((log) => (
                 <tr
                   key={log.id}
                   onClick={() => setSelectedLog(log)}
                   className="hover:bg-[#f3faff] transition-colors cursor-pointer"
                 >
-                  <td className="py-3 px-4 font-bold text-[#071e27]">{log.subject}</td>
-                  <td className="py-3 px-4 text-[#454652]">{log.recipientGroup}</td>
-                  <td className="py-3 px-4 font-semibold text-[#071e27]">{log.recipientCount || 240}</td>
-                  <td className="py-3 px-4 text-[#454652]">{log.sentAt}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-2 px-3 font-bold text-[#071e27] text-[11px]">{log.subject}</td>
+                  <td className="py-2 px-3 text-[#454652]">{log.recipientGroup}</td>
+                  <td className="py-2 px-3 font-bold text-[#071e27]">{log.recipientCount || 240}</td>
+                  <td className="py-2 px-3 text-[#454652] text-[10px]">{log.sentAt}</td>
+                  <td className="py-2 px-3">
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${log.priority === 'URGENT'
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${log.priority === 'URGENT'
                         ? 'bg-[#ffdad6] text-[#ba1a1a]'
                         : 'bg-[#d9e2ff] text-[#00429c]'
                         }`}
@@ -1189,13 +1193,13 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                       {log.priority}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right">
+                  <td className="py-2 px-3 text-right">
                     {log.status === 'SUCCESS' ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-[11px] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         SUCCESS
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-600 font-bold text-[11px] bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                      <span className="inline-flex items-center gap-1 text-red-600 font-bold text-[10px] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                         FAILED
                       </span>
                     )}

@@ -118,6 +118,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
     executeGoogleAuthWithProfile(cleanEmail, name);
   };
 
+  const [registerRole, setRegisterRole] = useState<'student' | 'parent'>('student');
+  const [childRollNo, setChildRollNo] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -136,16 +139,34 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           setIsLoading(false);
           return;
         }
+
+        if (registerRole === 'parent' && !childRollNo.trim()) {
+          setErrorMessage("Please enter your child's student Roll Number / PRN.");
+          setIsLoading(false);
+          return;
+        }
         
         const dbUser = await apiService.registerUser({
           name: name.trim(),
           email: email.trim(),
           password: password.trim(),
-          role: 'student',
-          roleTitle: 'B.Tech Student'
+          role: registerRole,
+          roleTitle: registerRole === 'parent' ? 'Parent / Guardian' : 'B.Tech Student'
         });
+
+        if (registerRole === 'parent' && childRollNo.trim()) {
+          try {
+            await apiService.linkParentStudent({
+              studentRollNo: childRollNo.trim(),
+              relationship: 'Parent/Guardian',
+            });
+          } catch (linkErr) {
+            console.warn('Auto-link child warning:', linkErr);
+          }
+        }
+
         setIsLoading(false);
-        onLoginSuccess('student', dbUser.email || email.trim(), dbUser.user || dbUser);
+        onLoginSuccess(registerRole, dbUser.email || email.trim(), dbUser.user || dbUser);
       } else {
         const dbUser = await apiService.loginUser(email.trim(), password.trim());
         setIsLoading(false);
@@ -212,7 +233,32 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           {/* Login / Register Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegisterMode && (
-              <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex rounded-xl bg-[#f3faff] p-1 border border-[#c6c5d4]">
+                  <button
+                    type="button"
+                    onClick={() => setRegisterRole('student')}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      registerRole === 'student'
+                        ? 'bg-[#000666] text-white shadow-xs'
+                        : 'text-[#454652] hover:text-[#000666]'
+                    }`}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterRole('parent')}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      registerRole === 'parent'
+                        ? 'bg-[#000666] text-white shadow-xs'
+                        : 'text-[#454652] hover:text-[#000666]'
+                    }`}
+                  >
+                    Parent / Guardian
+                  </button>
+                </div>
+
                 <div>
                   <label className="block text-[11px] font-bold text-[#454652] uppercase tracking-wider mb-1">
                     Full Name
@@ -223,7 +269,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
                       required={isRegisterMode}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your full name"
+                      placeholder={registerRole === 'parent' ? "Parent's full name" : "Student's full name"}
                       className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-[#071e27] font-semibold outline-none focus:ring-2 focus:ring-[#000666]"
                     />
                     <span className="material-symbols-outlined absolute left-3 top-3 text-[18px] text-[#767683]">
@@ -232,6 +278,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
                   </div>
                 </div>
 
+                {registerRole === 'parent' && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#454652] uppercase tracking-wider mb-1">
+                      Child's Student Roll No / PRN
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required={registerRole === 'parent'}
+                        value={childRollNo}
+                        onChange={(e) => setChildRollNo(e.target.value)}
+                        placeholder="e.g. 21CS001 or 1SI21CS045"
+                        className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-[#071e27] font-semibold outline-none focus:ring-2 focus:ring-[#000666]"
+                      />
+                      <span className="material-symbols-outlined absolute left-3 top-3 text-[18px] text-[#767683]">
+                        school
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div>

@@ -130,7 +130,7 @@ export const apiService = {
     return await response.json();
   },
 
-  async syncOfficialNotices(): Promise<{ status: string; totalScraped: number; newlyAdded: number; alreadyExisted: number; notices: NoticeItem[] }> {
+  async syncOfficialNotices(): Promise<{ status: string; totalScraped: number; newlyAdded: number; alreadyExistedSkipped?: number; alreadyExisted?: number; purgedOldCount?: number; message?: string; notices?: NoticeItem[] }> {
     const response = await fetch(`${API_BASE_URL}/scraper/notices/sync`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -594,6 +594,337 @@ export const apiService = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Failed to change password');
     }
+    return await response.json();
+  },
+
+  // 12. Parent Module API
+  async fetchParentProfile() {
+    const response = await fetch(`${API_BASE_URL}/parents/me`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch parent profile');
+    return await response.json();
+  },
+
+  async linkParentStudent(data: { studentRollNo: string; relationship?: string; alternatePhone?: string; occupation?: string }) {
+    const response = await fetch(`${API_BASE_URL}/parents/link-student`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to link student record');
+    }
+    return await response.json();
+  },
+
+  async fetchParentNotices() {
+    const response = await fetch(`${API_BASE_URL}/parents/notices`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch notices for parent');
+    return await response.json();
+  },
+
+  // 13. Central Question System API (Public Q&A)
+  async fetchQuestions(category?: string, status?: string, search?: string) {
+    const params = new URLSearchParams();
+    if (category && category !== 'All') params.append('category', category);
+    if (status && status !== 'All') params.append('status', status);
+    if (search) params.append('search', search);
+
+    const url = `${API_BASE_URL}/questions${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch questions');
+    return await response.json();
+  },
+
+  async fetchQuestionById(id: number) {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch question details');
+    return await response.json();
+  },
+
+  async createQuestion(questionData: { title: string; content: string; category: string; authorName?: string; authorRole?: string }) {
+    const response = await fetch(`${API_BASE_URL}/questions`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(questionData),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to post question');
+    }
+    return await response.json();
+  },
+
+  async addQuestionAnswer(questionId: number, answerData: { content: string; responderName?: string; responderRole?: string; responderTitle?: string }) {
+    const response = await fetch(`${API_BASE_URL}/questions/${questionId}/answers`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(answerData),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to submit official response');
+    }
+    return await response.json();
+  },
+
+  async upvoteQuestion(id: number) {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}/upvote`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to upvote question');
+    return await response.json();
+  },
+
+  async updateQuestionStatus(id: number, status: string) {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) throw new Error('Failed to update question status');
+    return await response.json();
+  },
+
+  async deleteQuestion(id: number) {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete question');
+    return true;
+  },
+
+  // 14. Academic Calendar API
+  async fetchAcademicCalendars() {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch academic calendars');
+    return await response.json();
+  },
+
+  async fetchActiveCalendar() {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/active`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch active academic calendar');
+    return await response.json();
+  },
+
+  async createAcademicCalendar(calendarData: { title: string; academicYear: string; semesterType: string; startDate: string; endDate: string; isActive?: boolean }) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(calendarData),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to create academic calendar');
+    }
+    return await response.json();
+  },
+
+  async uploadAcademicCalendarDoc(file: File, title?: string, academicYear?: string, semesterType?: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (title) formData.append('title', title);
+    if (academicYear) formData.append('academicYear', academicYear);
+    if (semesterType) formData.append('semesterType', semesterType);
+
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/upload-doc`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to upload and parse calendar document');
+    }
+    return await response.json();
+  },
+
+  async parseAcademicCalendarText(payload: { text: string; title?: string; academicYear?: string; semesterType?: string }) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/parse-text`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to parse calendar text');
+    }
+    return await response.json();
+  },
+
+  async activateAcademicCalendar(id: number) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/${id}/activate`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to activate academic calendar');
+    return await response.json();
+  },
+
+  async addCalendarEvent(calendarId: number, eventData: any) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/${calendarId}/events`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(eventData),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to add calendar event');
+    }
+    return await response.json();
+  },
+
+  async updateCalendarEvent(eventId: number, eventData: any) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/events/${eventId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(eventData),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to update calendar event');
+    }
+    return await response.json();
+  },
+
+  async deleteCalendarEvent(eventId: number) {
+    const response = await fetch(`${API_BASE_URL}/academic-calendars/events/${eventId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete calendar event');
+    return true;
+  },
+
+  // 15. Automatic Notice Scheduler API
+  async triggerSchedulerRun() {
+    const response = await fetch(`${API_BASE_URL}/scheduler/run-now`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to trigger scheduler job');
+    return await response.json();
+  },
+
+  async fetchSchedulerStatus() {
+    const response = await fetch(`${API_BASE_URL}/scheduler/status`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch scheduler status');
+    return await response.json();
+  },
+
+  // 16. SIT Portal News & Events API with Photos
+  async fetchNewsAndEvents(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/news-events`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch news and events');
+    return await response.json();
+  },
+
+  async createNewsEvent(eventData: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/news-events`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(eventData)
+    });
+    if (!response.ok) throw new Error('Failed to publish event');
+    return await response.json();
+  },
+
+  async deleteNewsEvent(id: number | string): Promise<any> {
+    const numericId = String(id).replace('sitcoe-', '');
+    const response = await fetch(`${API_BASE_URL}/news-events/${numericId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete event');
+    return await response.json();
+  },
+
+  async triggerNewsEventsCheck(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/news-events/check-now`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to trigger 3-hr news check');
+    return await response.json();
+  },
+
+  // 17. Placement Management APIs
+  async fetchPlacementSummary(): Promise<{ stats: any; recruiters: any[]; drives: any[] }> {
+    const response = await fetch(`${API_BASE_URL}/placements/summary`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch placement summary');
+    return await response.json();
+  },
+
+  async updatePlacementStats(stats: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/stats`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(stats)
+    });
+    if (!response.ok) throw new Error('Failed to update placement metrics');
+    return await response.json();
+  },
+
+  async addPlacementRecruiter(recruiter: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/recruiters`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(recruiter)
+    });
+    if (!response.ok) throw new Error('Failed to add recruiting partner');
+    return await response.json();
+  },
+
+  async deletePlacementRecruiter(id: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/recruiters/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete recruiter');
+    return await response.json();
+  },
+
+  async addPlacementDrive(drive: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(drive)
+    });
+    if (!response.ok) throw new Error('Failed to schedule placement drive');
+    return await response.json();
+  },
+
+  async deletePlacementDrive(id: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete placement drive');
+    return await response.json();
+  },
+
+  async resetPlacementData(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/reset`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to reset placement data');
+    return await response.json();
+  },
+
+  async getSystemOverview(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/analytics/system-overview`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch system overview analytics');
     return await response.json();
   }
 };

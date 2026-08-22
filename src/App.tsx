@@ -9,7 +9,7 @@ import { Sidebar, Header, Footer } from '@/components/layout';
 import { Modals } from '@/components/modals';
 import { Sparkles } from 'lucide-react';
 
-import { AdminDashboard, FacultyDashboard, HodDashboard } from '@/features/dashboard';
+import { AdminDashboard, FacultyDashboard, HodDashboard, StudentDashboard, ParentDashboard } from '@/features/dashboard';
 import { PublicLanding } from '@/features/public-landing';
 import { LoginView } from '@/features/auth';
 import { BulkEmailPanel } from '@/features/email';
@@ -19,6 +19,8 @@ import { AnalyticsView } from '@/features/analytics';
 import { SettingsView } from '@/features/settings';
 import { NoticeFeedView, NoticePublishModal } from '@/features/notices';
 import { DocumentLibraryView } from '@/features/documents';
+import { CentralQuestionSystem } from '@/features/questions';
+import { AcademicCalendarView } from '@/features/calendar';
 import { EditProfileModal, ContactFacultyModal, AddEditCourseModal } from '@/components/modals';
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
@@ -113,9 +115,16 @@ export default function App() {
   const [prefilledEmail, setPrefilledEmail] = useState<string>('');
   
   // Authentication & Role Navigation Guard
-  const handleProtectedNavigate = (targetView: ViewMode, emailContext?: string) => {
-    setPrefilledEmail(emailContext || '');
-    const publicViews: ViewMode[] = ['public-landing', 'login', 'curriculum', 'notices', 'faculty', 'documents', 'students'];
+  const handleProtectedNavigate = (view: ViewMode, emailContext?: string) => {
+    let targetView = view;
+    if ((targetView as string) === 'directory') targetView = 'students';
+    if ((targetView as string) === 'faculty-directory') targetView = 'faculty';
+
+    if (emailContext !== undefined) {
+      setPrefilledEmail(emailContext);
+    }
+
+    const publicViews: ViewMode[] = ['public-landing', 'login', 'curriculum', 'notices', 'faculty', 'documents', 'students', 'questions', 'academic-calendar'];
     const adminViews: ViewMode[] = ['bulk-email', 'faculty-email'];
 
     if (!isLoggedIn && !publicViews.includes(targetView)) {
@@ -183,7 +192,7 @@ export default function App() {
         department: customProfile.department || 'Computer Science & Engineering',
         email: customProfile.email || email
       };
-      defaultView = role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : 'notices';
+      defaultView = role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : role === 'parent' ? 'parent-dashboard' : 'student-dashboard';
     } else {
       profile = {
         name: 'Unknown User',
@@ -193,7 +202,7 @@ export default function App() {
         department: 'Computer Science & Engineering',
         email: email
       };
-      defaultView = role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : 'notices';
+      defaultView = role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : role === 'parent' ? 'parent-dashboard' : 'student-dashboard';
     }
 
     // Fix BUG-001: Restore intended view if it exists
@@ -524,8 +533,21 @@ export default function App() {
       try {
         const savedStudent = await apiService.addStudent(student);
         setStudentsList((prev) => [savedStudent || student, ...prev]);
+        alert('Student record added successfully!');
       } catch (err) {
         alert('Failed to save student record to PostgreSQL database.');
+      }
+    });
+  };
+
+  const handleUpdateStudent = async (id: string | number, studentData: Partial<StudentRecord>) => {
+    requireAuthAction(async () => {
+      try {
+        const updated = await apiService.updateStudent(id, studentData);
+        setStudentsList((prev) => prev.map((s) => (s.id === id ? updated : s)));
+        alert('Student & Parent details updated successfully!');
+      } catch (err: any) {
+        alert(err.message || 'Failed to update student record.');
       }
     });
   };
@@ -602,9 +624,9 @@ export default function App() {
         />
 
         {/* Global Updates Ticker */}
-        <div className="px-6 pt-4 max-w-[1440px] w-full mx-auto">
-          <div className="bg-white border border-slate-200 rounded-xl h-10 flex items-center overflow-hidden px-4 text-xs shadow-sm">
-            <span className="font-bold text-zinc-900 uppercase tracking-wider text-[11px] shrink-0 mr-4 flex items-center gap-1.5">
+        <div className="px-3 sm:px-6 pt-3 sm:pt-4 max-w-[1440px] w-full mx-auto">
+          <div className="bg-white border border-slate-200 rounded-xl h-10 flex items-center overflow-hidden px-3 sm:px-4 text-xs shadow-sm">
+            <span className="font-bold text-zinc-900 uppercase tracking-wider text-[11px] shrink-0 mr-2 sm:mr-4 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Updates
             </span>
@@ -623,7 +645,7 @@ export default function App() {
         </div>
 
         {/* Dynamic View Container */}
-        <main className="flex-1 p-6 max-w-[1440px] w-full mx-auto animate-in fade-in duration-150">
+        <main className="flex-1 p-3 sm:p-6 max-w-[1440px] w-full mx-auto animate-in fade-in duration-150">
           {activeView === 'dashboard' && (
             <AdminDashboard
               onNavigate={handleProtectedNavigate}
@@ -631,6 +653,9 @@ export default function App() {
               onToggleFacultyStatus={handleToggleFacultyStatus}
               activities={activities}
               students={studentsList}
+              notices={notices}
+              emailLogs={emailLogs}
+              noticesCount={notices.length}
               onOpenQuickNoticeModal={() => requireAuthAction(() => setShowPublishNoticeModal(true))}
             />
           )}
@@ -749,8 +774,38 @@ export default function App() {
               students={studentsList}
               onAddStudent={userRole === 'admin' ? () => requireAuthAction(() => setShowAddStudent(true)) : undefined}
               onDeleteStudent={userRole === 'admin' ? handleDeleteStudent : undefined}
+              onUpdateStudent={userRole === 'admin' ? handleUpdateStudent : undefined}
               onNavigate={handleProtectedNavigate}
               onAddStudentsBulk={userRole === 'admin' ? handleAddStudentsBulk : undefined}
+            />
+          )}
+
+          {activeView === 'student-dashboard' && (
+            <StudentDashboard
+              currentProfile={currentProfile}
+              onNavigate={handleProtectedNavigate}
+            />
+          )}
+
+          {activeView === 'parent-dashboard' && (
+            <ParentDashboard
+              currentProfile={currentProfile}
+              onNavigate={handleProtectedNavigate}
+            />
+          )}
+
+          {activeView === 'questions' && (
+            <CentralQuestionSystem
+              currentProfile={currentProfile}
+              userRole={userRole}
+            />
+          )}
+
+          {activeView === 'academic-calendar' && (
+            <AcademicCalendarView
+              currentProfile={currentProfile}
+              userRole={userRole}
+              notices={notices}
             />
           )}
 

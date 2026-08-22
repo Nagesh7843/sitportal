@@ -43,6 +43,23 @@ public class Student {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "attendance")
+    @Builder.Default
+    private Double attendance = 92.5;
+
+    @Column(name = "parent_name")
+    private String parentName;
+
+    @Column(name = "parent_email")
+    private String parentEmail;
+
+    @Column(name = "parent_phone")
+    private String parentPhone;
+
+    @Column(name = "parent_relationship")
+    @Builder.Default
+    private String parentRelationship = "Parent/Guardian";
+
     @Builder.Default
     private String status = "Active";
 }

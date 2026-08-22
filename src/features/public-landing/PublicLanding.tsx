@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ViewMode, NoticeItem } from '@/types';
 import sitLogo from '@/assets/sit-logo.png';
 import { Shield, Megaphone, BookOpen, Users, ArrowRight, Sparkles, Clock, ChevronRight } from 'lucide-react';
+import { PlacementHubSection } from './PlacementHubSection';
+import { CollegeNewsEventsSection } from './CollegeNewsEventsSection';
 
 interface PublicLandingProps {
   onNavigate: (view: ViewMode) => void;
@@ -15,76 +17,6 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
 
   return (
     <div className="space-y-6 font-sans text-slate-800">
-      
-      {/* Vibrant SIT Navy Hero Banner */}
-      <section className="bg-gradient-to-r from-[#000666] via-[#1a237e] to-[#002171] text-white p-3 sm:p-4 rounded-xl border border-blue-900/40 shadow-xl relative overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 relative z-10">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-200 text-xs font-semibold border border-white/20 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              Official Department Portal • SIT CSE
-            </div>
-
-            <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight">
-              Computer Science & Engineering <br />
-              <span className="text-cyan-200 font-normal">Communication Portal</span>
-            </h1>
-
-            <p className="text-[#cfe6f2] text-[10px] sm:text-[11px] leading-tight max-w-xl">
-              Centralized platform for students & faculty. Digital notice board, curriculum syllabus, document archives, and live directory.
-            </p>
-
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {!isLoggedIn ? (
-                <button
-                  onClick={() => onNavigate('login')}
-                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
-                  aria-label="Sign In to Portal"
-                >
-                  <span>Sign In</span>
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    const view: ViewMode = userRole === 'admin' ? 'dashboard' : userRole === 'hod' ? 'hod-dashboard' : userRole === 'faculty' ? 'faculty-portal' : 'notices';
-                    onNavigate(view);
-                  }}
-                  className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold rounded-lg shadow hover:bg-amber-300 transition-all text-[11px] flex items-center gap-1 border border-amber-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
-                  aria-label="Go to Dashboard"
-                >
-                  <span>Dashboard</span>
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              )}
-              <button
-                onClick={() => onNavigate('notices')}
-                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-white outline-none"
-                aria-label="View Notices"
-              >
-                <Megaphone className="w-3 h-3 text-cyan-300" aria-hidden="true" />
-                <span>Notices</span>
-              </button>
-              <button
-                onClick={() => onNavigate('curriculum')}
-                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/20 font-semibold rounded-lg transition-all text-[11px] flex items-center gap-1 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-white outline-none"
-                aria-label="View Curriculum"
-              >
-                <BookOpen className="w-3 h-3 text-cyan-300" aria-hidden="true" />
-                <span>Curriculum</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="shrink-0 p-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 shadow">
-            <img src={sitLogo} alt="SIT Logo" className="h-9 sm:h-10 w-auto object-contain brightness-105" />
-          </div>
-        </div>
-      </section>
 
 
       {/* 📌 Sleek Central Digital Notice Stream */}
@@ -110,7 +42,11 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
 
         {/* Live Notices Stream */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {notices.slice(0, 4).map((notice) => (
+          {[...notices].sort((a, b) => {
+            const idA = typeof a.id === 'number' ? a.id : parseInt(String(a.id || 0), 10) || 0;
+            const idB = typeof b.id === 'number' ? b.id : parseInt(String(b.id || 0), 10) || 0;
+            return idB - idA;
+          }).slice(0, 4).map((notice) => (
             <button
               key={notice.id}
               onClick={() => setSelectedNotice(notice)}
@@ -192,6 +128,12 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
           </button>
         </div>
       </section>
+
+      {/* Placement Hub Window */}
+      <PlacementHubSection onExploreNotices={() => onNavigate('notices')} userRole={userRole} />
+
+      {/* SIT Portal News & Campus Events Section with Photos */}
+      <CollegeNewsEventsSection userRole={userRole} />
 
       {/* Embedded Notice Detail Modal */}
       {selectedNotice && (

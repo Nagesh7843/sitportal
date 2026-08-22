@@ -18,13 +18,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile
 }) => {
-  // Role-aware Navigation Items
+  // Role-aware Navigation Items strictly adhering to the Access Control Matrix
   const getNavItems = (): { id: ViewMode; label: string; icon: string }[] => {
     if (userRole === 'admin') {
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'dashboard', label: 'Admin Dashboard', icon: 'dashboard' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
         { id: 'documents', label: 'Document Library', icon: 'folder_open' },
         { id: 'curriculum', label: 'Curriculum', icon: 'menu_book' },
         { id: 'faculty', label: 'Faculty Directory', icon: 'groups' },
@@ -36,6 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'hod-dashboard', label: 'HOD Executive Hub', icon: 'shield' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
         { id: 'documents', label: 'Document Library', icon: 'folder_open' },
         { id: 'curriculum', label: 'Curriculum', icon: 'menu_book' },
         { id: 'faculty', label: 'Faculty Directory', icon: 'groups' },
@@ -47,16 +51,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'faculty-portal', label: 'Faculty Hub', icon: 'badge' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
         { id: 'documents', label: 'Document Library', icon: 'folder_open' },
         { id: 'curriculum', label: 'Curriculum', icon: 'menu_book' },
         { id: 'faculty', label: 'Faculty Roster', icon: 'groups' },
         { id: 'students', label: 'Students Directory', icon: 'school' },
       ];
+    } else if (userRole === 'parent') {
+      return [
+        { id: 'public-landing', label: 'Portal Home', icon: 'public' },
+        { id: 'parent-dashboard', label: 'Parent Dashboard', icon: 'family_restroom' },
+        { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
+        { id: 'documents', label: 'Document Library', icon: 'folder_open' },
+        { id: 'curriculum', label: 'Curriculum & Structure', icon: 'menu_book' },
+      ];
+    } else if (userRole === 'student') {
+      return [
+        { id: 'public-landing', label: 'Portal Home', icon: 'public' },
+        { id: 'student-dashboard', label: 'Student Dashboard', icon: 'school' },
+        { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
+        { id: 'documents', label: 'Document Library', icon: 'folder_open' },
+        { id: 'curriculum', label: 'Curriculum & Syllabus', icon: 'menu_book' },
+        { id: 'faculty', label: 'Faculty Availability', icon: 'groups' },
+      ];
     } else {
-      // Student or Public
+      // Public guest
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
+        { id: 'questions', label: 'Central Q&A', icon: 'forum' },
         { id: 'documents', label: 'Document Library', icon: 'folder_open' },
         { id: 'curriculum', label: 'Curriculum & Syllabus', icon: 'menu_book' },
         { id: 'faculty', label: 'Faculty Availability', icon: 'groups' },
@@ -96,10 +125,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <h1 className="font-bold text-[17px] leading-tight text-[#071e27] group-hover:text-[#2b5bb5] transition-colors">
-                CSE Department
+                SITCOE Portal
               </h1>
               <p className="text-[10px] font-semibold text-[#454652] opacity-80 uppercase tracking-wider">
-                Communication Portal
+                Institutional Portal
               </p>
             </div>
           </div>

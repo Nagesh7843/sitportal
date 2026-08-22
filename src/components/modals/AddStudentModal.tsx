@@ -26,6 +26,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [batchGroup, setBatchGroup] = useState<BatchGroup>('A1');
   const [studentPrn, setStudentPrn] = useState('');
   const [studentGpa, setStudentGpa] = useState('3.5');
+  const [studentAttendance, setStudentAttendance] = useState('90');
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentPhone, setParentPhone] = useState('');
+  const [parentRelationship, setParentRelationship] = useState('Father');
 
   useEffect(() => {
     if (division === 'Div A' && !batchGroup.startsWith('A')) setBatchGroup('A1');
@@ -43,6 +48,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         rollNo: studentRollNo.trim(),
         prn: studentPrn,
         gpa: Math.min(4, Math.max(0, Number(studentGpa) || 0)),
+        attendance: Math.min(100, Math.max(0, Number(studentAttendance) || 90)),
         cohortBatch: studentBatch,
         email: studentEmail.trim() || `${studentRollNo.trim().toLowerCase()}@student.sitcoe.org`,
         avatarBg: 'bg-[#d9e2ff] text-[#00429c]',
@@ -50,6 +56,10 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         academicYear,
         division,
         batchGroup,
+        parentName: parentName.trim(),
+        parentEmail: parentEmail.trim().toLowerCase(),
+        parentPhone: parentPhone.trim(),
+        parentRelationship: parentRelationship.trim(),
         status: 'Active'
       };
       onAddStudent(newStudent);
@@ -62,6 +72,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       setBatchGroup('A1');
       setStudentPrn('');
       setStudentGpa('3.5');
+      setStudentAttendance('90');
+      setParentName('');
+      setParentEmail('');
+      setParentPhone('');
+      setParentRelationship('Father');
       onClose();
     }
   };
@@ -163,7 +178,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Roll Number</label>
               <input
@@ -190,7 +205,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Division</label>
               <select
@@ -258,7 +273,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="md:col-span-1">
               <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">PRN Number</label>
               <div className="relative">
@@ -272,16 +287,75 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
               </div>
             </div>
             <div>
-              <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">SGPA (0-4)</label>
+              <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">CGPA / SGPA (0-10)</label>
               <input
                 type="number"
-                step="0.1"
+                step="0.01"
                 min={0}
-                max={4}
+                max={10}
                 value={studentGpa}
                 onChange={(e) => setStudentGpa(e.target.value)}
                 className="w-full border border-[#c6c5d4] rounded-xl p-3 text-[13px] outline-none focus:ring-2 focus:ring-[#000666]"
               />
+            </div>
+          </div>
+
+          {/* Parent / Guardian Credentials & Linking */}
+          <div className="bg-blue-50/70 p-4 rounded-xl space-y-3 border border-blue-200 mt-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-blue-700">family_restroom</span>
+                Parent / Guardian Login Details
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase">Parent Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Suresh Patil"
+                  value={parentName}
+                  onChange={(e) => setParentName(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-blue-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase">Parent Login Email</label>
+                <input
+                  type="email"
+                  placeholder="e.g. suresh.patil@parent.sitcoe.org"
+                  value={parentEmail}
+                  onChange={(e) => setParentEmail(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-blue-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase">Parent Phone Number</label>
+                <input
+                  type="tel"
+                  placeholder="+91 9876543210"
+                  value={parentPhone}
+                  onChange={(e) => setParentPhone(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-blue-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase">Relationship to Student</label>
+                <select
+                  value={parentRelationship}
+                  onChange={(e) => setParentRelationship(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-blue-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                >
+                  <option value="Father">Father</option>
+                  <option value="Mother">Mother</option>
+                  <option value="Guardian">Guardian</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
           </div>
 

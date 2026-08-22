@@ -11,6 +11,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByAcademicYear(String academicYear);
     List<Student> findByAcademicYearAndDivision(String academicYear, String division);
     boolean existsByEmail(String email);
+    java.util.Optional<Student> findByRollNo(String rollNo);
 
     @org.springframework.data.jpa.repository.Query("SELECT s.email FROM Student s WHERE " +
            "(:hasYears = false OR s.academicYear IN :years) AND " +

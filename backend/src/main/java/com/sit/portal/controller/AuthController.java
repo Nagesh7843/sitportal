@@ -86,7 +86,13 @@ public class AuthController {
         }
 
         Optional<Faculty> facOpt = facultyRepository.findByEmail(cleanEmail);
-        if (facOpt.isPresent()) {
+        if ("parent".equalsIgnoreCase(userRequest.getRole())) {
+            userRequest.setRole("parent");
+            userRequest.setRoleTitle("Parent / Guardian");
+            if (userRequest.getName() == null || userRequest.getName().isEmpty()) {
+                userRequest.setName("Parent");
+            }
+        } else if (facOpt.isPresent()) {
             Faculty fac = facOpt.get();
             String rank = fac.getRankTitle() != null ? fac.getRankTitle().toLowerCase() : "";
             if (rank.contains("hod") || rank.contains("head")) {
@@ -102,7 +108,7 @@ public class AuthController {
             userRequest.setRoleTitle("B.Tech Student");
         } else {
             Map<String, String> err = new HashMap<>();
-            err.put("message", "Registration denied: Your email is not present in any pre-approved department database (Faculty or Student).");
+            err.put("message", "Registration denied: Your email is not present in any pre-approved department database (Faculty or Student). For Parents, please select the Parent tab.");
             return ResponseEntity.badRequest().body(err);
         }
 

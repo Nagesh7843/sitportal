@@ -2,6 +2,8 @@ export type ViewMode =
   | 'dashboard' 
   | 'hod-dashboard'
   | 'faculty-portal' 
+  | 'student-dashboard'
+  | 'parent-dashboard'
   | 'public-landing' 
   | 'login'
   | 'notices'
@@ -12,4 +14,6 @@ export type ViewMode =
   | 'students' 
   | 'analytics' 
   | 'settings'
-  | 'faculty-email';
+  | 'faculty-email'
+  | 'questions'
+  | 'academic-calendar';

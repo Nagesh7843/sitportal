@@ -36,6 +36,11 @@ export interface StudentRecord {
   division?: Division;
   batchGroup?: BatchGroup;
   status?: 'Active' | 'Inactive';
+  attendance?: number;
+  parentName?: string;
+  parentEmail?: string;
+  parentPhone?: string;
+  parentRelationship?: string;
 }
 
 export interface CourseItem {

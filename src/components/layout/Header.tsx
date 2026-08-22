@@ -33,15 +33,16 @@ export const Header: React.FC<HeaderProps> = ({
   onGoBack
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   return (
-    <header className="flex justify-between items-center px-4 sm:px-6 w-full sticky top-0 z-30 bg-[#f3faff] h-[64px] border-b border-[#c6c5d4] shadow-xs font-sans">
-      <div className="flex items-center gap-3 sm:gap-6">
+    <header className="relative flex justify-between items-center px-3 sm:px-6 w-full sticky top-0 z-30 bg-[#f3faff] h-[64px] border-b border-[#c6c5d4] shadow-xs font-sans">
+      <div className="flex items-center gap-2 sm:gap-6 min-w-0">
         {/* Mobile Hamburger Menu Toggle */}
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
-            className="lg:hidden p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
+            className="lg:hidden p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none shrink-0"
             title="Toggle Navigation Menu"
             aria-label="Toggle Navigation Menu"
             aria-expanded="false"
@@ -53,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
         {canGoBack && onGoBack && (
           <button
             onClick={onGoBack}
-            className="p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none"
+            className="p-2 rounded-xl text-[#000666] hover:bg-[#d5ecf8] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none shrink-0"
             title="Go Back"
             aria-label="Go Back"
           >
@@ -61,7 +62,19 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Global Search Bar */}
+        {/* Mobile Search Toggle Button */}
+        <button
+          onClick={() => setShowMobileSearch(!showMobileSearch)}
+          className="md:hidden p-2 rounded-xl text-[#454652] hover:bg-[#d5ecf8] hover:text-[#000666] transition-colors focus-visible:ring-2 focus-visible:ring-[#000666] outline-none shrink-0"
+          title="Search Portal"
+          aria-label="Toggle Mobile Search Bar"
+        >
+          <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
+            {showMobileSearch ? 'close' : 'search'}
+          </span>
+        </button>
+
+        {/* Global Search Bar (Desktop) */}
         <div className="relative hidden md:block">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#454652] text-[20px]">
             search
@@ -84,6 +97,34 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mobile Expandable Search Drawer Overlay */}
+      {showMobileSearch && (
+        <div className="md:hidden absolute top-[64px] left-0 right-0 bg-[#f3faff] p-3 border-b border-[#c6c5d4] shadow-md z-40 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="relative w-full">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#454652] text-[20px]">
+              search
+            </span>
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search circulars, faculty, or students..."
+              className="w-full pl-10 pr-9 py-2 bg-[#dbf1fe] rounded-xl border border-[#c6c5d4] text-[13px] text-[#071e27] placeholder-[#767683] focus:outline-none focus:ring-2 focus:ring-[#000666]"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#767683] hover:text-[#071e27]"
+                aria-label="Clear Search"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Notifications Icon */}
