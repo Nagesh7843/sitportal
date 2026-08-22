@@ -31,6 +31,9 @@ public class CalendarEvent {
     @Column(name = "event_type", nullable = false)
     private String eventType; // EXAM, ASSIGNMENT, PROJECT_REVIEW, HOLIDAY, WORKSHOP, FEST, RESULT, REGISTRATION, GENERAL
 
+    @Column(name = "type")
+    private String type; // EXAM, ASSIGNMENT, PROJECT_REVIEW, etc.
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
@@ -66,9 +69,16 @@ public class CalendarEvent {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PrePersist
+    @PreUpdate
     protected void onCreate() {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
+        }
+        if (this.type == null || this.type.isBlank()) {
+            this.type = (this.eventType != null && !this.eventType.isBlank()) ? this.eventType : "GENERAL";
+        }
+        if (this.eventType == null || this.eventType.isBlank()) {
+            this.eventType = (this.type != null && !this.type.isBlank()) ? this.type : "GENERAL";
         }
     }
 }

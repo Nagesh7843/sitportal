@@ -216,6 +216,7 @@ public class AcademicCalendarDocParserService {
             return CalendarEvent.builder()
                     .title(cleanTitle(eventTitle))
                     .eventType(eventType)
+                    .type(eventType)
                     .startDate(startDate)
                     .endDate(endDate != null ? endDate : startDate.plusDays(1))
                     .description("Official Academic Calendar Milestone: " + eventTitle)
