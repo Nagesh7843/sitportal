@@ -17,6 +17,15 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
   currentProfile,
   onSuccess,
 }) => {
+  const [senderName, setSenderName] = useState(currentProfile?.name || '');
+  const [senderEmail, setSenderEmail] = useState(currentProfile?.email || '');
+  const [senderRole, setSenderRole] = useState(
+    currentProfile?.role === 'parent'
+      ? 'Parent / Guardian'
+      : currentProfile?.role === 'student'
+      ? 'Student'
+      : 'Parent / Guardian'
+  );
   const [inquiryType, setInquiryType] = useState('Office Hours Appointment');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -24,15 +33,36 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!isOpen || !faculty) return null;
+  // Sync profile when opened or changed
+  React.useEffect(() => {
+    if (currentProfile) {
+      if (currentProfile.name) setSenderName(currentProfile.name);
+      if (currentProfile.email) setSenderEmail(currentProfile.email);
+      if (currentProfile.role === 'parent') setSenderRole('Parent / Guardian');
+      else if (currentProfile.role === 'student') setSenderRole('Student');
+    }
+  }, [currentProfile, isOpen]);
 
-  const studentName = currentProfile?.name || 'SIT Student';
-  const studentEmail = currentProfile?.email || '';
+  if (!isOpen || !faculty) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const finalName = senderName.trim() || (currentProfile?.name ? currentProfile.name : 'SIT Guest Visitor');
+    const finalEmail = senderEmail.trim();
+
+    if (!finalEmail || !finalEmail.includes('@') || !finalEmail.includes('.')) {
+      setErrorMessage('Please provide a valid email address so the faculty member can reply back to you.');
+      return;
+    }
+
+    if (!finalName) {
+      setErrorMessage('Please enter your full name.');
+      return;
+    }
+
     if (!subject.trim() || !message.trim()) {
-      setErrorMessage('Please fill in both the subject and your message.');
+      setErrorMessage('Please fill in both the subject and your inquiry message.');
       return;
     }
 
@@ -40,12 +70,14 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
     setErrorMessage(null);
 
     try {
+      const displayNameWithRole = `${finalName} (${senderRole})`;
+
       await apiService.contactFaculty({
         facultyId: faculty.id,
         facultyName: faculty.name,
         facultyEmail: faculty.email,
-        studentName: studentName,
-        studentEmail: studentEmail,
+        studentName: displayNameWithRole,
+        studentEmail: finalEmail,
         studentPrn: (currentProfile as any)?.prn || (currentProfile as any)?.rollNo || 'N/A',
         academicYear: (currentProfile as any)?.academicYear || 'CSE Department',
         division: (currentProfile as any)?.division || '',
@@ -58,7 +90,7 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
       if (onSuccess) {
         onSuccess(`Your inquiry has been emailed to ${faculty.name}!`);
       } else {
-        alert(`Your message has been sent to ${faculty.name} (${faculty.email})!`);
+        alert(`Your message has been sent to ${faculty.name} (${faculty.email})! Replies will be delivered to ${finalEmail}.`);
       }
 
       setSubject('');
@@ -119,17 +151,85 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Sender Identity Preview */}
-          <div className="p-3 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-[12px] text-[#334155] flex flex-col sm:flex-row justify-between gap-2">
-            <div>
-              <span className="text-[#64748b]">Sending as: </span>
-              <strong className="text-[#071e27]">{studentName}</strong>
-              {studentEmail && <span className="text-[#64748b]"> ({studentEmail})</span>}
+          {/* Sender Identity Section */}
+          {!currentProfile ? (
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[15px] text-[#000666]">person</span>
+                  Your Sender Details
+                </span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  Direct Reply-To Active
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    Your Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={senderName}
+                    onChange={(e) => setSenderName(e.target.value)}
+                    placeholder="e.g. Shankar Gaikwad"
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-[13px] text-slate-900 font-medium outline-none focus:border-[#000666]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    Your Reply-To Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={senderEmail}
+                    onChange={(e) => setSenderEmail(e.target.value)}
+                    placeholder="e.g. yourname@gmail.com"
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-[13px] text-slate-900 font-medium outline-none focus:border-[#000666]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  Your Role / Affiliation
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {(['Parent / Guardian', 'Student', 'Visitor / Prospective', 'Alumni'] as const).map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setSenderRole(role)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        senderRole === role
+                          ? 'bg-[#000666] text-white shadow-2xs'
+                          : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md self-start sm:self-auto border border-emerald-200">
-              Direct Reply-To Active
+          ) : (
+            <div className="p-3.5 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-[12px] text-[#334155] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <span className="text-[#64748b]">Sending as: </span>
+                <strong className="text-[#071e27]">{senderName || currentProfile.name}</strong>
+                <span className="text-slate-500 font-medium"> ({senderRole})</span>
+                {senderEmail && <span className="text-[#64748b]"> &bull; {senderEmail}</span>}
+              </div>
+              <div className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                Direct Reply-To Active
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Inquiry Category */}
@@ -143,6 +243,7 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
                 className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-2.5 text-[13px] font-semibold text-[#071e27] outline-none focus:border-[#000666]"
               >
                 <option value="Office Hours Appointment">Office Hours Appointment</option>
+                <option value="Ward Academic Progress">Ward Academic Progress / Monitoring</option>
                 <option value="Project Guidance">Project Guidance / Capstone</option>
                 <option value="Doubt Resolution">Doubt Resolution / Concept Query</option>
                 <option value="Attendance Query">Attendance / Examination Query</option>
@@ -193,7 +294,7 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
               required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. Guidance on Machine Learning Pipeline Implementation"
+              placeholder="e.g. Inquiring regarding academic progress and office hours"
               className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-3 text-[13px] text-[#071e27] font-medium outline-none focus:border-[#000666]"
             />
           </div>
@@ -208,7 +309,7 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your detailed inquiry or meeting request here. Please specify your availability if asking for an appointment..."
+              placeholder="Write your detailed inquiry or meeting request here. Please specify your preferred timing if asking for an appointment..."
               className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-3 text-[13px] text-[#071e27] font-medium outline-none focus:border-[#000666] resize-none"
             />
           </div>
@@ -217,7 +318,7 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
           <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
             <span className="material-symbols-outlined text-[16px] text-amber-700 shrink-0 mt-0.5">info</span>
             <span>
-              This inquiry is officially dispatched to the faculty member's institutional email with an SIT header. When the professor replies, it will arrive directly in your inbox (<strong>{studentEmail || 'your email'}</strong>).
+              This inquiry is officially dispatched to the faculty member's institutional inbox. When the professor replies, the email will arrive directly in your personal inbox (<strong>{senderEmail || 'your email address'}</strong>).
             </span>
           </div>
 
