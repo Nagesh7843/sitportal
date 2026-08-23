@@ -61,6 +61,8 @@ The system enforces granular role-based permissions across 6 distinct user profi
 | **View Email Transmission Audit Logs** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Post Question in Q&A Forum** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | **Post Official Verified Answer in Q&A Forum** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Central Document Library (Read / Download)** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Curriculum & Academic Structure (Read)** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | **View Admin Command Center & Metrics** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Live System Activity Audit Trail Stream** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 

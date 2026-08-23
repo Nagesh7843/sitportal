@@ -118,15 +118,22 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
             </div>
           </div>
 
-          <button
-            onClick={() => setShowLinkModal(true)}
-            className="px-3.5 py-1.5 text-xs font-semibold text-[#00337c] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors inline-flex items-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              {student ? 'sync' : 'add_link'}
-            </span>
-            {student ? 'Change Linked Student' : 'Link Student'}
-          </button>
+          {student ? (
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="material-symbols-outlined text-[16px] text-emerald-600">verified</span>
+                <span>Verified Ward Link</span>
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLinkModal(true)}
+              className="px-3.5 py-1.5 text-xs font-semibold text-[#00337c] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors inline-flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_link</span>
+              <span>Link Student Record</span>
+            </button>
+          )}
         </div>
 
         {student ? (
@@ -241,38 +248,143 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
           <div className="bg-white rounded-2xl border border-[#d6d9e0] p-5 shadow-xs">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#00337c]">event_upcoming</span>
-                <h3 className="font-bold text-gray-900 text-sm">Upcoming Milestones</h3>
+                <span className="material-symbols-outlined text-[#00337c]">campaign</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Active Milestone Circulars</h3>
+                  <p className="text-[10px] text-gray-500">Official posted notices & upcoming events</p>
+                </div>
               </div>
               <button
                 onClick={() => onNavigate('academic-calendar')}
-                className="text-[11px] font-semibold text-[#00337c] hover:underline"
+                className="text-[11px] font-semibold text-[#00337c] hover:underline flex items-center gap-1"
               >
-                Calendar →
+                <span>Full Roadmap</span>
+                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
               </button>
             </div>
 
-            {activeCalendar?.events && activeCalendar.events.length > 0 ? (
-              <div className="space-y-3">
-                {activeCalendar.events.slice(0, 4).map((evt) => (
-                  <div key={evt.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[#00337c]">
-                      <span>{evt.startDate}</span>
-                      <span className="px-1.5 py-0.5 bg-blue-100 rounded text-[10px] uppercase font-semibold">{evt.eventType}</span>
-                    </div>
-                    <p className="font-semibold text-gray-900 text-xs mt-1">{evt.title}</p>
-                    {evt.location && (
-                      <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">location_on</span>
-                        {evt.location}
-                      </p>
-                    )}
+            {(() => {
+              const parseDate = (dStr?: string) => {
+                if (!dStr) return null;
+                const clean = dStr.trim();
+                if (clean.includes('-')) {
+                  const parts = clean.split('-').map(Number);
+                  if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]);
+                } else if (clean.includes('/')) {
+                  const parts = clean.split('/').map(Number);
+                  if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                const d = new Date(clean);
+                return isNaN(d.getTime()) ? null : d;
+              };
+
+              const allEvents = activeCalendar?.events || [];
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+
+              // Filter ONLY posted/active events (within pre-notice trigger window up to 5 days post-completion)
+              const postedEvents = allEvents
+                .filter((evt) => {
+                  const start = parseDate(evt.startDate);
+                  const end = parseDate(evt.endDate || evt.startDate);
+                  if (!start || !end) return true;
+
+                  const preNoticeDays = evt.daysBeforeNotice || 7;
+                  const diffDaysStart = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  const diffDaysEnd = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                  // 1. Must be posted/triggered (within pre-notice window or officially GENERATED)
+                  const isPostedOrTriggered = evt.noticeStatus === 'GENERATED' || diffDaysStart <= preNoticeDays;
+
+                  // 2. Auto-removed 5 days after event completion (diffDaysEnd < -5 means expired)
+                  const isNotExpired = diffDaysEnd >= -5;
+
+                  return isPostedOrTriggered && isNotExpired;
+                })
+                .sort((a, b) => {
+                  const dateA = parseDate(a.startDate)?.getTime() || 0;
+                  const dateB = parseDate(b.startDate)?.getTime() || 0;
+                  return dateA - dateB;
+                });
+
+              if (postedEvents.length === 0) {
+                return (
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-center space-y-1.5">
+                    <span className="material-symbols-outlined text-slate-400 text-2xl">notifications_paused</span>
+                    <p className="text-xs font-bold text-slate-700">No active circulars currently posted</p>
+                    <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-tight">
+                      Academic milestone notices are automatically posted into this feed 5–7 days prior to each event and retained for 5 days after completion.
+                    </p>
+                    <button
+                      onClick={() => onNavigate('academic-calendar')}
+                      className="mt-2 text-xs font-bold text-[#00337c] hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Explore Full Semester Schedule</span>
+                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                    </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-500 text-center py-4">No upcoming events scheduled.</p>
-            )}
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {postedEvents.slice(0, 6).map((evt) => {
+                    const start = parseDate(evt.startDate);
+                    const end = parseDate(evt.endDate || evt.startDate);
+
+                    let tagline = 'Posted Notice';
+                    let badgeColor = 'bg-blue-50 text-[#00337c] border-blue-200';
+
+                    if (start && end) {
+                      const diffDaysStart = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      const diffDaysEnd = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                      if (diffDaysStart > 1) {
+                        tagline = `Event in ${diffDaysStart} days`;
+                        badgeColor = 'bg-indigo-50 text-indigo-700 border-indigo-200 font-bold';
+                      } else if (diffDaysStart === 1) {
+                        tagline = 'Starts Tomorrow';
+                        badgeColor = 'bg-amber-100 text-amber-900 border-amber-300 font-bold';
+                      } else if (diffDaysStart === 0) {
+                        tagline = 'Starts Today';
+                        badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+                      } else if (diffDaysStart < 0 && diffDaysEnd >= 0) {
+                        tagline = 'Ongoing Event';
+                        badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+                      } else if (diffDaysEnd < 0 && diffDaysEnd >= -5) {
+                        const daysLeft = 5 + diffDaysEnd + 1;
+                        tagline = `Completed • Removes in ${daysLeft}d`;
+                        badgeColor = 'bg-gray-100 text-gray-600 border-gray-200';
+                      }
+                    }
+
+                    return (
+                      <div key={evt.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-blue-200 transition-colors">
+                        <div className="flex items-center justify-between text-[11px] font-bold">
+                          <span className="text-[#00337c]">{evt.startDate}{evt.endDate && evt.endDate !== evt.startDate ? ` - ${evt.endDate}` : ''}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border ${badgeColor} flex items-center gap-1`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                              {tagline}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-blue-100 rounded text-[10px] uppercase font-semibold text-blue-800">
+                              {evt.eventType}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="font-semibold text-gray-900 text-xs mt-1.5 leading-snug">{evt.title}</p>
+                        {evt.location && (
+                          <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">location_on</span>
+                            {evt.location}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Central Q&A Callout */}

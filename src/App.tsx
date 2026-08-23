@@ -148,6 +148,11 @@ export default function App() {
       alert('Access Restricted: Broadcast panels require Administrator, HOD, or Faculty credentials.');
       return;
     }
+
+    if (userRole === 'parent' && (targetView === 'documents' || targetView === 'curriculum')) {
+      alert('Access Restricted: Document repository and curriculum are reserved for students and faculty.');
+      return;
+    }
     
     if (activeView !== targetView) {
       if (targetView === 'public-landing') {

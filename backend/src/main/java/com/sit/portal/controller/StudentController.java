@@ -143,37 +143,27 @@ public class StudentController {
         }
 
         String email = student.getParentEmail().trim().toLowerCase();
-        String parentName = (student.getParentName() != null && !student.getParentName().trim().isEmpty())
-                ? student.getParentName().trim()
-                : "Parent of " + student.getName();
 
-        // 1. Ensure user record exists for parent login
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User newUser = User.builder()
-                    .name(parentName)
-                    .email(email)
-                    .role("parent")
-                    .roleTitle("Parent / Guardian")
-                    .department("CSE")
-                    .password(passwordEncoder.encode("Parent@123"))
-                    .createdAt(LocalDateTime.now())
-                    .build();
-            return userRepository.save(newUser);
-        });
+        // Check if the parent already has an existing User account (if they already self-registered)
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        Long userId = userOpt.map(User::getId).orElse(null);
 
-        // 2. Ensure parent record linked to child's roll number exists
-        Optional<Parent> parentOpt = parentRepository.findByStudentRollNo(student.getRollNo());
+        // Update or create the Parent mapping record WITHOUT creating a default User account or default password
+        String identifier = student.getRollNo() != null ? student.getRollNo() : student.getPrn();
+        if (identifier == null) return;
+
+        Optional<Parent> parentOpt = parentRepository.findByStudentRollNo(identifier);
         Parent parent;
         if (parentOpt.isPresent()) {
             parent = parentOpt.get();
-            parent.setUserId(user.getId());
+            if (userId != null) parent.setUserId(userId);
             parent.setStudentName(student.getName());
             if (student.getParentPhone() != null) parent.setAlternatePhone(student.getParentPhone());
             if (student.getParentRelationship() != null) parent.setRelationship(student.getParentRelationship());
         } else {
             parent = Parent.builder()
-                    .userId(user.getId())
-                    .studentRollNo(student.getRollNo())
+                    .userId(userId)
+                    .studentRollNo(identifier)
                     .studentName(student.getName())
                     .alternatePhone(student.getParentPhone())
                     .relationship(student.getParentRelationship() != null ? student.getParentRelationship() : "Parent/Guardian")

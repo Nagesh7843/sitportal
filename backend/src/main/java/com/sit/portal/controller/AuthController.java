@@ -6,6 +6,8 @@ import com.sit.portal.repository.UserRepository;
 import com.sit.portal.repository.StudentRepository;
 import com.sit.portal.repository.FacultyRepository;
 import com.sit.portal.entity.Faculty;
+import com.sit.portal.entity.Parent;
+import com.sit.portal.repository.ParentRepository;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,9 @@ public class AuthController {
 
     @Autowired
     private FacultyRepository facultyRepository;
+
+    @Autowired
+    private ParentRepository parentRepository;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -120,6 +125,21 @@ public class AuthController {
         }
         
         User savedUser = userRepository.save(userRequest);
+
+        if ("parent".equalsIgnoreCase(savedUser.getRole())) {
+            // Auto link with existing student record matching parentEmail if present
+            studentRepository.findByParentEmail(cleanEmail).ifPresent(student -> {
+                Parent p = parentRepository.findByUserId(savedUser.getId())
+                        .orElse(Parent.builder().userId(savedUser.getId()).build());
+                p.setUserId(savedUser.getId());
+                p.setStudentRollNo(student.getRollNo() != null ? student.getRollNo() : student.getPrn());
+                p.setStudentName(student.getName());
+                if (student.getParentRelationship() != null) p.setRelationship(student.getParentRelationship());
+                if (student.getParentPhone() != null) p.setAlternatePhone(student.getParentPhone());
+                parentRepository.save(p);
+            });
+        }
+
         String token = jwtUtils.generateToken(savedUser.getEmail(), savedUser.getRole());
 
         Map<String, Object> response = new HashMap<>();

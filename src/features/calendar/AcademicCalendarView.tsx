@@ -20,6 +20,7 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('ALL');
   const [audienceFilter, setAudienceFilter] = useState<'ALL' | 'STUDENT' | 'PARENT' | 'FACULTY'>('ALL');
+  const [timelineScope, setTimelineScope] = useState<'UPCOMING' | 'ALL' | 'PTM'>('UPCOMING');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
@@ -320,20 +321,96 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
 
   const eventTypes = ['ALL', 'EXAM', 'ASSIGNMENT', 'PROJECT_REVIEW', 'WORKSHOP', 'FEST', 'HOLIDAY', 'MEETING', 'RESULT', 'GENERAL'];
 
-  const filteredEvents = (selectedCalendar?.events || []).filter((event) => {
-    const matchesType = selectedTypeFilter === 'ALL' || event.eventType === selectedTypeFilter;
-    const matchesAudience = audienceFilter === 'ALL' || event.targetAudience === audienceFilter || event.targetAudience === 'ALL';
-    const matchesSearch =
-      !searchQuery.trim() ||
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase()));
+  const parseEventDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    const clean = dateStr.trim();
+    if (clean.includes('-')) {
+      const parts = clean.split('-').map(Number);
+      if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]);
+    } else if (clean.includes('/')) {
+      const parts = clean.split('/').map(Number);
+      if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    const d = new Date(clean);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
-    // Event Completion + 5 Days Retention Rule for Students & Parents
-    const matchesRetention = !isStudentOrParent || isEventActiveForStudentParent(event.endDate || event.startDate);
+  // Check if an event is within its posted trigger window (or GENERATED) and not expired (5 days post completion)
+  const isEventPostedOrTriggered = (event: CalendarEventItem) => {
+    const start = parseEventDate(event.startDate);
+    const end = parseEventDate(event.endDate || event.startDate);
+    if (!start || !end) return true;
 
-    return matchesType && matchesAudience && matchesSearch && matchesRetention;
-  });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const preNoticeDays = event.daysBeforeNotice || 7;
+    const diffDaysStart = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDaysEnd = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    // 1. Must be posted/triggered (within pre-notice window or officially GENERATED)
+    const isPosted = event.noticeStatus === 'GENERATED' || diffDaysStart <= preNoticeDays;
+
+    // 2. Auto-removed 5 days after event completion
+    const isNotExpired = diffDaysEnd >= -5;
+
+    return isPosted && isNotExpired;
+  };
+
+  const getEventTagline = (event: CalendarEventItem) => {
+    const start = parseEventDate(event.startDate);
+    const end = parseEventDate(event.endDate || event.startDate);
+    if (!start || !end) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const diffDaysStart = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDaysEnd = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDaysStart > 1) {
+      return { text: `Event in ${diffDaysStart} days`, badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+    } else if (diffDaysStart === 1) {
+      return { text: 'Starts Tomorrow', badgeClass: 'bg-amber-100 text-amber-900 border-amber-300 font-bold' };
+    } else if (diffDaysStart === 0) {
+      return { text: 'Starts Today', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' };
+    } else if (diffDaysStart < 0 && diffDaysEnd >= 0) {
+      return { text: 'Ongoing Event', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' };
+    } else if (diffDaysEnd < 0 && diffDaysEnd >= -5) {
+      const daysLeft = 5 + diffDaysEnd + 1;
+      return { text: `Completed • Removes in ${daysLeft}d`, badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' };
+    } else if (diffDaysEnd < -5) {
+      return { text: 'Archived Event', badgeClass: 'bg-gray-100 text-gray-400 border-gray-200' };
+    } else {
+      return { text: `Scheduled (${event.daysBeforeNotice || 7}d notice)`, badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' };
+    }
+  };
+
+  const filteredEvents = (selectedCalendar?.events || [])
+    .filter((event) => {
+      const matchesType = selectedTypeFilter === 'ALL' || event.eventType === selectedTypeFilter;
+      const matchesAudience = audienceFilter === 'ALL' || event.targetAudience === audienceFilter || event.targetAudience === 'ALL';
+      const matchesSearch =
+        !searchQuery.trim() ||
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      let matchesTimeline = true;
+      if (timelineScope === 'UPCOMING') {
+        matchesTimeline = !isStudentOrParent || isEventPostedOrTriggered(event);
+      } else if (timelineScope === 'PTM') {
+        const titleLower = (event.title || '').toLowerCase();
+        matchesTimeline = event.eventType === 'MEETING' || event.targetAudience === 'PARENT' || titleLower.includes('parent') || titleLower.includes('ptm') || titleLower.includes('meet');
+      }
+
+      return matchesType && matchesAudience && matchesSearch && matchesTimeline;
+    })
+    .sort((a, b) => {
+      const dateA = parseEventDate(a.startDate)?.getTime() || 0;
+      const dateB = parseEventDate(b.startDate)?.getTime() || 0;
+      return dateA - dateB;
+    });
 
   const getEventBadge = (type: string) => {
     switch (type) {
@@ -493,8 +570,48 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar pt-2.5 border-t border-gray-100">
+        {/* Row 2: Timeline Scope Tabs (Upcoming vs Full Semester vs PTM) */}
+        <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-gray-100">
+          <span className="text-[11px] font-bold text-gray-500 mr-1 shrink-0 uppercase tracking-wider">Timeline View:</span>
+          <button
+            onClick={() => setTimelineScope('UPCOMING')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              timelineScope === 'UPCOMING'
+                ? 'bg-[#000666] text-white shadow-xs'
+                : 'bg-[#f0f7ff] text-[#00337c] hover:bg-[#e0efff] border border-blue-200'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">event_upcoming</span>
+            <span>Upcoming & Active Events</span>
+          </button>
+
+          <button
+            onClick={() => setTimelineScope('ALL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              timelineScope === 'ALL'
+                ? 'bg-[#000666] text-white shadow-xs'
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">calendar_month</span>
+            <span>Full Semester Roadmap ({selectedCalendar?.events?.length || 0})</span>
+          </button>
+
+          <button
+            onClick={() => setTimelineScope('PTM')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              timelineScope === 'PTM'
+                ? 'bg-[#000666] text-white shadow-xs'
+                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">groups</span>
+            <span>Parent Meets (PTM)</span>
+          </button>
+        </div>
+
+        {/* Row 3: Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar pt-2 border-t border-gray-100">
           <span className="text-[11px] font-bold text-gray-500 mr-1 shrink-0 uppercase tracking-wider">Milestone Type:</span>
           {eventTypes.map((type) => (
             <button
@@ -560,15 +677,27 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
                   className="bg-white rounded-xl border border-[#d6d9e0] p-4 hover:shadow-md transition-shadow flex flex-col justify-between gap-3 relative"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide border ${getEventBadge(
-                          event.eventType
-                        )}`}
-                      >
-                        {event.eventType}
-                      </span>
-                      <span className="text-[11px] font-semibold text-gray-500 flex items-center gap-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide border ${getEventBadge(
+                            event.eventType
+                          )}`}
+                        >
+                          {event.eventType}
+                        </span>
+                        {(() => {
+                          const tag = getEventTagline(event);
+                          if (!tag) return null;
+                          return (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${tag.badgeClass} flex items-center gap-1 shadow-2xs`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                              {tag.text}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <span className="text-[11px] font-semibold text-gray-500 flex items-center gap-1 shrink-0">
                         <span className="material-symbols-outlined text-[13px]">calendar_today</span>
                         {event.startDate}
                         {event.endDate && event.endDate !== event.startDate ? ` to ${event.endDate}` : ''}

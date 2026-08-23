@@ -5,6 +5,7 @@ export type EventType =
   | 'HOLIDAY' 
   | 'WORKSHOP' 
   | 'FEST' 
+  | 'MEETING'
   | 'RESULT' 
   | 'REGISTRATION' 
   | 'GENERAL';

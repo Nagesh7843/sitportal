@@ -140,7 +140,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
             </button>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto custom-scrollbar space-y-2.5 p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner">
+          <div className="max-h-[580px] lg:max-h-[620px] overflow-y-auto custom-scrollbar space-y-2.5 p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner">
             {notices.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-xs font-semibold">
                 No notices published yet.
