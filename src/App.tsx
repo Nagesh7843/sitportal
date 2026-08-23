@@ -124,7 +124,7 @@ export default function App() {
       setPrefilledEmail(emailContext);
     }
 
-    const publicViews: ViewMode[] = ['public-landing', 'login', 'curriculum', 'notices', 'faculty', 'documents', 'students', 'questions', 'academic-calendar'];
+    const publicViews: ViewMode[] = ['public-landing', 'login', 'notices', 'faculty', 'students', 'questions', 'academic-calendar'];
     const adminViews: ViewMode[] = ['bulk-email', 'faculty-email'];
 
     if (!isLoggedIn && !publicViews.includes(targetView)) {

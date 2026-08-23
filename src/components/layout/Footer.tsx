@@ -27,10 +27,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             Portal Home
           </button>
           <button 
-            onClick={() => onNavigate && onNavigate('curriculum')} 
+            onClick={() => onNavigate && onNavigate('academic-calendar')} 
             className="text-[#cfe6f2] hover:text-[#e0e0ff] transition-colors"
           >
-            Curriculum & Syllabus
+            Academic Calendar
           </button>
           <button 
             onClick={() => onNavigate && onNavigate('faculty')} 

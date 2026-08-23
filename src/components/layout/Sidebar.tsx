@@ -85,8 +85,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
-        { id: 'documents', label: 'Document Library', icon: 'folder_open' },
-        { id: 'curriculum', label: 'Curriculum & Syllabus', icon: 'menu_book' },
         { id: 'faculty', label: 'Faculty Availability', icon: 'groups' },
       ];
     }

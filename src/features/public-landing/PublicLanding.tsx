@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ViewMode, NoticeItem } from '@/types';
 import sitLogo from '@/assets/sit-logo.png';
-import { Shield, Megaphone, BookOpen, Users, ArrowRight, Sparkles, Clock, ChevronRight } from 'lucide-react';
+import { Shield, Megaphone, Calendar, Users, ArrowRight, Sparkles, Clock, ChevronRight } from 'lucide-react';
 import { PlacementHubSection } from './PlacementHubSection';
 import { CollegeNewsEventsSection } from './CollegeNewsEventsSection';
 
@@ -106,14 +106,14 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
           </button>
 
           <button 
-            onClick={() => onNavigate('curriculum')}
+            onClick={() => onNavigate('academic-calendar')}
             className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-              <BookOpen className="w-4 h-4" aria-hidden="true" />
+              <Calendar className="w-4 h-4" aria-hidden="true" />
             </div>
-            <h3 className="font-bold text-xs text-slate-900">Curriculum & Syllabus</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">Course structures, credit schemes, and official syllabus.</p>
+            <h3 className="font-bold text-xs text-slate-900">Academic Calendar</h3>
+            <p className="text-[11px] text-slate-500 leading-relaxed">Semester roadmaps, examination schedules, and milestones.</p>
           </button>
 
           <button 
