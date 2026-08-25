@@ -42,6 +42,15 @@ public class PlacementDrive {
     @Column(nullable = false)
     private String status; // UPCOMING, ONGOING, COMPLETED
 
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
+    @Column(name = "banner_image_url", columnDefinition = "TEXT")
+    private String bannerImageUrl;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

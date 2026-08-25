@@ -59,11 +59,11 @@ export const apiService = {
     return data;
   },
 
-  async loginWithGoogle(email: string) {
+  async loginWithGoogle(email: string, idToken?: string) {
     const response = await fetch(`${API_BASE_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, idToken }),
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -112,6 +112,16 @@ export const apiService = {
       body: JSON.stringify(notice),
     });
     if (!response.ok) throw new Error('Failed to update notice');
+    return await response.json();
+  },
+
+  async markNoticeAsRead(noticeId: string | number, userIdentifier?: string): Promise<NoticeItem> {
+    const response = await fetch(`${API_BASE_URL}/notices/${noticeId}/read`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ userIdentifier: userIdentifier || 'anonymous' }),
+    });
+    if (!response.ok) throw new Error('Failed to mark notice as read');
     return await response.json();
   },
 
@@ -883,6 +893,16 @@ export const apiService = {
     return await response.json();
   },
 
+  async updatePlacementRecruiter(id: number | string, recruiter: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/recruiters/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(recruiter)
+    });
+    if (!response.ok) throw new Error('Failed to update recruiting partner');
+    return await response.json();
+  },
+
   async deletePlacementRecruiter(id: number | string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/placements/recruiters/${id}`, {
       method: 'DELETE',
@@ -899,6 +919,16 @@ export const apiService = {
       body: JSON.stringify(drive)
     });
     if (!response.ok) throw new Error('Failed to schedule placement drive');
+    return await response.json();
+  },
+
+  async updatePlacementDrive(id: number | string, drive: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(drive)
+    });
+    if (!response.ok) throw new Error('Failed to update placement drive');
     return await response.json();
   },
 
@@ -920,11 +950,77 @@ export const apiService = {
     return await response.json();
   },
 
+  async generatePlacementNotice(payload: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/generate-notice`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Failed to generate placement notice');
+    return await response.json();
+  },
+
+  async fetchPlacedAchievers(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/placements/achievers`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch placed student achievers');
+    return await response.json();
+  },
+
+  async createPlacedAchiever(achiever: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/achievers`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(achiever)
+    });
+    if (!response.ok) throw new Error('Failed to save placed student achiever');
+    return await response.json();
+  },
+
+  async updatePlacedAchiever(id: number | string, achiever: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/achievers/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(achiever)
+    });
+    if (!response.ok) throw new Error('Failed to update placed student achiever');
+    return await response.json();
+  },
+
+  async deletePlacedAchiever(id: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/achievers/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete placed student achiever');
+    return await response.json();
+  },
+
   async getSystemOverview(): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/analytics/system-overview`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch system overview analytics');
+    return await response.json();
+  },
+
+  // System Settings Endpoints (PostgreSQL sitportaldb)
+  async fetchSettings(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch system settings from database');
+    return await response.json();
+  },
+
+  async updateSettings(settings: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(settings)
+    });
+    if (!response.ok) throw new Error('Failed to update system settings in database');
     return await response.json();
   }
 };

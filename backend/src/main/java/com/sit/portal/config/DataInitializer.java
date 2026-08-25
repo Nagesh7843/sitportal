@@ -8,6 +8,8 @@ import com.sit.portal.repository.CourseRepository;
 import com.sit.portal.repository.LaboratoryRepository;
 import com.sit.portal.repository.ResearchLabRepository;
 import com.sit.portal.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.sit.portal.service.SettingService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,19 +24,40 @@ public class DataInitializer {
             UserRepository userRepository,
             CourseRepository courseRepository,
             LaboratoryRepository laboratoryRepository,
-            ResearchLabRepository researchLabRepository) {
+            ResearchLabRepository researchLabRepository,
+            PasswordEncoder passwordEncoder,
+            SettingService settingService) {
         return args -> {
+            // Ensure system settings are initialized in PostgreSQL
+            settingService.getSystemSettings();
+
             // Seed Super Admin in PostgreSQL sitportaldb if not present
-            if (!userRepository.existsByEmail("gnagesh550@gmail.com")) {
+            if (!userRepository.existsByEmail("admin@sitcoe.ac.in")) {
                 userRepository.save(User.builder()
-                        .name("Nagesh")
-                        .email("gnagesh550@gmail.com")
-                        .password("N@gesh7843")
+                        .name("Institute Administrator")
+                        .email("admin@sitcoe.ac.in")
+                        .password(passwordEncoder.encode("Admin@SIT2026!"))
                         .role("admin")
-                        .roleTitle("Super Administrator & Website Controller")
-                        .department("Computer Science & Engineering")
+                        .roleTitle("Institute Administrator & Portal Controller")
+                        .department("Sharad Institute of Technology")
                         .build());
+            } else {
+                // Ensure existing admin password is valid BCrypt hash
+                userRepository.findByEmail("admin@sitcoe.ac.in").ifPresent(admin -> {
+                    if (admin.getPassword() != null && !admin.getPassword().startsWith("$2a$") && !admin.getPassword().startsWith("$2b$")) {
+                        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+                        userRepository.save(admin);
+                    }
+                });
             }
+
+            // Migrate any plain text passwords in users table to BCrypt hashes
+            userRepository.findAll().forEach(u -> {
+                if (u.getPassword() != null && !u.getPassword().startsWith("$2a$") && !u.getPassword().startsWith("$2b$")) {
+                    u.setPassword(passwordEncoder.encode(u.getPassword()));
+                    userRepository.save(u);
+                }
+            });
 
             // Seed Laboratories
             if (laboratoryRepository.count() == 0) {

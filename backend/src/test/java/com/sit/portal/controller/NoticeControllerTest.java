@@ -97,9 +97,6 @@ class NoticeControllerTest {
 
     @Test
     void deletesTheRequestedNoticeWhenFound() {
-        Notice notice = Notice.builder().id(42L).title("Test").build();
-        when(noticeService.getNoticeById(42L)).thenReturn(Optional.of(notice));
-
         ResponseEntity<Void> response = controller.deleteNotice(42L);
 
         assertEquals(204, response.getStatusCode().value());
@@ -107,13 +104,11 @@ class NoticeControllerTest {
     }
 
     @Test
-    void deleteNoticeReturnsNotFoundWhenMissing() {
-        when(noticeService.getNoticeById(999L)).thenReturn(Optional.empty());
+    void deletesNoticeWithStringId() {
+        ResponseEntity<Void> response = controller.deleteNotice("42");
 
-        ResponseEntity<Void> response = controller.deleteNotice(999L);
-
-        assertEquals(404, response.getStatusCode().value());
-        verify(noticeService, never()).deleteNotice(999L);
+        assertEquals(204, response.getStatusCode().value());
+        verify(noticeService).deleteNotice(42L);
     }
 
     @Test

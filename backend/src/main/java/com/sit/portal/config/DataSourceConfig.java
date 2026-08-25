@@ -19,7 +19,7 @@ public class DataSourceConfig {
     @Value("${spring.datasource.username:${SPRING_DATASOURCE_USERNAME:postgres}}")
     private String defaultUsername;
 
-    @Value("${spring.datasource.password:${SPRING_DATASOURCE_PASSWORD:N@gesh7843}}")
+    @Value("${spring.datasource.password:${SPRING_DATASOURCE_PASSWORD:postgres}}")
     private String defaultPassword;
 
     @Bean

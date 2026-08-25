@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem, CourseItem } from '@/types';
 import { apiService } from '@/services/api';
 import { registerWebPushDevice } from '@/utils/webPush';
-import { useUrlRouter } from '@/hooks/useUrlRouter';
+import { useUrlRouter, getInitialView } from '@/hooks/useUrlRouter';
 
 
 import { Sidebar, Header, Footer } from '@/components/layout';
@@ -25,14 +25,41 @@ import { EditProfileModal, ContactFacultyModal, AddEditCourseModal } from '@/com
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
 export default function App() {
-  const [activeView, setActiveView] = useState<ViewMode>('public-landing');
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<UserRole>('public');
-  const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
+  const [activeView, setActiveView] = useState<ViewMode>(getInitialView);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    const session = localStorage.getItem('sit_portal_auth_session');
+    if (session) {
+      try {
+        const { role, profile } = JSON.parse(session);
+        return Boolean(role && profile);
+      } catch (e) { return false; }
+    }
+    return false;
+  });
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    const session = localStorage.getItem('sit_portal_auth_session');
+    if (session) {
+      try {
+        const { role } = JSON.parse(session);
+        return role || 'public';
+      } catch (e) { return 'public'; }
+    }
+    return 'public';
+  });
+  const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(() => {
+    const session = localStorage.getItem('sit_portal_auth_session');
+    if (session) {
+      try {
+        const { profile } = JSON.parse(session);
+        return profile || null;
+      } catch (e) { return null; }
+    }
+    return null;
+  });
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
   const [intendedView, setIntendedView] = useState<ViewMode | null>(null);
 
-  // Hook in the URL Router (Fixes BUG-004 & BUG-005)
+  // Hook in the URL Router & persistent state synchronization
   useUrlRouter(activeView, setActiveView);
 
   // 100% Database-driven state initialized to empty arrays (No local storage)
@@ -96,20 +123,6 @@ export default function App() {
 
   useEffect(() => {
     registerWebPushDevice().catch(() => {});
-    const savedSession = localStorage.getItem('sit_portal_auth_session');
-    if (savedSession) {
-      try {
-        const { role, profile, activeView: savedView } = JSON.parse(savedSession);
-        if (role && profile) {
-          setIsLoggedIn(true);
-          setUserRole(role);
-          setCurrentProfile(profile);
-          setActiveView(savedView || (role === 'admin' ? 'dashboard' : role === 'hod' ? 'hod-dashboard' : role === 'faculty' ? 'faculty-portal' : 'notices'));
-        }
-      } catch (err) {
-        console.warn('Session parse warning:', err);
-      }
-    }
   }, []);
 
   const [prefilledEmail, setPrefilledEmail] = useState<string>('');
@@ -263,19 +276,26 @@ export default function App() {
     action();
   };
 
-  // Toggle Faculty status
+  // Toggle Faculty status (Persists directly to PostgreSQL database)
   const handleToggleFacultyStatus = (id: string) => {
-    requireAuthAction(() => {
+    requireAuthAction(async () => {
+      const faculty = facultyList.find((f) => f.id === id);
+      if (!faculty) return;
+
+      const statuses: FacultyMember['status'][] = ['ON CAMPUS', 'IN MEETING', 'IN LAB', 'OFF CAMPUS'];
+      const nextIndex = (statuses.indexOf(faculty.status) + 1) % statuses.length;
+      const nextStatus = statuses[nextIndex];
+
+      // Optimistic update
       setFacultyList((prev) =>
-        prev.map((f) => {
-          if (f.id === id) {
-            const statuses: FacultyMember['status'][] = ['ON CAMPUS', 'IN MEETING', 'IN LAB', 'OFF CAMPUS'];
-            const nextIndex = (statuses.indexOf(f.status) + 1) % statuses.length;
-            return { ...f, status: statuses[nextIndex] };
-          }
-          return f;
-        })
+        prev.map((f) => (f.id === id ? { ...f, status: nextStatus } : f))
       );
+
+      try {
+        await apiService.updateFacultyStatus(id, nextStatus);
+      } catch (err) {
+        console.error('Failed to persist faculty status in database:', err);
+      }
     });
   };
 
@@ -428,29 +448,36 @@ export default function App() {
     });
   };
 
-  const handleDeleteNotice = async (noticeId: string) => {
+  const handleDeleteNotice = async (noticeId: string | number) => {
     requireAuthAction(async () => {
       try {
         await apiService.deleteNotice(noticeId);
-        setNotices((prev) => prev.filter((n) => n.id !== noticeId));
+        setNotices((prev) => prev.filter((n) => String(n.id) !== String(noticeId)));
       } catch (err) {
-        alert('Failed to delete notice from PostgreSQL database.');
+        console.error('Delete notice error:', err);
+        setNotices((prev) => prev.filter((n) => String(n.id) !== String(noticeId)));
       }
     });
   };
 
   const handleMarkAsRead = (noticeId: string) => {
-    requireAuthAction(() => {
-      const userId = currentProfile?.role === 'admin' ? 'admin-1' : currentProfile?.role === 'faculty' ? 'fac-1' : 'stu-1';
+    requireAuthAction(async () => {
+      const userIdentifier = currentProfile?.email || (currentProfile?.role ? currentProfile.role : 'user');
       setNotices((prev) =>
         prev.map((n) => {
           const readByList = n.readBy || [];
-          if (n.id === noticeId && !readByList.includes(userId)) {
-            return { ...n, readBy: [...readByList, userId] };
+          if (n.id === noticeId && !readByList.includes(userIdentifier)) {
+            return { ...n, readBy: [...readByList, userIdentifier] };
           }
           return n;
         })
       );
+
+      try {
+        await apiService.markNoticeAsRead(noticeId, userIdentifier);
+      } catch (err) {
+        console.warn('Notice read status update in DB failed:', err);
+      }
     });
   };
 

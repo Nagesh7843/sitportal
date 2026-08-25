@@ -3,6 +3,7 @@ import { ViewMode, NoticeItem } from '@/types';
 import sitLogo from '@/assets/sit-logo.png';
 import { Shield, Megaphone, Calendar, Users, ArrowRight, Sparkles, Clock, ChevronRight } from 'lucide-react';
 import { PlacementHubSection } from './PlacementHubSection';
+import { PlacedStudentsSection } from './PlacedStudentsSection';
 import { CollegeNewsEventsSection } from './CollegeNewsEventsSection';
 
 interface PublicLandingProps {
@@ -23,100 +24,112 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
       <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Megaphone className="w-4 h-4 text-indigo-600" />
-              Central Digital Notice Stream
-            </h2>
-            <p className="text-xs text-slate-500">Official circulars and academic updates</p>
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-md bg-amber-50 text-amber-600">
+                <Megaphone className="w-4 h-4" aria-hidden="true" />
+              </span>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">Central Notice Board</h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100/80 text-amber-800 border border-amber-200">
+                Official CSE Circulars
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              General academic, institutional, and student circulars from the Principal, HOD, and Staff.
+            </p>
           </div>
-
           <button
             onClick={() => onNavigate('notices')}
-            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none rounded-md px-1"
-            aria-label="View all circulars"
+            className="text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 group focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none rounded-lg p-1"
           >
-            <span>All Circulars</span>
-            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>View All Notices</span>
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Live Notices Stream */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[...notices].sort((a, b) => {
-            const idA = typeof a.id === 'number' ? a.id : parseInt(String(a.id || 0), 10) || 0;
-            const idB = typeof b.id === 'number' ? b.id : parseInt(String(b.id || 0), 10) || 0;
-            return idB - idA;
-          }).slice(0, 4).map((notice) => (
-            <button
-              key={notice.id}
-              onClick={() => setSelectedNotice(notice)}
-              className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-indigo-300 hover:bg-slate-100/60 transition-all cursor-pointer space-y-2 flex flex-col justify-between text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
-              aria-label={`Read notice: ${notice.title}`}
-            >
-              <div className="space-y-1.5">
+        {notices.length === 0 ? (
+          <div className="text-center py-8 text-slate-400">
+            <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-50" aria-hidden="true" />
+            <p className="text-xs font-medium">No published notices available at this time.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {notices.slice(0, 3).map((notice) => (
+              <button
+                key={notice.id}
+                onClick={() => setSelectedNotice(notice)}
+                className="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 bg-slate-50/50 hover:bg-white transition-all space-y-2 text-left cursor-pointer group focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none shadow-2xs hover:shadow-xs"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    notice.priority === 'URGENT' ? 'bg-red-50 text-red-700 border border-red-200' :
+                    notice.priority === 'NORMAL' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                    'bg-slate-100 text-slate-700'
+                  }`}>
                     {notice.category}
                   </span>
-                  {notice.expiresAt && (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {notice.expiresAt}
-                    </span>
-                  )}
+                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" aria-hidden="true" />
+                    {notice.publishedAt.split('•')[0]}
+                  </span>
                 </div>
-
-                <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
+                <h3 className="font-bold text-xs text-slate-900 group-hover:text-indigo-900 transition-colors line-clamp-1">
                   {notice.title}
                 </h3>
-                
-                <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
                   {notice.content}
                 </p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500">
-                <span>By <strong>{notice.authorName}</strong></span>
-                <span className="text-indigo-600 font-bold hover:underline flex items-center gap-0.5">
-                  Read Notice
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] text-slate-400">
+                  <span className="truncate">By {notice.authorName}</span>
+                  <span className="text-indigo-700 font-semibold group-hover:underline">Read Full</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Sleek Department Modules Grid */}
+      {/* 🚀 Quick Portal Access Hub */}
       <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div className="border-b border-slate-100 pb-3">
-          <h2 className="text-base font-bold text-slate-900">Department Modules</h2>
-          <p className="text-xs text-slate-500">Quick navigation to key academic tools</p>
+        <div>
+          <h2 className="text-base font-bold text-slate-900 tracking-tight">Department Services & Resources</h2>
+          <p className="text-xs text-slate-500">Direct shortcuts to department facilities, schedules, and directories.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <button 
-            onClick={() => onNavigate('notices')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
-          >
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
-              <Megaphone className="w-4 h-4" aria-hidden="true" />
-            </div>
-            <h3 className="font-bold text-xs text-slate-900">Digital Notice Board</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">Targeted circulars by Year, Division, and Batch.</p>
-          </button>
-
-          <button 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
             onClick={() => onNavigate('academic-calendar')}
             className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
               <Calendar className="w-4 h-4" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-xs text-slate-900">Academic Calendar</h3>
             <p className="text-[11px] text-slate-500 leading-relaxed">Semester roadmaps, examination schedules, and milestones.</p>
           </button>
 
-          <button 
+          <button
+            onClick={() => onNavigate('curriculum')}
+            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+          >
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
+            </div>
+            <h3 className="font-bold text-xs text-slate-900">Curriculum & Syllabus</h3>
+            <p className="text-[11px] text-slate-500 leading-relaxed">DBATU Autonomous scheme course structures & credits.</p>
+          </button>
+
+          <button
+            onClick={() => onNavigate('documents')}
+            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+          >
+            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+              <Shield className="w-4 h-4" aria-hidden="true" />
+            </div>
+            <h3 className="font-bold text-xs text-slate-900">Department Documents</h3>
+            <p className="text-[11px] text-slate-500 leading-relaxed">Official curriculum circulars, forms, and institutional guides.</p>
+          </button>
+
+          <button
             onClick={() => onNavigate('faculty')}
             className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
           >
@@ -129,8 +142,11 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
         </div>
       </section>
 
-      {/* Placement Hub Window */}
+      {/* Training & Placement (T&P) Hub Window */}
       <PlacementHubSection onExploreNotices={() => onNavigate('notices')} userRole={userRole} />
+
+      {/* 🌟 Dedicated Placed Students & Star Achievers Scrolling Showcase */}
+      <PlacedStudentsSection userRole={userRole} />
 
       {/* SIT Portal News & Campus Events Section with Photos */}
       <CollegeNewsEventsSection userRole={userRole} />

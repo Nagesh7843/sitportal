@@ -1,21 +1,32 @@
 package com.sit.portal.service;
 
 import com.sit.portal.entity.Notice;
+import com.sit.portal.entity.NoticeRead;
 import com.sit.portal.entity.FcmToken;
 import com.sit.portal.repository.NoticeRepository;
+import com.sit.portal.repository.NoticeReadRepository;
 import com.sit.portal.repository.FcmTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional
 public class NoticeService {
 
     @Autowired
     private NoticeRepository noticeRepository;
+
+    @Autowired
+    private NoticeReadRepository noticeReadRepository;
 
     @Autowired
     private FcmTokenRepository fcmTokenRepository;
@@ -23,23 +34,30 @@ public class NoticeService {
     @Autowired
     private PushNotificationService pushNotificationService;
 
+    @Autowired
+    private SettingService settingService;
+
     @Cacheable(value = "notices")
     public List<Notice> getAllNotices() {
         return noticeRepository.findAllPrioritizedAndLatest();
     }
 
     /**
-     * Automated Scheduler: Deletes notices published older than 20 days (runs hourly).
+     * Automated Scheduler: Deletes notices published older than configured retention days (runs hourly).
      */
     @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 * * * *")
     @CacheEvict(value = "notices", allEntries = true)
     public int autoCleanupExpiredNotices() {
         int retentionDays = 20;
-        java.time.LocalDateTime cutoffDate = java.time.LocalDateTime.now().minusDays(retentionDays);
+        try {
+            String daysStr = settingService.getSystemSettings().getRetentionDays();
+            if (daysStr != null && !daysStr.trim().isEmpty()) {
+                retentionDays = Integer.parseInt(daysStr.trim());
+            }
+        } catch (Exception ignored) {}
+
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(retentionDays);
         int deleted = noticeRepository.deleteNoticesOlderThan(cutoffDate);
-        if (deleted > 0) {
-            System.out.println("Automated Notice Expiry Scheduler: Successfully cleaned up " + deleted + " notices older than " + retentionDays + " days.");
-        }
         return deleted;
     }
 
@@ -48,47 +66,59 @@ public class NoticeService {
      */
     @CacheEvict(value = "notices", allEntries = true)
     public int cleanupNoticesOlderThanDays(int days) {
-        java.time.LocalDateTime cutoffDate = java.time.LocalDateTime.now().minusDays(days);
-        int deleted = noticeRepository.deleteNoticesOlderThan(cutoffDate);
-        if (deleted > 0) {
-            System.out.println("Notice Expiry Cleanup: Removed " + deleted + " notices older than " + days + " days.");
-        }
-        return deleted;
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+        return noticeRepository.deleteNoticesOlderThan(cutoffDate);
     }
 
     @CacheEvict(value = "notices", allEntries = true)
     public Notice createNotice(Notice notice) {
         if (notice.getPublishedAt() == null || notice.getPublishedAt().isEmpty() || "Just now".equals(notice.getPublishedAt())) {
-            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a");
-            notice.setPublishedAt(java.time.LocalDateTime.now().format(formatter));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a");
+            notice.setPublishedAt(LocalDateTime.now().format(formatter));
         }
         Notice savedNotice = noticeRepository.save(notice);
-        
-        // Broadcast Push Notification to all registered FCM tokens
-        List<FcmToken> tokens = fcmTokenRepository.findAll();
-        System.out.println("========== PUSH NOTIFICATION BROADCAST ==========");
-        System.out.println("Title: New Notice Published - " + savedNotice.getTitle());
-        System.out.println("Total Devices Targeted: " + tokens.size());
-        for (FcmToken token : tokens) {
-            System.out.println("-> Sending FCM push to device token: " + token.getToken() + " (User: " + token.getEmail() + ")");
-        }
-        System.out.println("=================================================");
 
-        // Trigger Web Push
+        // Broadcast Web Push Notification
         try {
             pushNotificationService.sendPushNotificationToAll(
                 "New Notice: " + savedNotice.getTitle(),
                 savedNotice.getContent()
             );
-        } catch (Exception e) {
-            System.err.println("Error triggering Web Push: " + e.getMessage());
-        }
-        
+        } catch (Exception ignored) {}
+
         return savedNotice;
     }
 
-    public java.util.Optional<Notice> getNoticeById(Long id) {
+    public Optional<Notice> getNoticeById(Long id) {
         return noticeRepository.findById(id);
+    }
+
+    @CacheEvict(value = "notices", allEntries = true)
+    public Optional<Notice> markNoticeAsRead(Long noticeId, String userIdentifier) {
+        if (userIdentifier == null || userIdentifier.trim().isEmpty()) {
+            userIdentifier = "anonymous";
+        }
+        String cleanUser = userIdentifier.trim().toLowerCase();
+
+        return noticeRepository.findById(noticeId).map(notice -> {
+            boolean alreadyRead = noticeReadRepository.existsByNoticeIdAndUserIdentifier(noticeId, cleanUser);
+            if (!alreadyRead) {
+                noticeReadRepository.save(NoticeRead.builder()
+                        .noticeId(noticeId)
+                        .userIdentifier(cleanUser)
+                        .readAt(LocalDateTime.now())
+                        .build());
+
+                List<String> reads = notice.getReadBy() != null ? new ArrayList<>(notice.getReadBy()) : new ArrayList<>();
+                if (!reads.contains(cleanUser)) {
+                    reads.add(cleanUser);
+                    notice.setReadBy(reads);
+                }
+                notice.setViewsCount((notice.getViewsCount() != null ? notice.getViewsCount() : 0) + 1);
+                return noticeRepository.save(notice);
+            }
+            return notice;
+        });
     }
 
     @CacheEvict(value = "notices", allEntries = true)
@@ -113,8 +143,14 @@ public class NoticeService {
     }
 
     @CacheEvict(value = "notices", allEntries = true)
-    public void deleteNotice(Long id) {
+    public boolean deleteNotice(Long id) {
+        if (!noticeRepository.existsById(id)) {
+            return false;
+        }
+        try {
+            noticeReadRepository.deleteByNoticeId(id);
+        } catch (Exception ignored) {}
         noticeRepository.deleteById(id);
+        return true;
     }
 }
-

@@ -17,6 +17,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
   const [googleCustomEmail, setGoogleCustomEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -24,7 +25,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
   const [isGsiLoaded, setIsGsiLoaded] = useState(false);
 
   // Read Google Cloud Client ID from .env environment file
-  const googleClientId = (((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID) || localStorage.getItem('sit_google_client_id') || '').trim();
+  const [googleClientId] = useState<string>(() => {
+    return (((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID) || localStorage.getItem('sit_google_client_id') || '').trim();
+  });
 
   // Initialize Real-Time Official Google Identity Services SDK (gsi/client)
   useEffect(() => {
@@ -62,14 +65,64 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
       const userName = googleData.name || userEmail.split('@')[0];
       const userAvatar = googleData.picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250';
 
-      executeGoogleAuthWithProfile(userEmail, userName, userAvatar);
+      executeGoogleAuthWithProfile(userEmail, userName, userAvatar, response.credential);
     } catch (err) {
       console.error('Google OAuth decoding error:', err);
       setErrorMessage('Google Sign-In failed to parse ID Token response.');
     }
   };
 
-  // Render Official Native Google Sign-In Button if VITE_GOOGLE_CLIENT_ID is set in .env
+  // Trigger Google OAuth 2.0 Popup Window
+  const triggerGoogleOAuthPopup = () => {
+    setErrorMessage('');
+    if (googleClientId && (window as any).google?.accounts?.oauth2) {
+      try {
+        const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              try {
+                const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+                if (userRes.ok) {
+                  const googleProfile = await userRes.json();
+                  if (googleProfile.email) {
+                    executeGoogleAuthWithProfile(
+                      googleProfile.email.toLowerCase(),
+                      googleProfile.name || googleProfile.email.split('@')[0],
+                      googleProfile.picture
+                    );
+                    return;
+                  }
+                }
+              } catch (fetchErr) {
+                console.warn('Google userinfo fetch failed:', fetchErr);
+              }
+            }
+            if (tokenResponse?.error) {
+              setErrorMessage(`Google OAuth error: ${tokenResponse.error_description || tokenResponse.error}`);
+            }
+          },
+        });
+        tokenClient.requestAccessToken();
+        return;
+      } catch (oauthErr: any) {
+        console.warn('OAuth2 popup error:', oauthErr);
+      }
+    }
+
+    if (googleClientId && (window as any).google?.accounts?.id) {
+      (window as any).google.accounts.id.prompt();
+    } else if (googleCustomEmail.trim()) {
+      executeGoogleAuth(googleCustomEmail);
+    } else {
+      setShowGoogleModal(true);
+    }
+  };
+
+  // Render Official Native Google Sign-In Button if VITE_GOOGLE_CLIENT_ID is set
   useEffect(() => {
     if (showGoogleModal && isGsiLoaded && googleClientId && (window as any).google?.accounts?.id) {
       try {
@@ -95,24 +148,29 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
     }
   }, [showGoogleModal, isGsiLoaded, googleClientId]);
 
-
-
-  const executeGoogleAuthWithProfile = async (cleanEmail: string, name: string, avatar?: string) => {
+  const executeGoogleAuthWithProfile = async (cleanEmail: string, name: string, avatar?: string, idToken?: string) => {
     setShowGoogleModal(false);
     setIsLoading(true);
+    setErrorMessage('');
 
     try {
-      const dbUser = await apiService.loginWithGoogle(cleanEmail);
+      const dbUser = await apiService.loginWithGoogle(cleanEmail, idToken);
       setIsLoading(false);
       onLoginSuccess(dbUser.role, dbUser.email || cleanEmail, dbUser.user || dbUser);
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMessage(err.message || 'Google Authentication failed. Please check your credentials or create an account first.');
+      setErrorMessage(
+        err.message ||
+          `Access Denied: The Google account (${cleanEmail}) is not registered in the official Sharad Institute of Technology (SITCOE) & Trust roster. Only pre-enrolled students, faculty, and verified guardians are permitted to log in.`
+      );
     }
   };
 
   const executeGoogleAuth = (selectedEmail: string) => {
-    if (!selectedEmail.trim()) return;
+    if (!selectedEmail.trim()) {
+      setErrorMessage('Please enter your institutional Google account email to authenticate.');
+      return;
+    }
     const cleanEmail = selectedEmail.trim().toLowerCase();
     const name = cleanEmail.split('@')[0].toUpperCase();
     executeGoogleAuthWithProfile(cleanEmail, name);
@@ -205,7 +263,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           {/* Real-Time Google OAuth 2.0 Sign In Button */}
           <button
             type="button"
-            onClick={() => setShowGoogleModal(true)}
+            onClick={triggerGoogleOAuthPopup}
             className="w-full py-3 px-4 bg-white border border-slate-300 hover:border-slate-400 text-slate-800 font-bold rounded-xl text-xs shadow-sm hover:shadow transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -224,9 +282,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           </div>
 
           {errorMessage && (
-            <div className="p-3 bg-[#ffdad6] text-[#ba1a1a] rounded-xl text-[12px] font-bold border border-[#ffb4ab] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">error</span>
-              <span>{errorMessage}</span>
+            <div className="p-3 bg-[#ffdad6] text-[#ba1a1a] rounded-xl text-[12px] font-bold border border-[#ffb4ab] flex items-start gap-2">
+              <span className="material-symbols-outlined text-[18px] shrink-0 mt-0.5">gpp_maybe</span>
+              <div className="space-y-0.5">
+                <span className="block">{errorMessage}</span>
+                <span className="block text-[11px] font-normal text-red-700">
+                  Note: Google Sign-In requires your email to be registered in the department database.
+                </span>
+              </div>
             </div>
           )}
 
@@ -415,70 +478,71 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
 
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">Sign in with Google</h2>
               <p className="text-xs text-slate-500">
-                Choose an institutional Google account to continue to <strong>SIT CSE Department Portal</strong>
+                Single Sign-On for <strong>Sharad Institute of Technology (SITCOE)</strong> & Trust institutions.
               </p>
             </div>
 
-            {/* Primary Continue with Google Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (googleClientId && (window as any).google?.accounts?.id) {
-                  (window as any).google.accounts.id.prompt();
-                } else if (googleCustomEmail.trim()) {
-                  executeGoogleAuth(googleCustomEmail);
-                } else {
-                  setErrorMessage('Google Authentication Error: Please enter your college domain or Gmail address below to verify your identity.');
-                }
-              }}
-              className="w-full py-3.5 px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold rounded-2xl text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer"
-            >
-              <svg className="w-5 h-5 bg-white p-0.5 rounded-full" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-              </svg>
-              <span>Continue with Google</span>
-            </button>
-
-            {/* Native Live Google Button Container (Rendered if VITE_GOOGLE_CLIENT_ID is set in .env) */}
-            {googleClientId && (
-              <div className="flex flex-col items-center justify-center p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2">
-                <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">
-                  ⚡ Official Google Authentication Widget:
-                </span>
-                <div id="nativeGoogleSignInBtn" className="min-h-[44px]"></div>
-              </div>
-            )}
-
-
-
-            {/* Custom Google Account Input */}
-            <div className="pt-2 border-t border-slate-200 space-y-2">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Or enter another college domain mail
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={googleCustomEmail}
-                  onChange={(e) => setGoogleCustomEmail(e.target.value)}
-                  placeholder="name@sitcoe.org.in"
-                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600"
-                />
+            {/* If Google Client ID is configured, show one-click Google Sign-in */}
+            {googleClientId ? (
+              <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => executeGoogleAuth(googleCustomEmail)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0"
+                  onClick={triggerGoogleOAuthPopup}
+                  className="w-full py-3 px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold rounded-xl text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 cursor-pointer"
                 >
-                  Verify
+                  <svg className="w-5 h-5 bg-white p-0.5 rounded-full" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  <span>One-Click Google Sign-In</span>
                 </button>
+                <div id="nativeGoogleSignInBtn" className="flex justify-center"></div>
               </div>
-            </div>
+            ) : null}
 
-            <p className="text-[10px] text-center text-slate-400 leading-normal">
-              By continuing, Google will share your name, email address, and profile picture with SIT CSE Department Portal.
+            {/* Institutional Google Email Verification */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (googleEmail.trim()) {
+                  executeGoogleAuth(googleEmail);
+                }
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-left">
+                  Enter Registered College Google Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    placeholder="e.g. admin@sitcoe.ac.in or student@sitcoe.org.in"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white"
+                  />
+                  <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-[18px] text-slate-400">
+                    mail
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !googleEmail.trim()}
+                className="w-full py-3 px-4 bg-[#000666] hover:bg-[#1a237e] text-white font-bold rounded-xl text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                <span>{isLoading ? 'Verifying Account...' : 'Verify & Sign In with Google'}</span>
+              </button>
+            </form>
+
+            <p className="text-[11px] text-center text-slate-500 font-medium leading-relaxed pt-2 border-t border-slate-100">
+              🔒 <strong>Single Sign-On Security</strong>: Access is authorized exclusively for pre-registered SITCOE & Trust institutional Google accounts.
             </p>
           </div>
         </div>

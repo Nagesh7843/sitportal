@@ -11,6 +11,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByAcademicYear(String academicYear);
     List<Student> findByAcademicYearAndDivision(String academicYear, String division);
     boolean existsByEmail(String email);
+    java.util.Optional<Student> findByEmail(String email);
     java.util.Optional<Student> findByRollNo(String rollNo);
     java.util.Optional<Student> findByPrn(String prn);
     java.util.Optional<Student> findByParentEmail(String parentEmail);

@@ -101,6 +101,7 @@ Targeted notifications can be filtered precisely down to specific cohorts:
 - [`src/features/dashboard/AdminDashboard.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/dashboard/AdminDashboard.tsx): Master Integrated Communication Ledger, Sender Directory, and Real-Time Transferred Email Tracker.
 - [`src/components/layout/Sidebar.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/components/layout/Sidebar.tsx): SITCOE Institutional Navigation Drawer.
 - [`src/components/layout/Footer.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/components/layout/Footer.tsx): SITCOE Footer & Institutional Credits.
+- [`LOGIN_TO_USER_ROLE_HLD.md`](file:///d:/SIT%20PORTAL/cse-department-portal/LOGIN_TO_USER_ROLE_HLD.md): Complete High-Level Design (HLD) specification for Authentication, Authorization, Role-Based Access Control (RBAC), and Persona Routing.
 
 ---
 *Specification Document Generated for SITCOE Communication Portal.*

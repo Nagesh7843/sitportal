@@ -35,6 +35,12 @@ public class PlacementStat {
     @Column(name = "batch_year")
     private String batchYear;
 
+    @Column(name = "banner_image_url", columnDefinition = "TEXT")
+    private String bannerImageUrl;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

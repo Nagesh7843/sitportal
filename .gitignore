@@ -10,3 +10,4 @@ backend/target/
 playwright-report/
 test-results/
 *.pdf
+backend/src/main/resources/application-local.properties

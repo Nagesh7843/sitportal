@@ -33,18 +33,18 @@ export const aiService = {
     const apiKey = getApiKey();
 
     const modeFocus = {
-      general: 'Focus on providing clean, concise, helpful guidance about SIT CSE Department Portal.',
+      general: 'Focus on providing clean, concise, helpful guidance about the Sharad Institute of Technology (SITCOE) Portal and Trust institutions.',
       academic: 'Focus on curriculum, course credits, examination schemes, GPA calculations, and study materials.',
       faculty: 'Focus on faculty designations, current campus location (ON CAMPUS, IN LAB, IN MEETING), research, and office hours.',
-      notices: 'Focus on filtering circulars, urgent notices, submission deadlines, and academic year targets.'
+      notices: 'Focus on filtering circulars, urgent notices, submission deadlines, and academic targets.'
     }[mode];
 
-    const systemPrompt = `You are SIT AI, the intelligent, helpful official AI Assistant for the Computer Science & Engineering (CSE) Department at Sharad Institute of Technology (SIT).
+    const systemPrompt = `You are SIT AI, the intelligent, helpful official AI Assistant for Sharad Institute of Technology (SITCOE) and Trust Institutions.
 ${modeFocus}
 
-LIVE DEPARTMENTAL DATA:
-- Department: Computer Science & Engineering (CSE), SIT
-- Administrator: Nagesh (gnagesh550@gmail.com)
+LIVE INSTITUTIONAL DATA:
+- Institution: Sharad Institute of Technology (SITCOE) & Trust Units
+- Administration: Central Administration & Portal Controllers
 - Active Faculty Roster (${contextData.faculty.length}): ${contextData.faculty.map(f => `${f.name} [${f.status}] - Spec: ${f.specialization}, Office: ${f.officeHours || '9 AM - 5 PM'}`).join('; ')}
 - Published Circulars (${contextData.notices.length}): ${contextData.notices.map(n => `[${n.priority}] "${n.title}" (Date: ${n.publishedAt})`).join('; ')}
 - Available Study Documents (${contextData.documents.length}): ${contextData.documents.map(d => `${d.title} [${d.category}]`).join('; ')}
@@ -123,10 +123,10 @@ RESPONSE STYLE RULES:
       return `### 🎓 Academic & Curriculum Guide\n\n• **Department**: Computer Science & Engineering (B.Tech)\n• **Syllabus & Notes**: Access all semester PDFs under **Documents Library**.\n• **CGPA Grading**: Based on SIT autonomous 10-point credit scale.\n• **Minimum Attendance**: 85% mandatory for examination eligibility.`;
     }
 
-    if (q.includes('admin') || q.includes('nagesh') || q.includes('hod')) {
-      return `### 👑 Administration\n\n• **Controller & Super Admin**: Nagesh (gnagesh550@gmail.com)\n• **Department**: Computer Science & Engineering, SIT Tumakuru\n• **Portal Access**: Role-based access for Admin, Faculty, and Students.`;
+    if (q.includes('admin') || q.includes('controller') || q.includes('hod')) {
+      return `### 👑 Administration\n\n• **Central Administration**: Sharad Institute of Technology (SITCOE)\n• **Portal Access**: Role-based access for Admin, Faculty, Students, and Parents.`;
     }
 
-    return `### 🤖 SIT CSE AI Assistant\n\nHow can I help you today? Select a mode above or ask about:\n• **Notices & Circulars**\n• **Faculty presence status**\n• **Syllabus & Study documents**`;
+    return `### 🤖 SIT Institutional AI Assistant\n\nHow can I help you today? Select a mode above or ask about:\n• **Notices & Circulars**\n• **Faculty presence status**\n• **Syllabus & Study documents**\n• **Placement & Academic Programs**`;
   }
 };

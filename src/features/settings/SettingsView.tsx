@@ -18,32 +18,31 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) => {
-  const [activeDepartment, setActiveDepartment] = useState<string>(() => {
-    return localStorage.getItem('sit_setting_active_dept') || 'CSE';
-  });
-  const [academicYear, setAcademicYear] = useState<string>(() => {
-    return localStorage.getItem('sit_setting_academic_year') || '2026-27';
-  });
+  const [activeDepartment, setActiveDepartment] = useState<string>('Computer Science & Engineering');
+  const [academicYear, setAcademicYear] = useState<string>('2025-2026');
 
   // Scraper & Notification Settings
-  const [scraperInterval, setScraperInterval] = useState<string>(() => {
-    return localStorage.getItem('sit_setting_scraper_interval') || '30';
-  });
-  const [retentionDays, setRetentionDays] = useState<string>(() => {
-    return localStorage.getItem('sit_setting_retention_days') || '20';
-  });
-  const [pushOnScrape, setPushOnScrape] = useState<boolean>(() => {
-    const saved = localStorage.getItem('sit_setting_push_on_scrape');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  const [soundAlerts, setSoundAlerts] = useState<boolean>(() => {
-    const saved = localStorage.getItem('sit_setting_sound_alerts');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  const [emailAlerts, setEmailAlerts] = useState<boolean>(() => {
-    const saved = localStorage.getItem('sit_setting_email_alerts');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [scraperInterval, setScraperInterval] = useState<string>('30');
+  const [retentionDays, setRetentionDays] = useState<string>('20');
+  const [pushOnScrape, setPushOnScrape] = useState<boolean>(true);
+  const [soundAlerts, setSoundAlerts] = useState<boolean>(true);
+  const [emailAlerts, setEmailAlerts] = useState<boolean>(true);
+
+  useEffect(() => {
+    apiService.fetchSettings().then((s) => {
+      if (s) {
+        if (s.activeDepartment) setActiveDepartment(s.activeDepartment);
+        if (s.academicYear) setAcademicYear(s.academicYear);
+        if (s.scraperInterval) setScraperInterval(String(s.scraperInterval));
+        if (s.retentionDays) setRetentionDays(String(s.retentionDays));
+        if (s.pushOnScrape !== undefined) setPushOnScrape(Boolean(s.pushOnScrape));
+        if (s.soundAlerts !== undefined) setSoundAlerts(Boolean(s.soundAlerts));
+        if (s.emailAlerts !== undefined) setEmailAlerts(Boolean(s.emailAlerts));
+      }
+    }).catch((err) => {
+      console.warn('Failed to load system settings from database:', err);
+    });
+  }, []);
 
   const [testEmailAddress, setTestEmailAddress] = useState<string>(() => {
     return currentProfile?.email || '';
@@ -203,16 +202,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
     setIsRunningDiagnostics(false);
   };
 
-  const handleSavePreferences = () => {
-    localStorage.setItem('sit_setting_active_dept', activeDepartment);
-    localStorage.setItem('sit_setting_academic_year', academicYear);
-    localStorage.setItem('sit_setting_scraper_interval', scraperInterval);
-    localStorage.setItem('sit_setting_retention_days', retentionDays);
-    localStorage.setItem('sit_setting_push_on_scrape', JSON.stringify(pushOnScrape));
-    localStorage.setItem('sit_setting_sound_alerts', JSON.stringify(soundAlerts));
-    localStorage.setItem('sit_setting_email_alerts', JSON.stringify(emailAlerts));
-
-    setSaveToast('✅ Configuration and diagnostic preferences saved successfully.');
+  const handleSavePreferences = async () => {
+    try {
+      await apiService.updateSettings({
+        activeDepartment,
+        academicYear,
+        scraperInterval,
+        retentionDays,
+        pushOnScrape,
+        soundAlerts,
+        emailAlerts,
+      });
+      setSaveToast('✅ Configuration saved directly to PostgreSQL database successfully.');
+    } catch (err) {
+      setSaveToast('❌ Failed to save configuration to database.');
+    }
     setTimeout(() => setSaveToast(null), 4000);
   };
 

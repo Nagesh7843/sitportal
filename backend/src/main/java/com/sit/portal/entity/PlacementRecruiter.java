@@ -29,6 +29,15 @@ public class PlacementRecruiter {
     @Column(name = "role_tag")
     private String roleTag;
 
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
+    @Column(name = "website_url", length = 500)
+    private String websiteUrl;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

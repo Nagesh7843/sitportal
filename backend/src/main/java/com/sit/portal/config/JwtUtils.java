@@ -13,10 +13,18 @@ import java.util.Date;
 public class JwtUtils {
 
     private final Key key;
-    private final long jwtExpirationMs = 86400000; // 24 Hours
+    private final long jwtExpirationMs;
 
-    public JwtUtils(@Value("${JWT_SECRET:SitPortalSecretKeyForJwtAuthenticationToken2026SecureKey!}") String jwtSecret) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public JwtUtils(
+            @Value("${app.jwt.secret:${JWT_SECRET:SitPortalProductionSecretKeyForJwtAuthenticationToken2026SecureKey!}}") String jwtSecret,
+            @Value("${app.jwt.expiration-ms:${JWT_EXPIRATION_MS:86400000}}") long jwtExpirationMs) {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.jwtExpirationMs = jwtExpirationMs;
+    }
+
+    public JwtUtils(String jwtSecret) {
+        this(jwtSecret, 86400000L);
     }
 
     public String generateToken(String email, String role) {

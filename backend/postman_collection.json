@@ -126,7 +126,7 @@
 					"response": []
 				},
 				{
-					"name": "Google OAuth Login",
+					"name": "Google OAuth Login (Roster-Verified)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -137,13 +137,37 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"nagesh@sitcoe.org.in\"\n}"
+							"raw": "{\n  \"email\": \"admin@sitcoe.ac.in\",\n  \"idToken\": \"\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/google",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "google"]
-						}
+						},
+						"description": "Authenticates user via Google OAuth email or ID Token. Enforces strict DB validation: Only allows login if email is present in users, faculty, students, or parents tables in PostgreSQL. Returns HTTP 200 + JWT."
+					},
+					"response": []
+				},
+				{
+					"name": "Google OAuth Login - Unauthorized Rejection (403)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"external.unauthorized@gmail.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/google",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "google"]
+						},
+						"description": "Demonstrates strict roster security: An unknown email not in the database is strictly rejected with HTTP 403 Forbidden."
 					},
 					"response": []
 				},
@@ -2012,13 +2036,36 @@
 						"header": [{"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"TCS Digital\",\n  \"packageBand\": \"₹7.5 - 11.5 LPA\",\n  \"roleTag\": \"Product & Digital Dev\"\n}"
+							"raw": "{\n  \"name\": \"TCS Digital\",\n  \"packageBand\": \"₹7.5 - 11.5 LPA\",\n  \"roleTag\": \"Product & Digital Dev\",\n  \"logoUrl\": \"https://logo.clearbit.com/tcs.com\",\n  \"websiteUrl\": \"https://tcs.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/placements/recruiters",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "placements", "recruiters"]
-						}
+						},
+						"description": "Adds a recruiting partner with auto-fetched web logo and official website domain."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Recruiting Partner",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+						},
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"TCS Digital\",\n  \"packageBand\": \"₹9.0 - 12.0 LPA\",\n  \"roleTag\": \"AI & Cloud Engineering\",\n  \"logoUrl\": \"https://logo.clearbit.com/tcs.com\",\n  \"websiteUrl\": \"https://tcs.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters", "1"]
+						},
+						"description": "Updates recruiting partner details, domain, and web logo in database."
 					},
 					"response": []
 				},
@@ -2212,6 +2259,381 @@
 							"path": ["api", "v1", "activities"]
 						},
 						"description": "Fetches recent live audit track records of notices generated, drives added, and scraper synchronizations."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "💼 13. Training & Placement (T&P) Hub Module",
+			"item": [
+				{
+					"name": "Get Placement Summary (Stats, Recruiters & Drives)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/summary",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "summary"]
+						},
+						"description": "Fetches aggregated placement metrics with banner image URL, recruiter logo directory, and scheduled campus placement drives."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Placement Key Metrics & Banner",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"highestPackage\": \"₹21.0 LPA\",\n  \"averagePackage\": \"₹6.20 LPA\",\n  \"placementRatio\": \"94.8%\",\n  \"totalOffers\": \"155+ Offers\",\n  \"batchYear\": \"2025-2026\",\n  \"bannerImageUrl\": \"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "stats"]
+						},
+						"description": "Updates placement metrics and highlight banner infographic image in PostgreSQL and triggers broadcast notification."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Recruiting Partner with Web Logo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Persistent Systems\",\n  \"packageBand\": \"₹8.5 LPA\",\n  \"roleTag\": \"Software Engineer\",\n  \"websiteUrl\": \"persistent.com\",\n  \"logoUrl\": \"https://logo.clearbit.com/persistent.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters"]
+						},
+						"description": "Adds a new recruiting enterprise partner with auto-fetched real logo."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Recruiting Partner",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Tata Consultancy Services\",\n  \"packageBand\": \"₹9.0 LPA\",\n  \"roleTag\": \"Digital Innovator\",\n  \"websiteUrl\": \"tcs.com\",\n  \"logoUrl\": \"https://logo.clearbit.com/tcs.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters", "1"]
+						},
+						"description": "Updates recruiting partner details and logo in PostgreSQL."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recruiting Partner",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/recruiters/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "recruiters", "1"]
+						},
+						"description": "Deletes a recruiting partner from database."
+					},
+					"response": []
+				},
+				{
+					"name": "Schedule Placement Drive with Poster Banner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"companyName\": \"Infosys Limited\",\n  \"role\": \"Specialist Programmer (SP)\",\n  \"packageLpa\": \"₹9.5 LPA\",\n  \"driveDate\": \"April 18, 2026\",\n  \"eligibility\": \"BE CSE • CGPA ≥ 7.5\",\n  \"location\": \"Campus Lab 2 & Online\",\n  \"applyDeadline\": \"April 12, 2026\",\n  \"status\": \"UPCOMING\",\n  \"logoUrl\": \"https://logo.clearbit.com/infosys.com\",\n  \"bannerImageUrl\": \"https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/drives",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "drives"]
+						},
+						"description": "Schedules a new on-campus placement drive with drive ad poster banner."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Placement Drive",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"companyName\": \"Infosys Limited\",\n  \"role\": \"Lead Specialist Programmer (LSP)\",\n  \"packageLpa\": \"₹12.0 LPA\",\n  \"driveDate\": \"April 20, 2026\",\n  \"eligibility\": \"BE CSE • CGPA ≥ 8.0\",\n  \"location\": \"Auditorium 1\",\n  \"applyDeadline\": \"April 15, 2026\",\n  \"status\": \"ONGOING\",\n  \"logoUrl\": \"https://logo.clearbit.com/infosys.com\",\n  \"bannerImageUrl\": \"https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/drives/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "drives", "1"]
+						},
+						"description": "Updates a scheduled placement drive with modified details or poster."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Placement Drive",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/drives/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "drives", "1"]
+						},
+						"description": "Removes a scheduled placement drive."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Placed Student Achievers Showcase",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/achievers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "achievers"]
+						},
+						"description": "Fetches all placed student achievers with photos, company logos, package CTC, and roles."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Placed Student Achiever",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentName\": \"Aarav Sharma\",\n  \"prn\": \"2023CSE014\",\n  \"division\": \"A\",\n  \"photoUrl\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80\",\n  \"companyName\": \"Persistent Systems\",\n  \"companyLogoUrl\": \"https://img.logo.dev/persistent.com?token=pk_anonymous\",\n  \"role\": \"Software Development Engineer\",\n  \"packageLpa\": \"₹9.50 LPA\",\n  \"batchYear\": \"2025-2026\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/achievers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "achievers"]
+						},
+						"description": "Records a placed student with photo and company logo for the Placed Students showcase."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Placed Student Achiever",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentName\": \"Aarav Sharma\",\n  \"packageLpa\": \"₹12.0 LPA\",\n  \"role\": \"Senior SDE-1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/achievers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "achievers", "1"]
+						},
+						"description": "Updates an existing placed student achiever."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Placed Student Achiever",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/achievers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "achievers", "1"]
+						},
+						"description": "Deletes a placed student record."
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Official Placement Announcement Notice & Broadcast Push",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"companyName\": \"Persistent Systems\",\n  \"role\": \"Software Development Engineer\",\n  \"packageLpa\": \"₹9.50 LPA\",\n  \"batchYear\": \"2025-2026\",\n  \"congratulationsMessage\": \"Heartiest congratulations to our talented students for this stellar achievement!\",\n  \"bannerImageUrl\": \"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80\",\n  \"placedStudents\": [\n    {\n      \"name\": \"Aarav Sharma\",\n      \"prn\": \"2023CSE014\",\n      \"division\": \"A\",\n      \"packageLpa\": \"₹9.50 LPA\",\n      \"photoUrl\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/generate-notice",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "generate-notice"]
+						},
+						"description": "Generates placement announcement, saves student achievers with photos, and broadcasts Chrome Web Push notifications without polluting the general notice board."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset All Placement Data",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/placements/reset",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "placements", "reset"]
+						},
+						"description": "Danger zone: Clears all placement statistics, recruiters, drives, and achievers from database."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "⚙️ 14. System Settings Module",
+			"item": [
+				{
+					"name": "Get System & Portal Configuration",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/settings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "settings"]
+						},
+						"description": "Retrieves the central PostgreSQL-backed portal settings (active department, academic year, retention days, scraper intervals, alerts)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update System & Portal Configuration",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"activeDepartment\": \"Computer Science & Engineering\",\n  \"academicYear\": \"2025-2026\",\n  \"scraperInterval\": \"30\",\n  \"retentionDays\": \"20\",\n  \"pushOnScrape\": true,\n  \"soundAlerts\": true,\n  \"emailAlerts\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/settings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "settings"]
+						},
+						"description": "Updates central system settings in PostgreSQL sitportaldb."
 					},
 					"response": []
 				}

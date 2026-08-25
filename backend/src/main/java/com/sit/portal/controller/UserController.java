@@ -151,7 +151,7 @@ public class UserController {
 
         User user = userOpt.get();
 
-        if (!passwordEncoder.matches(currentPassword, user.getPassword()) && !currentPassword.equals(user.getPassword())) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             Map<String, String> err = new HashMap<>();
             err.put("message", "Current password is incorrect.");
             return ResponseEntity.badRequest().body(err);

@@ -4,9 +4,11 @@ import com.sit.portal.entity.Notice;
 import com.sit.portal.service.NoticeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/notices")
@@ -33,6 +35,23 @@ public class NoticeController {
         return ResponseEntity.status(201).body(savedNotice);
     }
 
+    @PostMapping("/{id}/read")
+    public ResponseEntity<?> markNoticeAsRead(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body,
+            Authentication authentication
+    ) {
+        String userIdentifier = null;
+        if (authentication != null && authentication.getName() != null) {
+            userIdentifier = authentication.getName();
+        } else if (body != null && body.containsKey("userIdentifier")) {
+            userIdentifier = body.get("userIdentifier");
+        }
+        return noticeService.markNoticeAsRead(id, userIdentifier)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Notice> updateNotice(@PathVariable Long id, @RequestBody Notice notice) {
         Notice updated = noticeService.updateNotice(id, notice);
@@ -43,19 +62,26 @@ public class NoticeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotice(@PathVariable Long id) {
-        if (noticeService.getNoticeById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteNotice(@PathVariable String id) {
+        try {
+            Long numericId = Long.parseLong(id.trim());
+            deleteNotice(numericId);
+        } catch (NumberFormatException ignored) {
+            // Client-side or non-numeric ID - return 204 gracefully so UI can remove it
         }
+        return ResponseEntity.noContent().build();
+    }
+
+    public ResponseEntity<Void> deleteNotice(Long id) {
         noticeService.deleteNotice(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/cleanup-expired")
-    public ResponseEntity<java.util.Map<String, Object>> cleanupExpiredNotices(
+    public ResponseEntity<Map<String, Object>> cleanupExpiredNotices(
             @RequestParam(defaultValue = "20") int days) {
         int deletedCount = noticeService.cleanupNoticesOlderThanDays(days);
-        return ResponseEntity.ok(java.util.Map.of(
+        return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
                 "retentionDays", days,
                 "deletedCount", deletedCount,

@@ -8,3 +8,5 @@ export * from './dashboard';
 export * from './qa';
 export * from './calendar';
 export * from './news';
+export * from './placement';
+

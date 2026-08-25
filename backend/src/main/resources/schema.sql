@@ -237,6 +237,8 @@ CREATE TABLE IF NOT EXISTS placement_stats (
     placement_ratio VARCHAR(50),
     total_offers VARCHAR(50),
     batch_year VARCHAR(50),
+    banner_image_url TEXT,
+    description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -246,6 +248,9 @@ CREATE TABLE IF NOT EXISTS placement_recruiters (
     name VARCHAR(150) NOT NULL,
     package_band VARCHAR(100),
     role_tag VARCHAR(100),
+    logo_url VARCHAR(500),
+    website_url VARCHAR(500),
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -260,5 +265,62 @@ CREATE TABLE IF NOT EXISTS placement_drives (
     location VARCHAR(150),
     apply_deadline VARCHAR(50),
     status VARCHAR(50) DEFAULT 'UPCOMING',
+    logo_url VARCHAR(500),
+    banner_image_url TEXT,
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 20. Placed Students Achievements Table
+CREATE TABLE IF NOT EXISTS placed_students_achievements (
+    id BIGSERIAL PRIMARY KEY,
+    student_name VARCHAR(150) NOT NULL,
+    prn VARCHAR(50),
+    division VARCHAR(20),
+    photo_url TEXT,
+    company_name VARCHAR(150) NOT NULL,
+    company_logo_url VARCHAR(500),
+    role VARCHAR(150),
+    package_lpa VARCHAR(50),
+    batch_year VARCHAR(50),
+    placed_date VARCHAR(50),
+    banner_image_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 21. System Settings Table (Central Database-Backed Portal Configuration)
+CREATE TABLE IF NOT EXISTS system_settings (
+    id BIGSERIAL PRIMARY KEY,
+    active_department VARCHAR(100) DEFAULT 'Computer Science & Engineering',
+    academic_year VARCHAR(50) DEFAULT '2025-2026',
+    scraper_interval VARCHAR(20) DEFAULT '30',
+    retention_days VARCHAR(20) DEFAULT '20',
+    push_on_scrape BOOLEAN DEFAULT TRUE,
+    sound_alerts BOOLEAN DEFAULT TRUE,
+    email_alerts BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 22. Notice Reads Table (Persistent Notice Read/Seen Tracking)
+CREATE TABLE IF NOT EXISTS notice_reads (
+    id BIGSERIAL PRIMARY KEY,
+    notice_id BIGINT NOT NULL,
+    user_identifier VARCHAR(150) NOT NULL,
+    read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Production Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_notices_status_pub ON notices(status, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_students_email ON students(email);
+CREATE INDEX IF NOT EXISTS idx_students_roll ON students(roll_no);
+CREATE INDEX IF NOT EXISTS idx_students_prn ON students(prn);
+CREATE INDEX IF NOT EXISTS idx_faculty_email ON faculty(email);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_ts ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_questions_status_created ON questions(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notice_reads_notice_user ON notice_reads(notice_id, user_identifier);
+CREATE INDEX IF NOT EXISTS idx_placed_achievers_batch ON placed_students_achievements(batch_year, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_placement_drives_date ON placement_drives(drive_date);
+
+
