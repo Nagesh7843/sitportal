@@ -24,14 +24,19 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-[#000666] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[28px] text-[#759efd]">folder_open</span>
-            Centralized Document Library
-          </h1>
-          <p className="text-[#cfe6f2] text-[13px] mt-1">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">folder_open</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              Centralized Document Library
+            </h1>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              Repository
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Course Syllabus • Lab Manuals • Project Briefs • Academic Guidelines • Question Banks
           </p>
         </div>
@@ -39,10 +44,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         {onOpenUploadModal && (
           <button
             onClick={onOpenUploadModal}
-            className="bg-white text-[#000666] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2 shrink-0"
+            className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">cloud_upload</span>
-            <span>Upload New Document</span>
+            <span className="material-symbols-outlined text-[16px]">cloud_upload</span>
+            <span>Upload Document</span>
           </button>
         )}
       </div>

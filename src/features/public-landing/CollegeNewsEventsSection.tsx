@@ -155,18 +155,22 @@ export const CollegeNewsEventsSection: React.FC<CollegeNewsEventsSectionProps> =
   const canManage = ['admin', 'hod', 'faculty'].includes((userRole || '').toLowerCase());
 
   return (
-    <section className="bg-white p-6 sm:p-7 rounded-3xl border border-[#c3d3d9] shadow-xs space-y-6 font-sans">
+    <section className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4 font-sans">
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#c3d3d9]/60 pb-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-bold uppercase tracking-wider">
-            <span className="material-symbols-outlined text-[16px] text-red-600">newspaper</span>
-            SITCOE Official News & Campus Events
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-md bg-blue-50 text-[#000666] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">newspaper</span>
+            </span>
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              Department News, Conclaves & Campus Events
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+              Live Feed
+            </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#071e27] tracking-tight">
-            Department News, Conclaves & Campus Events
-          </h2>
-          <p className="text-xs text-[#454652]">
+          <p className="text-xs text-slate-500 mt-0.5">
             Live event feed & official announcements from SITCOE.
           </p>
         </div>
@@ -175,22 +179,22 @@ export const CollegeNewsEventsSection: React.FC<CollegeNewsEventsSectionProps> =
           {canManage && (
             <button
               onClick={() => setIsPublishModalOpen(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+              className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
               title="Publish a new campus event"
             >
               <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              <span>Publish New Event</span>
+              <span>Publish Event</span>
             </button>
           )}
 
           {notificationPermission !== 'granted' && (
             <button
               onClick={handleRequestPushPermission}
-              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs"
+              className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs rounded-xl transition-colors inline-flex items-center gap-1.5 cursor-pointer"
               title="Allow Chrome notifications on your desktop"
             >
-              <span className="material-symbols-outlined text-[16px]">notifications_active</span>
-              <span>Enable Chrome Alerts</span>
+              <span className="material-symbols-outlined text-[16px] text-amber-600">notifications_active</span>
+              <span>Enable Alerts</span>
             </button>
           )}
 
@@ -198,7 +202,7 @@ export const CollegeNewsEventsSection: React.FC<CollegeNewsEventsSectionProps> =
             href="https://www.sitcoe.ac.in/ptbtypes_of_news_events/event/"
             target="_blank"
             rel="noreferrer"
-            className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition-colors inline-flex items-center gap-1.5"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition-colors inline-flex items-center gap-1.5"
           >
             <span>sitcoe.ac.in</span>
             <span className="material-symbols-outlined text-[14px]">open_in_new</span>

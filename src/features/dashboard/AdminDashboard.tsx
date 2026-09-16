@@ -103,44 +103,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <div className="space-y-6 font-sans text-[#071e27]">
-      {/* Executive Welcome & Control Header Banner */}
-      <div className="bg-gradient-to-r from-[#000666] via-[#1a237e] to-[#2b5bb5] p-6 rounded-2xl text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="z-10 space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold tracking-wider uppercase text-sky-200 backdrop-blur-md">
-            <span className="material-symbols-outlined text-[16px] text-amber-300">admin_panel_settings</span>
-            Administration
+      {/* Minimal Admin Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">admin_panel_settings</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              System Administration Dashboard
+            </h1>
+            <span className="px-2 py-0.5 bg-indigo-50 text-[#000666] text-[10px] font-bold rounded-md border border-indigo-200">
+              Institution Admin
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            System Administration Dashboard
-          </h1>
-          <p className="text-xs sm:text-sm text-sky-100 opacity-90 max-w-2xl leading-relaxed">
-            Review student records, faculty information, email activity, and notices for your institution.
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Review student records, faculty information, email broadcasts, and notices across all departments.
           </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="z-10 flex flex-wrap gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={onOpenQuickNoticeModal}
-            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
+            <span className="material-symbols-outlined text-[16px]">add_circle</span>
             <span>Publish Notice</span>
           </button>
 
           <button
             onClick={() => onNavigate('bulk-email')}
-            className="px-4 py-2.5 bg-white text-[#000666] hover:bg-sky-50 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">campaign</span>
+            <span className="material-symbols-outlined text-[16px]">campaign</span>
             <span>Launch Email Broadcast</span>
           </button>
         </div>
-
-        {/* Ambient Decorative Icon */}
-        <span className="material-symbols-outlined text-[200px] absolute -right-10 -bottom-16 opacity-10 pointer-events-none">
-          shield_person
-        </span>
       </div>
 
       {/* Institutional Department Scope Selector Strip */}

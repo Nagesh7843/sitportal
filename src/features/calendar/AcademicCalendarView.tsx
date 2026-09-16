@@ -434,40 +434,44 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans pb-12">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#000666] via-[#00337c] to-[#0d5c9c] text-white p-6 sm:p-8 shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">calendar_month</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               {isStudentOrParent ? 'Academic Calendar' : 'Academic Calendar & Notice Scheduler'}
             </h1>
-            <p className="text-xs sm:text-sm text-blue-100 font-medium leading-snug">
-              Official semester schedules, academic milestones, and examination timetables.
-            </p>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              Semester Timeline
+            </span>
           </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Official semester schedules, academic milestones, and examination timetables.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {canManage && (
-              <>
-                <button
-                  onClick={() => setShowDocIngestionModal(true)}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-2 active:scale-95"
-                  title="Upload Word DOCX, PDF, or text file to parse academic calendar"
-                >
-                  <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                  <span>Ingest via Docs / PDF</span>
-                </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {canManage && (
+            <>
+              <button
+                onClick={() => setShowDocIngestionModal(true)}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                title="Upload Word DOCX, PDF, or text file to parse academic calendar"
+              >
+                <span className="material-symbols-outlined text-[16px] text-amber-600">upload_file</span>
+                <span>Ingest via Docs / PDF</span>
+              </button>
 
-                <button
-                  onClick={() => setShowAddCalModal(true)}
-                  className="px-4 py-2.5 bg-white text-[#000666] hover:bg-blue-50 font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                  <span>New Semester</span>
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                onClick={() => setShowAddCalModal(true)}
+                className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                <span>New Semester</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

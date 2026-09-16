@@ -56,38 +56,38 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Top Welcome Banner */}
-      <div className="bg-gradient-to-r from-[#00337c] via-[#024099] to-[#0052cc] rounded-2xl p-4 sm:p-6 md:p-8 text-white shadow-md relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-xs rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-2">
-              <span className="material-symbols-outlined text-[16px]">school</span>
-              <span>Student Dashboard • B.Tech CSE</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#00337c] text-[22px]">school</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Welcome back, {currentProfile?.name || 'Student'}!
             </h1>
-            <p className="text-blue-100 text-xs sm:text-sm mt-1 max-w-xl">
-              Access your department notices, academic calendar events, course documents, and central Q&A.
-            </p>
+            <span className="px-2 py-0.5 bg-blue-50 text-[#00337c] text-[10px] font-bold rounded-md border border-blue-200">
+              B.Tech CSE
+            </span>
           </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Access your department notices, academic calendar events, course documents, and central Q&A.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3">
-            <button
-              onClick={() => onNavigate('questions')}
-              className="flex-1 sm:flex-none justify-center px-3.5 py-2.5 bg-white text-[#00337c] hover:bg-blue-50 font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-colors inline-flex items-center gap-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">forum</span>
-              <span>Central Q&A</span>
-            </button>
-            <button
-              onClick={() => onNavigate('curriculum')}
-              className="flex-1 sm:flex-none justify-center px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm rounded-xl transition-colors inline-flex items-center gap-2 border border-white/20 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">menu_book</span>
-              <span>Syllabus</span>
-            </button>
-          </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => onNavigate('questions')}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">forum</span>
+            <span>Central Q&A</span>
+          </button>
+          <button
+            onClick={() => onNavigate('curriculum')}
+            className="px-3.5 py-2 bg-[#00337c] hover:bg-[#002171] text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[16px]">menu_book</span>
+            <span>Syllabus</span>
+          </button>
         </div>
       </div>
 
@@ -180,24 +180,27 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
             </div>
           </div>
 
-          {/* Main Content Grid: Notices & Calendar */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Grid: Notices & Widgets cleanly aligned */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
             {/* Notices Section (2 cols) */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3 shrink-0">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#00337c]">campaign</span>
-                  <h2 className="text-lg font-bold text-gray-900">Latest Department Notices</h2>
+                  <span className="material-symbols-outlined text-[#00337c] text-[20px]">campaign</span>
+                  <h2 className="text-sm sm:text-base font-bold text-gray-900">Latest Department Notices</h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                    {notices.length} Circulars
+                  </span>
                 </div>
                 <button
                   onClick={() => onNavigate('notices')}
-                  className="text-xs font-semibold text-[#00337c] hover:underline"
+                  className="text-xs font-semibold text-[#00337c] hover:underline cursor-pointer"
                 >
-                  Browse All ({notices.length}) →
+                  Browse All →
                 </button>
               </div>
 
-              <div className="max-h-[580px] lg:max-h-[620px] overflow-y-auto custom-scrollbar space-y-2.5 p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner">
+              <div className="flex-1 min-h-[460px] max-h-[640px] overflow-y-auto custom-scrollbar space-y-2 p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner">
                 {notices.length === 0 ? (
                   <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-xs font-semibold">
                     No notices published yet.
@@ -206,7 +209,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
                   notices.map((notice) => (
                     <div
                       key={notice.id}
-                      className="bg-white rounded-lg border border-[#c6c5d4] p-3 shadow-2xs hover:shadow-xs transition-all space-y-1.5"
+                      className="bg-white rounded-lg border border-[#c6c5d4] p-2.5 sm:p-3 shadow-2xs hover:shadow-xs transition-all space-y-1"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-0.5 w-full">
@@ -241,7 +244,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
                         <span>Issued by: <strong>{notice.authorName}</strong> ({notice.authorRole})</span>
                         <button
                           onClick={() => onNavigate('notices')}
-                          className="font-bold text-[#000666] hover:underline flex items-center gap-0.5"
+                          className="font-bold text-[#000666] hover:underline flex items-center gap-0.5 cursor-pointer"
                         >
                           <span>View Notice</span>
                           <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
@@ -254,62 +257,62 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
             </div>
 
             {/* Right Sidebar: Upcoming Events & Quick Links */}
-            <div className="space-y-6">
+            <div className="flex flex-col gap-4">
               {/* Calendar Widget */}
-              <div className="bg-white rounded-2xl border border-[#d6d9e0] p-5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#00337c]">event_upcoming</span>
-                    <h3 className="font-bold text-gray-900 text-sm">Academic Events & Exams</h3>
+                    <span className="material-symbols-outlined text-[#00337c] text-[18px]">event_upcoming</span>
+                    <h3 className="font-bold text-gray-900 text-xs sm:text-sm">Academic Events</h3>
                   </div>
                   <button
                     onClick={() => onNavigate('academic-calendar')}
-                    className="text-[11px] font-semibold text-[#00337c] hover:underline"
+                    className="text-[11px] font-semibold text-[#00337c] hover:underline cursor-pointer"
                   >
-                    Full Calendar →
+                    Calendar →
                   </button>
                 </div>
 
                 {activeCalendar?.events && activeCalendar.events.length > 0 ? (
-                  <div className="space-y-3">
-                    {activeCalendar.events.slice(0, 4).map((evt) => (
-                      <div key={evt.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#00337c]">
+                  <div className="space-y-2">
+                    {activeCalendar.events.slice(0, 3).map((evt) => (
+                      <div key={evt.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-[#00337c]">
                           <span>{evt.startDate}</span>
-                          <span className="px-1.5 py-0.5 bg-blue-100 rounded text-[10px] uppercase font-semibold">{evt.eventType}</span>
+                          <span className="px-1.5 py-0.5 bg-blue-100 rounded text-[9px] uppercase font-semibold">{evt.eventType}</span>
                         </div>
-                        <p className="font-semibold text-gray-900 text-xs mt-1">{evt.title}</p>
+                        <p className="font-semibold text-gray-900 text-xs mt-0.5 line-clamp-1">{evt.title}</p>
                         {evt.location && (
-                          <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">location_on</span>
-                            {evt.location}
+                          <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[11px]">location_on</span>
+                            <span className="truncate">{evt.location}</span>
                           </p>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 text-center py-4">No upcoming events scheduled.</p>
+                  <p className="text-xs text-gray-500 text-center py-3">No upcoming events scheduled.</p>
                 )}
               </div>
 
               {/* Placement Drives & Eligibility Status Widget */}
-              <div className="bg-white rounded-2xl border border-[#d6d9e0] p-5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-indigo-700">work</span>
-                    <h3 className="font-bold text-gray-900 text-sm">Placement Drives</h3>
+                    <span className="material-symbols-outlined text-indigo-700 text-[18px]">work</span>
+                    <h3 className="font-bold text-gray-900 text-xs sm:text-sm">Placement Drives</h3>
                   </div>
                   <button
                     onClick={() => onNavigate('public-landing')}
-                    className="text-[11px] font-semibold text-indigo-700 hover:underline"
+                    className="text-[11px] font-semibold text-indigo-700 hover:underline cursor-pointer"
                   >
                     View Hub →
                   </button>
                 </div>
 
                 {placementDrives && placementDrives.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {placementDrives.slice(0, 3).map((drive: any) => {
                       const cgpa = Number(academicData?.cgpa ?? studentInfo?.gpa ?? 0);
                       const isDiploma = academicData?.qualificationPath === 'DIPLOMA';
@@ -317,30 +320,29 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
                       const twelfth = Number(academicData?.twelfthPercentage ?? 0);
                       const diploma = Number(academicData?.diplomaPercentage ?? 0);
 
-                      // Basic client-side check matching 6.0 CGPA and 60% standard
                       const isEligible = cgpa >= 6.0 && tenth >= 60 && (isDiploma ? diploma >= 60 : twelfth >= 60);
 
                       return (
-                        <div key={drive.id} className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-1.5">
+                        <div key={drive.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 space-y-1">
                           <div className="flex items-start justify-between gap-1">
-                            <h4 className="font-bold text-xs text-slate-900 leading-snug">{drive.companyName}</h4>
-                            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                            <h4 className="font-bold text-xs text-slate-900 leading-snug truncate">{drive.companyName}</h4>
+                            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
                               {drive.packageLpa || 'Competitive'}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600">{drive.role}</p>
+                          <p className="text-[10px] text-slate-600 line-clamp-1">{drive.role}</p>
                           <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                               isEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                             }`}>
-                              <span className="material-symbols-outlined text-[12px]">
+                              <span className="material-symbols-outlined text-[11px]">
                                 {isEligible ? 'check_circle' : 'info'}
                               </span>
-                              {isEligible ? 'Eligible to Apply' : 'Review Criteria'}
+                              {isEligible ? 'Eligible' : 'Review'}
                             </span>
                             <button
                               onClick={() => onNavigate('public-landing')}
-                              className="text-[10px] font-bold text-indigo-600 hover:underline"
+                              className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
                             >
                               Details
                             </button>
@@ -350,25 +352,27 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 text-center py-4">No active drives announced yet.</p>
+                  <p className="text-xs text-gray-500 text-center py-3">No active drives announced yet.</p>
                 )}
               </div>
 
               {/* Q&A Help Prompt */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-200/80 p-5">
-                <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
-                  <span className="material-symbols-outlined">live_help</span>
-                  Got Questions for Faculty?
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
+                    <span className="material-symbols-outlined text-[#000666] text-[18px]">live_help</span>
+                    <span>Got Questions for Faculty?</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                    Post questions directly about syllabus, exam dates, or departmental activities.
+                  </p>
                 </div>
-                <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
-                  Use the Central Question System to post your doubts about syllabus, exam dates, or department activities.
-                </p>
                 <button
                   onClick={() => onNavigate('questions')}
-                  className="mt-3 w-full py-2 bg-[#00337c] text-white hover:bg-blue-900 text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                  className="mt-3 w-full py-2 bg-[#000666] hover:bg-[#002171] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[16px]">help_center</span>
-                  Open Central Q&A Forum
+                  <span className="material-symbols-outlined text-[15px]">help_center</span>
+                  <span>Open Central Q&A Forum</span>
                 </button>
               </div>
             </div>

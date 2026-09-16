@@ -43,28 +43,30 @@ export const PlacementEligibilityHubTab: React.FC<PlacementEligibilityHubTabProp
   return (
     <div className="space-y-6 font-sans text-slate-800 animate-in fade-in duration-150">
       
-      {/* Header Info Banner */}
-      <div className="bg-gradient-to-r from-[#000666] via-[#1a237e] to-[#024099] rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-cyan-200 border border-white/20">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
-            Institutional Placement Qualification Engine
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-[#000666]" />
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              Placement Drives & Eligibility Desk
+            </h2>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              Verification Engine
+            </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">
-            Placement Drives & Candidate Pool Verification Desk
-          </h2>
-          <p className="text-xs md:text-sm text-cyan-100 max-w-2xl">
-            Evaluate registered student batches mathematically against drive thresholds with zero-loss dual qualification resolution (12th HSC vs. Diploma Lateral Entry).
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Evaluate registered student batches mathematically against drive thresholds with dual qualification support.
           </p>
         </div>
 
         <button
           onClick={loadDrives}
           disabled={isLoading}
-          className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl border border-white/20 transition-all flex items-center gap-2 self-start md:self-auto disabled:opacity-50"
+          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center gap-2 self-start sm:self-auto disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh Drives
+          <span>Refresh Drives</span>
         </button>
       </div>
 

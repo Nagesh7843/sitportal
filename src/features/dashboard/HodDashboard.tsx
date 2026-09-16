@@ -101,40 +101,40 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
       {activeTab === 'overview' && (
         <>
       
-      {/* HOD Executive Header */}
-      <section className="bg-gradient-to-r from-[#000666] via-[#1a237e] to-[#002171] text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-200 font-semibold text-xs border border-white/20">
-              <Shield className="w-3.5 h-3.5 text-cyan-400" />
-              Department Leadership & Monitoring Hub
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Welcome, {currentProfile?.name || 'Dr. A. S. Poornima'} (HOD {userDept})
+      {/* Minimal HOD Executive Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#000666]" />
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              Welcome, {currentProfile?.name || 'Dr. A. S. Poornima'}
             </h1>
-            <p className="text-cyan-100 text-xs sm:text-sm max-w-xl">
-              {userDept === 'CSE' ? 'Computer Science & Engineering' : userDept} Department • Siddaganga Institute of Technology
-            </p>
+            <span className="px-2 py-0.5 bg-blue-50 text-[#000666] text-[10px] font-bold rounded-md border border-blue-200">
+              HOD {userDept}
+            </span>
           </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={onOpenPublishNotice}
-              className="px-4 py-2.5 bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg hover:bg-amber-300 transition-all text-xs flex items-center gap-2"
-            >
-              <Megaphone className="w-4 h-4" />
-              Publish HOD Circular
-            </button>
-            <button
-              onClick={() => onNavigate('bulk-email')}
-              className="px-4 py-2.5 bg-white/10 border border-white/30 text-white font-semibold rounded-xl hover:bg-white/20 transition-all text-xs flex items-center gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              Department Email
-            </button>
-          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            {userDept === 'CSE' ? 'Computer Science & Engineering' : userDept} Department • Sharad Institute of Technology
+          </p>
         </div>
-      </section>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={onOpenPublishNotice}
+            className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Megaphone className="w-3.5 h-3.5" />
+            <span>Publish Circular</span>
+          </button>
+          <button
+            onClick={() => onNavigate('bulk-email')}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Dept Email</span>
+          </button>
+        </div>
+      </div>
 
       {/* Key Department Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

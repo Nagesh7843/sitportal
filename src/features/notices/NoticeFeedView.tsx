@@ -184,42 +184,45 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
         </div>
       )}
 
-      {/* Official Central Notice Board Banner */}
-      <div className="bg-gradient-to-r from-[#000666] via-[#121c60] to-[#002171] text-white p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative overflow-hidden">
-        {/* Background decorative glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-
-        <div className="space-y-1.5 z-10">
-          <h1 className="text-[24px] sm:text-[28px] font-black text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-[32px] text-[#759efd]">campaign</span>
-            SITCOE Central Notice Board
-          </h1>
-          <p className="text-[#cfe6f2] text-[13px] font-medium leading-snug">
-            Official circulars and academic updates for Sharad Institute of Technology College of Engineering (SITCOE).
-          </p>
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#000666] flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[24px]">campaign</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black text-slate-900 tracking-tight">
+                SITCOE Central Notice Board
+              </h1>
+              <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+                Official Circulars
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Official circulars and academic updates for Sharad Institute of Technology College of Engineering.
+            </p>
+          </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3 z-10 w-full lg:w-auto">
-          {/* Live Feed Button (Admin Only) */}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
           {(currentProfile.role === 'admin' || currentProfile.role === 'hod') && (
             <button
               onClick={handleOpenPreviewModal}
-              className="px-4 py-2.5 rounded-xl text-[13px] font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-2 transition-all shadow-md cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
               title="Inspect live circulars directly from sitcoe.ac.in"
             >
-              <span className="material-symbols-outlined text-[18px]">travel_explore</span>
+              <span className="material-symbols-outlined text-[16px]">travel_explore</span>
               <span>Live Feed</span>
             </button>
           )}
 
-          {/* Publish Notice Modal (Faculty/Admin/HOD) */}
           {canManageNotices && (
             <button
               onClick={onOpenPublishModal}
-              className="bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-amber-300 transition-all shadow-lg flex items-center gap-2 shrink-0 border border-amber-300 cursor-pointer"
+              className="bg-[#000666] hover:bg-[#002171] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
               <span>Publish Notice</span>
             </button>
           )}
@@ -310,7 +313,7 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
           </span>
         </div>
 
-        <div className="max-h-[480px] overflow-y-auto custom-scrollbar p-2 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner space-y-3">
+        <div className="min-h-[760px] max-h-[900px] xl:max-h-[960px] overflow-y-auto custom-scrollbar p-2.5 bg-[#f8fafc] rounded-xl border border-[#c6c5d4]/40 shadow-inner space-y-2.5">
           {filteredNotices.map((notice) => {
             const isRead = notice.readBy?.includes(currentUserId) ?? false;
             const isOfficial = isCollegeOfficialNotice(notice);
@@ -325,7 +328,7 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
             return (
               <div
                 key={notice.id}
-                className={`p-2.5 sm:p-3 rounded-lg border border-[#c6c5d4] shadow-2xs hover:shadow-xs transition-all ${priorityStyles} flex flex-col justify-between gap-1.5 relative group`}
+                className={`p-2.5 sm:p-3 rounded-lg border border-[#c6c5d4] shadow-2xs hover:shadow-xs transition-all ${priorityStyles} flex flex-col justify-between gap-1 relative group`}
               >
                 <div>
                   <div className="flex flex-wrap justify-between items-start mb-1 gap-1">

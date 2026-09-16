@@ -153,32 +153,30 @@ export const CentralQuestionSystem: React.FC<CentralQuestionSystemProps> = ({
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#00337c] to-[#1e40af] rounded-2xl p-6 md:p-8 text-white shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-xs rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
-              <span className="material-symbols-outlined text-[16px]">forum</span>
-              Institutional Central Q&A System
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">forum</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Central Question & Answer System
             </h1>
-            <p className="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-snug">
-              Transparent discussion forum for SITCOE students, parents, and faculty members.
-            </p>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              SITCOE Forum
+            </span>
           </div>
-
-          <div>
-            <button
-              onClick={() => setShowAskModal(true)}
-              className="px-5 py-2.5 bg-white text-[#00337c] hover:bg-blue-50 font-bold text-sm rounded-xl shadow-xs transition-colors inline-flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[20px]">add_circle</span>
-              Ask a Question
-            </button>
-          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Transparent discussion forum for SITCOE students, parents, and faculty members.
+          </p>
         </div>
+
+        <button
+          onClick={() => setShowAskModal(true)}
+          className="px-4 py-2.5 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[18px]">add_circle</span>
+          <span>Ask a Question</span>
+        </button>
       </div>
 
       {/* Filters, Categories & Search */}

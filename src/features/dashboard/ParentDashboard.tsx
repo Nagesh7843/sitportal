@@ -78,38 +78,38 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Top Banner / Welcome */}
-      <div className="bg-gradient-to-r from-[#00337c] to-[#0052cc] rounded-2xl p-6 md:p-8 text-white shadow-md relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-xs rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
-              <span className="material-symbols-outlined text-[16px]">family_restroom</span>
-              Parent Portal
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#00337c] text-[22px]">family_restroom</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Welcome, {currentProfile?.name || 'Parent'}
             </h1>
-            <p className="text-blue-100 text-sm mt-1 max-w-xl">
-              Stay updated with your child's academic progress, official department notices, and semester schedules.
-            </p>
+            <span className="px-2 py-0.5 bg-blue-50 text-[#00337c] text-[10px] font-bold rounded-md border border-blue-200">
+              Parent Portal
+            </span>
           </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Stay updated with your child's academic progress, official department notices, and semester schedules.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => onNavigate('questions')}
-              className="px-4 py-2.5 bg-white text-[#00337c] hover:bg-blue-50 font-semibold text-sm rounded-xl shadow-xs transition-colors inline-flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[18px]">help_center</span>
-              Central Q&A Forum
-            </button>
-            <button
-              onClick={() => onNavigate('academic-calendar')}
-              className="px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white font-semibold text-sm rounded-xl transition-colors inline-flex items-center gap-2 border border-white/20"
-            >
-              <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-              Academic Calendar
-            </button>
-          </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => onNavigate('questions')}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">help_center</span>
+            <span>Central Q&A</span>
+          </button>
+          <button
+            onClick={() => onNavigate('academic-calendar')}
+            className="px-3.5 py-2 bg-[#00337c] hover:bg-[#002171] text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+            <span>Calendar</span>
+          </button>
         </div>
       </div>
 

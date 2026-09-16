@@ -178,23 +178,23 @@ export const PlacedStudentsSection: React.FC<PlacedStudentsSectionProps> = ({ us
   };
 
   return (
-    <section className="bg-gradient-to-b from-[#f3f9fc] via-white to-blue-50/40 p-5 sm:p-8 rounded-3xl border border-[#c3d3d9] space-y-6 shadow-xs font-sans relative overflow-hidden">
-      {/* Background Ambient Glow */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
+    <section className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-4 shadow-xs font-sans">
       {/* Header Container */}
-      <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200/80 pb-5">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-500/15 via-amber-600/10 to-transparent border border-amber-300 text-amber-900 rounded-full text-xs font-black uppercase tracking-wider">
-            <span className="material-symbols-outlined text-[16px] text-amber-600 animate-pulse">star</span>
-            <span>Student Success & Star Achievers Gallery</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">military_tech</span>
+            </span>
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              Placed Students & Star Achievers
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              Success Gallery
+            </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#071e27] tracking-tight">
-            Our Placed Students & Milestone Achievers
-          </h2>
-          <p className="text-xs sm:text-sm text-[#454652] max-w-2xl leading-relaxed">
-            Auto-sliding showcase featuring our placed students, high-package recruitment offers, and company milestones.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Showcase featuring placed students, high-package recruitment offers, and company milestones.
           </p>
         </div>
 
@@ -299,21 +299,21 @@ export const PlacedStudentsSection: React.FC<PlacedStudentsSectionProps> = ({ us
           <span>Loading student achievers...</span>
         </div>
       ) : filteredAchievers.length === 0 ? (
-        <div className="py-14 px-4 text-center bg-white rounded-3xl border border-gray-200 space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-            <span className="material-symbols-outlined text-4xl">military_tech</span>
+        <div className="py-8 px-4 text-center bg-slate-50/50 rounded-xl border border-slate-200 space-y-2">
+          <div className="w-10 h-10 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl">military_tech</span>
           </div>
-          <h4 className="text-base font-bold text-gray-800">No Placed Student Achievers Added Yet</h4>
-          <p className="text-xs text-gray-500 max-w-md mx-auto">
-            When you generate placement notices or add star achievers, their high-definition photos and announcement posters will be displayed here in an auto-sliding window.
+          <h4 className="text-xs font-bold text-slate-800">No Placed Student Achievers Added Yet</h4>
+          <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+            Placed student profiles, company offers, and package announcements will appear here.
           </p>
           {canManage && (
             <button
               onClick={handleOpenAddNew}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs"
+              className="mt-1 px-3.5 py-1.5 bg-[#000666] hover:bg-[#002171] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">add</span>
-              <span>Add First Placed Student</span>
+              <span className="material-symbols-outlined text-[15px]">add</span>
+              <span>Add Placed Student</span>
             </button>
           )}
         </div>

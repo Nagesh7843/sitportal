@@ -33,9 +33,6 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
                 Official CSE Circulars
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              General academic, institutional, and student circulars from the Principal, HOD, and Staff.
-            </p>
           </div>
           <button
             onClick={() => onNavigate('notices')}
@@ -88,56 +85,67 @@ export const PublicLanding: React.FC<PublicLandingProps> = ({ onNavigate, notice
         )}
       </section>
 
-      {/* 🚀 Quick Portal Access Hub */}
-      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight">Department Services & Resources</h2>
-          <p className="text-xs text-slate-500">Direct shortcuts to department facilities, schedules, and directories.</p>
+      {/* 🚀 Quick Portal Access Hub - Minimal */}
+      <section className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-[#000666]">apps</span>
+            <span>Department Services & Resources</span>
+          </h2>
+          <span className="text-[11px] text-slate-400 font-medium">Quick Shortcuts</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <button
             onClick={() => onNavigate('academic-calendar')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+            className="p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col gap-1.5 group text-left outline-none"
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
-              <Calendar className="w-4 h-4" aria-hidden="true" />
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
+              <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
-            <h3 className="font-bold text-xs text-slate-900">Academic Calendar</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">Semester roadmaps, examination schedules, and milestones.</p>
+            <div>
+              <h3 className="font-bold text-xs text-slate-900 group-hover:text-indigo-950">Academic Calendar</h3>
+              <p className="text-[10px] text-slate-500 line-clamp-1">Semester roadmap & exams</p>
+            </div>
           </button>
 
           <button
             onClick={() => onNavigate('curriculum')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+            className="p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col gap-1.5 group text-left outline-none"
           >
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4" aria-hidden="true" />
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
-            <h3 className="font-bold text-xs text-slate-900">Curriculum & Syllabus</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">DBATU Autonomous scheme course structures & credits.</p>
+            <div>
+              <h3 className="font-bold text-xs text-slate-900 group-hover:text-blue-950">Curriculum & Syllabus</h3>
+              <p className="text-[10px] text-slate-500 line-clamp-1">DBATU scheme & credits</p>
+            </div>
           </button>
 
           <button
             onClick={() => onNavigate('documents')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+            className="p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col gap-1.5 group text-left outline-none"
           >
-            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
-              <Shield className="w-4 h-4" aria-hidden="true" />
+            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+              <Shield className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
-            <h3 className="font-bold text-xs text-slate-900">Department Documents</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">Official curriculum circulars, forms, and institutional guides.</p>
+            <div>
+              <h3 className="font-bold text-xs text-slate-900 group-hover:text-purple-950">Documents</h3>
+              <p className="text-[10px] text-slate-500 line-clamp-1">Circulars & lab manuals</p>
+            </div>
           </button>
 
           <button
             onClick={() => onNavigate('faculty')}
-            className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer space-y-2 group text-left focus-visible:ring-2 focus-visible:ring-indigo-600 outline-none"
+            className="p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col gap-1.5 group text-left outline-none"
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-              <Users className="w-4 h-4" aria-hidden="true" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+              <Users className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
-            <h3 className="font-bold text-xs text-slate-900">Faculty Directory</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed">Faculty profiles, availability status, and office hours.</p>
+            <div>
+              <h3 className="font-bold text-xs text-slate-900 group-hover:text-emerald-950">Faculty Directory</h3>
+              <p className="text-[10px] text-slate-500 line-clamp-1">Profiles & office hours</p>
+            </div>
           </button>
         </div>
       </section>

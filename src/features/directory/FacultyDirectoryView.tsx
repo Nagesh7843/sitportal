@@ -99,14 +99,19 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="bg-[#000666] text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-xl sm:text-[24px] font-extrabold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[24px] sm:text-[28px] text-[#759efd]">groups</span>
-            <span>{isStudentOrParent ? `${assignedDept} Faculty Directory` : 'Department Faculty Directory'}</span>
-          </h1>
-          <p className="text-[#cfe6f2] text-xs sm:text-[13px] mt-1">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">groups</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              {isStudentOrParent ? `${assignedDept} Faculty Directory` : 'Department Faculty Directory'}
+            </h1>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              Directory
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             {isStudentOrParent
               ? `Faculty members & academic advisors of ${assignedDept} Department`
               : 'Professors, Assistant Professors & Department Coordinators'}
@@ -114,13 +119,13 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
         </div>
 
         {!isStudentOrParent && (
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-center w-full md:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-2.5 items-center w-full md:w-auto">
             {onAddFaculty && (
               <button
                 onClick={onAddFaculty}
-                className="flex-1 sm:flex-none justify-center bg-white text-[#000666] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+                className="flex-1 sm:flex-none justify-center bg-[#000666] hover:bg-[#002171] text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
                 <span>Add Faculty</span>
               </button>
             )}
@@ -135,9 +140,9 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 sm:flex-none justify-center bg-[#000666] border-2 border-white text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-[13px] hover:bg-white hover:text-[#000666] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+                  className="flex-1 sm:flex-none justify-center bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold px-3.5 py-2 rounded-xl text-xs transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                  <span className="material-symbols-outlined text-[16px]">upload_file</span>
                   <span>Upload CSV</span>
                 </button>
               </>

@@ -38,25 +38,30 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Header */}
-      <div className="bg-[#000666] text-white p-6 sm:p-7 rounded-3xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Minimal Header Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[28px] text-[#759efd]">menu_book</span>
-            Department Curriculum & Syllabus
-          </h1>
-          <p className="text-[#cfe6f2] text-[13px] mt-1">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#000666] text-[22px]">menu_book</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              Department Curriculum & Syllabus
+            </h1>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded-md border border-blue-200">
+              CBCS Scheme
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             B.Tech Computer Science & Engineering • Choice-Based Credit System (CBCS)
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {canManageCurriculum && onAddCourse && (
             <button
               onClick={onAddCourse}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold px-4 py-2.5 rounded-xl text-[13px] transition-all shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-[#000666] hover:bg-[#002171] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
               <span>Add Course</span>
             </button>
           )}
@@ -68,10 +73,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                   onDeleteAllCourses();
                 }
               }}
-              className="bg-red-600/90 hover:bg-red-700 text-white font-bold px-3.5 py-2.5 rounded-xl text-[13px] transition-all shadow-xs flex items-center gap-1.5"
+              className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
               title="Delete all courses from database"
             >
-              <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+              <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
               <span>Clear All</span>
             </button>
           )}
@@ -79,9 +84,9 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           <a
             href={THIRD_YEAR_CSE_SYLLABUS}
             download="TY-CSE_0001-2.pdf"
-            className="bg-white text-[#000666] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold text-xs rounded-xl transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">download</span>
+            <span className="material-symbols-outlined text-[16px] text-blue-700">download</span>
             <span>TY Syllabus</span>
           </a>
         </div>
