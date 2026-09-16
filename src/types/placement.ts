@@ -79,3 +79,37 @@ export interface PlacementSummaryResponse {
   drives: PlacementDrive[];
   achievers?: PlacedStudentAchievement[];
 }
+
+export interface PlacementEligibilityRule {
+  id?: number;
+  placementDriveId: number | string;
+  minimumCgpa: number | string;
+  minimumTenthPercentage: number | string;
+  minimumTwelfthPercentage: number | string;
+  minimumDiplomaPercentage: number | string;
+  allowedDepartments: string;
+}
+
+export interface PlacementCandidateEvaluation {
+  id?: number;
+  placementDriveId: number | string;
+  studentId: number;
+  prn: string;
+  studentName?: string;
+  studentEmail?: string;
+  rollNo?: string;
+  department?: string;
+  academicYear?: string;
+  division?: string;
+  batchGroup?: string;
+  attendance?: number;
+  qualificationPath: '12TH' | 'DIPLOMA';
+  tenthPercentage: number | string;
+  twelfthPercentage: number | string;
+  diplomaPercentage: number | string;
+  cgpa: number | string;
+  activeBacklogs?: number;
+  isEligible: boolean;
+  evaluationReason?: string;
+  evaluatedAt?: string;
+}

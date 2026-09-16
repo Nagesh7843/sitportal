@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { ViewMode, FacultyMember, ActivityLog, StudentRecord, NoticeItem, EmailLog, NoticeCategory, NoticePriority } from '@/types';
 import { ActivityLogModal } from '@/components/modals';
+import { ChangeRequestApprovalDesk } from '@/features/admin/ChangeRequestApprovalDesk';
+import { SystemAuditTrailView } from '@/features/admin/SystemAuditTrailView';
+import { PlacementEligibilityHubTab } from '@/features/placement';
 
 interface AdminDashboardProps {
   onNavigate: (view: ViewMode) => void;
   facultyList: FacultyMember[];
-  onToggleFacultyStatus: (id: string) => void;
+  onToggleFacultyStatus?: (id: string) => void;
   activities: ActivityLog[];
   students: StudentRecord[];
   notices?: NoticeItem[];
@@ -25,15 +28,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenQuickNoticeModal,
 }) => {
   const [showActivityLogModal, setShowActivityLogModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notices' | 'emails' | 'faculty'>('notices');
+  const [selectedDepartmentScope, setSelectedDepartmentScope] = useState<string>('ALL');
+  const [activeTab, setActiveTab] = useState<'notices' | 'emails' | 'faculty' | 'change-requests' | 'placement-eligibility' | 'audit-trail'>('notices');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [selectedNoticeForModal, setSelectedNoticeForModal] = useState<NoticeItem | null>(null);
 
+  // Scoped student, faculty, and notices
+  const scopedStudents = useMemo(() => {
+    return students.filter(s => selectedDepartmentScope === 'ALL' || (s.department || 'CSE').toUpperCase() === selectedDepartmentScope.toUpperCase());
+  }, [students, selectedDepartmentScope]);
+
+  const scopedFaculty = useMemo(() => {
+    return facultyList.filter(f => selectedDepartmentScope === 'ALL' || (f.department || 'CSE').toUpperCase() === selectedDepartmentScope.toUpperCase());
+  }, [facultyList, selectedDepartmentScope]);
+
   // Filtered master circulars / notifications list
   const filteredNotices = useMemo(() => {
     return notices.filter((item) => {
+      const matchesDept = selectedDepartmentScope === 'ALL' || !item.department || item.department === 'ALL' || item.department.toUpperCase() === selectedDepartmentScope.toUpperCase();
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.authorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,9 +57,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const matchesCat = categoryFilter === 'ALL' || item.category === categoryFilter;
       const matchesPrio = priorityFilter === 'ALL' || item.priority === priorityFilter;
 
-      return matchesSearch && matchesCat && matchesPrio;
+      return matchesDept && matchesSearch && matchesCat && matchesPrio;
     });
-  }, [notices, searchQuery, categoryFilter, priorityFilter]);
+  }, [notices, selectedDepartmentScope, searchQuery, categoryFilter, priorityFilter]);
 
   // Total individual emails transferred calculation
   const totalEmailsTransferred = useMemo(() => {
@@ -94,13 +108,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="z-10 space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold tracking-wider uppercase text-sky-200 backdrop-blur-md">
             <span className="material-symbols-outlined text-[16px] text-amber-300">admin_panel_settings</span>
-            Executive Administrative Control Hub
+            Administration
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             System Administration Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-sky-100 opacity-90 max-w-2xl leading-relaxed">
-            Centralized institutional command center for monitoring student records, faculty status, broadcast email logs, and real-time circular dispatches across the CSE Department.
+            Review student records, faculty information, email activity, and notices for your institution.
           </p>
         </div>
 
@@ -129,6 +143,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </span>
       </div>
 
+      {/* Institutional Department Scope Selector Strip */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-indigo-50 rounded-xl text-[#000666]">
+            <span className="material-symbols-outlined text-[22px]">apartment</span>
+          </div>
+          <div>
+            <span className="text-[12px] font-extrabold text-slate-900 uppercase tracking-wider block">
+              Active Institutional Scope
+            </span>
+            <p className="text-[11px] text-slate-500">
+              Admin has full autonomous control & visibility across all 8 Engineering Departments
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <select
+            value={selectedDepartmentScope}
+            onChange={(e) => setSelectedDepartmentScope(e.target.value)}
+            className="bg-indigo-50 hover:bg-indigo-100/70 border border-indigo-200 text-indigo-950 font-extrabold text-xs px-3.5 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#000666] w-full md:w-auto cursor-pointer transition-colors"
+          >
+            <option value="ALL">🏛️ All 8 Departments (Institutional View)</option>
+            <option value="CSE">💻 Computer Science & Engineering (CSE)</option>
+            <option value="AIDS">🤖 Artificial Intelligence & Data Science (AIDS)</option>
+            <option value="MECH">⚙️ Mechanical Engineering (MECH)</option>
+            <option value="CIVIL">🏗️ Civil Engineering (CIVIL)</option>
+            <option value="ENTC">📡 Electronics & Telecommunication (ENTC)</option>
+            <option value="ELECTRICAL">⚡ Electrical Engineering (ELECTRICAL)</option>
+            <option value="MECHATRONICS">🦾 Mechatronics Engineering (MECHATRONICS)</option>
+            <option value="BASIC_SCIENCES">🔬 Basic Sciences & Humanities (BASIC_SCIENCES)</option>
+          </select>
+        </div>
+      </div>
+
       {/* Quick Stats Executive Bento Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Stat 1: Total Students */}
@@ -138,13 +187,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span className="material-symbols-outlined text-[24px]">school</span>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Active Roster
+              {selectedDepartmentScope === 'ALL' ? 'All Depts' : selectedDepartmentScope}
             </span>
           </div>
           <div className="mt-4">
-            <h3 className="text-[11px] font-bold text-[#454652] uppercase tracking-wider">Total Students</h3>
-            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{students.length}</p>
-            <p className="text-[11px] text-[#767683] mt-1">Enrolled student records</p>
+            <h3 className="text-[11px] font-bold text-[#454652] uppercase tracking-wider">Enrolled Students</h3>
+            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{scopedStudents.length}</p>
+            <p className="text-[11px] text-[#767683] mt-1">Student roster count</p>
           </div>
         </div>
 
@@ -155,13 +204,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span className="material-symbols-outlined text-[24px]">groups</span>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Department
+              {selectedDepartmentScope === 'ALL' ? 'All Faculty' : selectedDepartmentScope}
             </span>
           </div>
           <div className="mt-4">
-            <h3 className="text-[11px] font-bold text-[#454652] uppercase tracking-wider">Active Faculty</h3>
-            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{facultyList.length}</p>
-            <p className="text-[11px] text-[#767683] mt-1">Faculty directory roster</p>
+            <h3 className="text-[11px] font-bold text-[#454652] uppercase tracking-wider">Faculty Roster</h3>
+            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{scopedFaculty.length}</p>
+            <p className="text-[11px] text-[#767683] mt-1">Active faculty strength</p>
           </div>
         </div>
 
@@ -177,10 +226,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           <div className="mt-4">
             <h3 className="text-[11px] font-bold text-[#454652] uppercase tracking-wider">Circulars Dispatched</h3>
-            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{notices.length}</p>
+            <p className="text-[30px] font-extrabold text-[#071e27] leading-none mt-1">{filteredNotices.length}</p>
             <p className="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
               <span className="material-symbols-outlined text-[13px]">check_circle</span>
-              Sender Integrated
+              Scoped Feed
             </p>
           </div>
         </div>
@@ -221,21 +270,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Main Administrative Control Section: Tabbed Master Integrated Ledger */}
-      <div className="bg-white rounded-2xl border border-[#c6c5d4] shadow-xs p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-[#c6c5d4] shadow-xs p-4 sm:p-6 space-y-4 sm:space-y-5">
         {/* Navigation Tabs Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#c6c5d4] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-[#c6c5d4] pb-4">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[#000666] text-[24px]">receipt_long</span>
             <div>
-              <h2 className="font-extrabold text-lg text-[#071e27]">Integrated Notification & Communication Ledger</h2>
+              <h2 className="font-extrabold text-base sm:text-lg text-[#071e27]">Integrated Notification & Communication Ledger</h2>
               <p className="text-xs text-[#454652]">Real-time sender records, recipient targets, and circular transmission details</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-[#f3faff] p-1 rounded-xl border border-[#c6c5d4] self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 bg-[#f3faff] p-1 rounded-xl border border-[#c6c5d4] overflow-x-auto custom-scrollbar touch-scroll max-w-full w-full sm:w-auto">
             <button
               onClick={() => setActiveTab('notices')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'notices'
                   ? 'bg-[#000666] text-white shadow-xs'
                   : 'text-[#454652] hover:text-[#071e27]'
@@ -245,7 +294,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('emails')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'emails'
                   ? 'bg-[#000666] text-white shadow-xs'
                   : 'text-[#454652] hover:text-[#071e27]'
@@ -255,13 +304,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('faculty')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'faculty'
                   ? 'bg-[#000666] text-white shadow-xs'
                   : 'text-[#454652] hover:text-[#071e27]'
               }`}
             >
               Sender Directory ({senderStats.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('change-requests')}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                activeTab === 'change-requests'
+                  ? 'bg-[#000666] text-white shadow-xs'
+                  : 'text-[#454652] hover:text-[#071e27]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">verified_user</span>
+              Change Requests
+            </button>
+            <button
+              onClick={() => setActiveTab('placement-eligibility')}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                activeTab === 'placement-eligibility'
+                  ? 'bg-[#000666] text-white shadow-xs'
+                  : 'text-[#454652] hover:text-[#071e27]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">checklist</span>
+              Placement Eligibility
+            </button>
+            <button
+              onClick={() => setActiveTab('audit-trail')}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                activeTab === 'audit-trail'
+                  ? 'bg-[#000666] text-white shadow-xs'
+                  : 'text-[#454652] hover:text-[#071e27]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">history_toggle_off</span>
+              Audit Stream
             </button>
           </div>
         </div>
@@ -495,6 +577,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </div>
         )}
+
+        {/* TAB 4: STUDENT CHANGE REQUEST APPROVAL DESK */}
+        {activeTab === 'change-requests' && (
+          <ChangeRequestApprovalDesk />
+        )}
+
+        {/* TAB 5: PLACEMENT ELIGIBILITY DESK */}
+        {activeTab === 'placement-eligibility' && (
+          <PlacementEligibilityHubTab onNavigateNotice={() => onNavigate('notices')} />
+        )}
+
+        {/* TAB 6: SYSTEM ACTIVITY AUDIT TRAIL STREAM */}
+        {activeTab === 'audit-trail' && (
+          <SystemAuditTrailView />
+        )}
       </div>
 
       {/* Asymmetric Section: Faculty Availability Roster & Live Audit Feed */}
@@ -522,35 +619,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <th className="px-4 py-3">Faculty Member</th>
                   <th className="px-4 py-3">Specialization</th>
                   <th className="px-4 py-3">Rank / Role</th>
-                  <th className="px-4 py-3 text-right">Status Toggle</th>
+                  <th className="px-4 py-3 text-right">Department</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#c6c5d4]/40 bg-white">
-                {facultyList.map((fac) => {
-                  const statusColors = {
-                    'ON CAMPUS': 'bg-[#a3f69c]/50 text-[#002204] border-emerald-300',
-                    'IN MEETING': 'bg-[#d5ecf8] text-[#071e27] border-slate-300',
-                    'IN LAB': 'bg-[#d9e2ff] text-[#00429c] border-blue-300',
-                    'OFF CAMPUS': 'bg-[#ffdad6] text-[#93000a] border-red-300',
-                  }[fac.status];
-
-                  return (
-                    <tr key={fac.id} className="hover:bg-[#f3faff] transition-colors">
-                      <td className="px-4 py-3 font-bold text-[#071e27]">{fac.name}</td>
-                      <td className="px-4 py-3 text-[#454652]">{fac.specialization}</td>
-                      <td className="px-4 py-3 text-[#071e27]">{fac.rank}</td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => onToggleFacultyStatus(String(fac.id))}
-                          title="Click to toggle faculty presence status"
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border transition-transform active:scale-95 cursor-pointer ${statusColors}`}
-                        >
-                          {fac.status}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {facultyList.map((fac) => (
+                  <tr key={fac.id} className="hover:bg-[#f3faff] transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#071e27]">{fac.name}</td>
+                    <td className="px-4 py-3 text-[#454652]">{fac.specialization}</td>
+                    <td className="px-4 py-3 text-[#071e27]">{fac.rank || fac.designation}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {fac.department || 'CSE'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

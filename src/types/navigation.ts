@@ -16,4 +16,5 @@ export type ViewMode =
   | 'settings'
   | 'faculty-email'
   | 'questions'
-  | 'academic-calendar';
+  | 'academic-calendar'
+  | 'organization';

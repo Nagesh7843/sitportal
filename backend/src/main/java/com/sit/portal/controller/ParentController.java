@@ -1,13 +1,8 @@
 package com.sit.portal.controller;
 
-import com.sit.portal.entity.Notice;
-import com.sit.portal.entity.Parent;
-import com.sit.portal.entity.Student;
-import com.sit.portal.entity.User;
-import com.sit.portal.repository.NoticeRepository;
-import com.sit.portal.repository.ParentRepository;
-import com.sit.portal.repository.StudentRepository;
-import com.sit.portal.repository.UserRepository;
+import com.sit.portal.entity.*;
+import com.sit.portal.repository.*;
+import com.sit.portal.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/parents")
+@CrossOrigin(origins = "*")
 public class ParentController {
 
     @Autowired
@@ -30,6 +26,12 @@ public class ParentController {
 
     @Autowired
     private NoticeRepository noticeRepository;
+
+    @Autowired
+    private ParentStudentRelationshipRepository parentStudentRelationshipRepository;
+
+    @Autowired
+    private StudentService studentService;
 
     @GetMapping("/me")
     public ResponseEntity<?> getParentProfile(Authentication authentication) {
@@ -62,20 +64,19 @@ public class ParentController {
             }
         }
 
-        // If not found via Parent entity studentRollNo, check if any student has this parentEmail
-        if (linkedStudent == null) {
-            Optional<Student> studentByEmail = studentRepository.findByParentEmail(email);
-            if (studentByEmail.isPresent()) {
-                linkedStudent = studentByEmail.get();
-                Parent parent = parentOpt.orElse(Parent.builder().userId(user.getId()).build());
-                parent.setUserId(user.getId());
-                parent.setStudentRollNo(linkedStudent.getRollNo() != null ? linkedStudent.getRollNo() : linkedStudent.getPrn());
-                parent.setStudentName(linkedStudent.getName());
-                if (linkedStudent.getParentRelationship() != null) parent.setRelationship(linkedStudent.getParentRelationship());
-                if (linkedStudent.getParentPhone() != null) parent.setAlternatePhone(linkedStudent.getParentPhone());
-                Parent saved = parentRepository.save(parent);
-                result.put("parentInfo", saved);
-            }
+        List<Student> studentsByEmail = studentRepository.findByParentEmail(email);
+        result.put("linkedStudents", studentsByEmail);
+
+        if (linkedStudent == null && !studentsByEmail.isEmpty()) {
+            linkedStudent = studentsByEmail.get(0);
+            Parent parent = parentOpt.orElse(Parent.builder().userId(user.getId()).build());
+            parent.setUserId(user.getId());
+            parent.setStudentRollNo(linkedStudent.getRollNo() != null ? linkedStudent.getRollNo() : linkedStudent.getPrn());
+            parent.setStudentName(linkedStudent.getName());
+            if (linkedStudent.getParentRelationship() != null) parent.setRelationship(linkedStudent.getParentRelationship());
+            if (linkedStudent.getParentPhone() != null) parent.setAlternatePhone(linkedStudent.getParentPhone());
+            Parent saved = parentRepository.save(parent);
+            result.put("parentInfo", saved);
         }
 
         if (linkedStudent != null) {
@@ -83,6 +84,72 @@ public class ParentController {
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/me/relationships")
+    public ResponseEntity<?> getParentRelationships(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+        }
+        String email = authentication.getName().trim().toLowerCase();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found"));
+        }
+        Optional<Parent> parentOpt = parentRepository.findByUserId(userOpt.get().getId());
+        if (parentOpt.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        List<ParentStudentRelationship> rels = parentStudentRelationshipRepository.findByParentIdAndStatus(parentOpt.get().getId(), "VERIFIED");
+        return ResponseEntity.ok(rels);
+    }
+
+    @GetMapping("/me/students/{prn}")
+    public ResponseEntity<?> getVerifiedWardData(@PathVariable String prn, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+        }
+        String email = authentication.getName().trim().toLowerCase();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found"));
+        }
+
+        Optional<Student> studentOpt = studentRepository.findByPrn(prn);
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Student student = studentOpt.get();
+
+        // Verify relationship
+        boolean isAuthorized = false;
+        if (email.equalsIgnoreCase(student.getParentEmail())) {
+            isAuthorized = true;
+        } else {
+            Optional<Parent> parentOpt = parentRepository.findByUserId(userOpt.get().getId());
+            if (parentOpt.isPresent()) {
+                if (prn.equalsIgnoreCase(parentOpt.get().getStudentRollNo())) {
+                    isAuthorized = true;
+                } else {
+                    Optional<ParentStudentRelationship> rel = parentStudentRelationshipRepository.findByParentIdAndPrn(parentOpt.get().getId(), prn);
+                    if (rel.isPresent() && "VERIFIED".equalsIgnoreCase(rel.get().getStatus())) {
+                        isAuthorized = true;
+                    }
+                }
+            }
+        }
+
+        if (!isAuthorized) {
+            return ResponseEntity.status(403).body(Map.of("message", "Access denied: You are not authorized to view information for PRN " + prn));
+        }
+
+        Map<String, Object> wardData = new HashMap<>();
+        wardData.put("student", student);
+        wardData.put("academicData", studentService.getAcademicDataByPrn(prn).orElse(null));
+        wardData.put("currentEnrollment", studentService.getCurrentEnrollment(prn).orElse(null));
+        wardData.put("enrollmentHistory", studentService.getEnrollmentHistory(prn));
+
+        return ResponseEntity.ok(wardData);
     }
 
     @PostMapping("/link-student")
@@ -156,7 +223,6 @@ public class ParentController {
 
     @GetMapping("/notices")
     public ResponseEntity<?> getParentNotices(Authentication authentication) {
-        // Return all notices since parents receive all categories that students receive
         List<Notice> allNotices = noticeRepository.findAllPrioritizedAndLatest();
         return ResponseEntity.ok(allNotices);
     }

@@ -36,6 +36,7 @@ interface ModalsContainerProps {
 
   showNotifications: boolean;
   onCloseNotifications: () => void;
+  onOpenDeviceDispatch?: (notice?: any) => void;
 
   showHelp: boolean;
   onCloseHelp: () => void;
@@ -63,6 +64,7 @@ export const ModalsContainer: React.FC<ModalsContainerProps> = ({
   onCloseUploadMaterial,
   showNotifications,
   onCloseNotifications,
+  onOpenDeviceDispatch,
   showHelp,
   onCloseHelp,
 }) => {
@@ -108,6 +110,7 @@ export const ModalsContainer: React.FC<ModalsContainerProps> = ({
       <NotificationsDrawer
         isOpen={showNotifications}
         onClose={onCloseNotifications}
+        onOpenDeviceDispatch={onOpenDeviceDispatch}
       />
 
       <HelpModal

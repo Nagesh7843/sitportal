@@ -34,6 +34,27 @@ public class PlacementDrive {
 
     private String eligibility;
 
+    @Column(name = "minimum_cgpa", precision = 4, scale = 2)
+    private java.math.BigDecimal minimumCgpa;
+
+    @Column(name = "minimum_tenth_percentage", precision = 5, scale = 2)
+    private java.math.BigDecimal minimumTenthPercentage;
+
+    @Column(name = "minimum_twelfth_percentage", precision = 5, scale = 2)
+    private java.math.BigDecimal minimumTwelfthPercentage;
+
+    @Column(name = "minimum_diploma_percentage", precision = 5, scale = 2)
+    private java.math.BigDecimal minimumDiplomaPercentage;
+
+    @Column(name = "max_active_backlogs")
+    private Integer maxActiveBacklogs;
+
+    @Column(name = "allowed_departments", length = 255)
+    private String allowedDepartments;
+
+    @Column(name = "allowed_academic_years", length = 100)
+    private String allowedAcademicYears;
+
     private String location;
 
     @Column(name = "apply_deadline")

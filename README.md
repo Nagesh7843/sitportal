@@ -1,23 +1,22 @@
-# 🏛️ Sharad Institute of Technology (SITCOE) & Trust Institutions Central Portal
+# SIT Institutional Portal
 
-> **Production Full-Stack Institutional Web Application** built for **Sharad Institute of Technology College of Engineering (SITCOE)** and scalable across all 12 educational units of **Shri Shamrao Patil (Yadravkar) Educational & Charitable Trust**.
-
----
-
-## 🌟 Key Capabilities & Features
-
-- **🏛️ Institutional Digital Notice Board**: Real-time circulars, official PDF attachments, priority tagging (Urgent / Normal), and automated web scraping sync with `sitcoe.ac.in`.
-- **👨‍🏫 Live Faculty Presence & Directory**: Real-time status tracking (`ON CAMPUS`, `IN LAB`, `IN MEETING`, `OFF CAMPUS`), qualifications, research profiles, and office hours.
-- **🎓 Academic & Curriculum System**: Complete semester-wise syllabus, credits, course prerequisites, and document library.
-- **💼 Training & Placement Hub**: Placement drives, student achiever showcases, statistics, recruiter directories, and automated notification broadcasts.
-- **❓ Central Institutional Q&A**: Departmental and campus Q&A with real-time upvoting, expert faculty answers, and category filtering.
-- **🔔 Multi-Channel Notification Engine**: Web Push API (VAPID / Service Worker), Chrome push notifications, and asynchronous SMTP email broadcasts with Spring Retry.
-- **🤖 SIT Institutional AI Assistant**: Google Gemini-powered departmental intelligence with smart query routing and local fallback engine.
-- **🔒 Production Security & RBAC**: Role-based access control (`ADMIN`, `HOD`, `FACULTY`, `STUDENT`, `PARENT`), BCrypt password hashing (strength 12), and JWT session management.
+A web portal for managing institutional communication, academic information, people, and shared services. It is designed for SITCOE today and can grow to support additional Trust institutions.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## Features
+
+- **Notices and announcements**: Circulars, attachments, priority tags, and scheduled publishing.
+- **People directory**: Faculty and student profiles, availability, qualifications, and office hours.
+- **Academic information**: Programs, terms, curriculum, calendar, documents, and student records.
+- **Placements**: Drives, recruiters, eligibility criteria, placement updates, and notifications.
+- **Questions and support**: A central Q&A area and an optional AI helpdesk.
+- **Notifications**: Web push and email delivery, with delivery records.
+- **Access control**: Roles for administrators, HODs, faculty, students, parents, and future Trust-level users.
+
+---
+
+## Technology stack
 
 | Layer | Technologies |
 | :--- | :--- |
@@ -25,11 +24,11 @@
 | **Backend API** | Java 17, Spring Boot 4.1.0, Spring Data JPA, Spring Security, Hibernate ORM |
 | **Database** | PostgreSQL 16 (`sitportaldb`) with composite B-tree performance indexing |
 | **Push & Mail** | MartijnDwars WebPush (VAPID RFC-8292), Spring Mail (SMTP Async Retry) |
-| **DevOps & CI** | GitHub Actions (`.github/workflows/ci.yml`), Multi-stage Docker, Docker Compose, Nginx |
+| **Deployment** | Docker, Docker Compose, Nginx, and GitHub Actions |
 
 ---
 
-## 🚀 Quick Start & Local Execution
+## Run locally
 
 ### 1. Prerequisites
 - **Node.js**: v18 or v20+
@@ -44,7 +43,7 @@ cd backend
 # Run with local environment profile
 mvn spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
-*The Spring Boot server will initialize on `http://localhost:8080`.*
+The API runs on `http://localhost:8080`.
 
 ### 3. Frontend Setup
 ```bash
@@ -54,13 +53,13 @@ npm install
 # Start Vite Development Server
 npm run dev
 ```
-*The React SPA will launch on `http://localhost:3000`.*
+The web app runs on `http://localhost:3000`.
 
 ---
 
-## 🐳 Docker Deployment
+## Run with Docker
 
-To launch the complete full-stack environment (Database + Backend + Frontend + Reverse Proxy) with a single command:
+Start the database, API, and web app with:
 
 ```bash
 docker compose up -d --build
@@ -71,28 +70,29 @@ docker compose up -d --build
 
 ---
 
-## 🧪 Testing & Verification
+## Checks
 
-Run automated backend unit tests and frontend type validation:
+Run backend tests, TypeScript checks, and a production build:
 
 ```bash
-# Run 28 Java Backend Unit Tests
+# Backend tests
 cd backend && mvn test
 
-# Run TypeScript Lint & Production Bundle Build
+# Frontend checks
 npm run lint
 npm run build
 ```
 
 ---
 
-## 📚 Architecture & System Design Documentation
+## Architecture documentation
 
-- [**High-Level Design (HLD): Login to User Role & Access Control**](file:///d:/SIT%20PORTAL/cse-department-portal/LOGIN_TO_USER_ROLE_HLD.md): Comprehensive HLD covering Authentication (Credentials & Google OAuth SSO), Zero-Trust Roster Verification, Stateless JWT Lifecycle, Multi-Persona RBAC Matrix, Entity-Relationship Models, Sequence Flows, and Security Hardening.
-- [**System Architecture & Access Control Specification**](file:///d:/SIT%20PORTAL/cse-department-portal/PROJECT_ARCHITECTURE.md): Multi-tier topology, module descriptions, and notification retention rules.
+- [Institutional portal architecture](INSTITUTIONAL_PORTAL_ARCHITECTURE.md): Target architecture for a multi-institution portal.
+- [Current project architecture](PROJECT_ARCHITECTURE.md): Modules, academic model, and access-control notes.
+- [Login and access-control design](LOGIN_TO_USER_ROLE_HLD.md): Authentication and role-flow details.
 
 ---
 
-## 📮 API Documentation (Postman)
+## API documentation
 
-The single source of truth Postman collection is located at [`postman_collection.json`](file:///d:/SIT%20PORTAL/cse-department-portal/postman_collection.json) with 14 modular folders covering all REST endpoints.
+The Postman collection is available in [`postman_collection.json`](postman_collection.json).

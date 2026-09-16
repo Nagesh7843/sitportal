@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem, CourseItem } from '@/types';
+import { ViewMode, UserRole, UserProfile, FacultyMember, ActivityLog, UploadAsset, EmailLog, StudentRecord, NoticeItem, CourseItem, WorkingBatchConfig } from '@/types';
 import { apiService } from '@/services/api';
 import { registerWebPushDevice } from '@/utils/webPush';
 import { useUrlRouter, getInitialView } from '@/hooks/useUrlRouter';
 
 
-import { Sidebar, Header, Footer } from '@/components/layout';
+import { Sidebar, Header, Footer, MobileBottomNav } from '@/components/layout';
 import { Modals } from '@/components/modals';
 import { Sparkles } from 'lucide-react';
 
@@ -21,7 +21,8 @@ import { NoticeFeedView, NoticePublishModal } from '@/features/notices';
 import { DocumentLibraryView } from '@/features/documents';
 import { CentralQuestionSystem } from '@/features/questions';
 import { AcademicCalendarView } from '@/features/calendar';
-import { EditProfileModal, ContactFacultyModal, AddEditCourseModal } from '@/components/modals';
+import { DepartmentHierarchyView } from '@/features/organization';
+import { EditProfileModal, ContactFacultyModal, AddEditCourseModal, SendNoticeToDeviceModal } from '@/components/modals';
 import { AiHelpdeskChatbot } from '@/components/AiHelpdeskChatbot';
 
 export default function App() {
@@ -56,6 +57,56 @@ export default function App() {
     }
     return null;
   });
+
+  // Global Active Default Working Batch (for faculty & staff)
+  const [activeWorkingBatch, setActiveWorkingBatch] = useState<WorkingBatchConfig | null>(() => {
+    const saved = localStorage.getItem('sit_faculty_active_batch');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return null;
+  });
+
+  // Sync working batch from currentProfile if available
+  useEffect(() => {
+    if (currentProfile) {
+      if (currentProfile.defaultAcademicYear || currentProfile.defaultDivision || currentProfile.defaultBatchGroup) {
+        const batchConfig: WorkingBatchConfig = {
+          department: currentProfile.department || 'CSE',
+          academicYear: currentProfile.defaultAcademicYear || 'TE',
+          division: currentProfile.defaultDivision || 'Div A',
+          batchGroup: currentProfile.defaultBatchGroup || 'A1'
+        };
+        setActiveWorkingBatch(batchConfig);
+        localStorage.setItem('sit_faculty_active_batch', JSON.stringify(batchConfig));
+      }
+    }
+  }, [currentProfile]);
+
+  const handleSaveDefaultBatch = async (batchConfig: WorkingBatchConfig) => {
+    setActiveWorkingBatch(batchConfig);
+    localStorage.setItem('sit_faculty_active_batch', JSON.stringify(batchConfig));
+    if (currentProfile) {
+      setCurrentProfile({
+        ...currentProfile,
+        defaultAcademicYear: batchConfig.academicYear,
+        defaultDivision: batchConfig.division,
+        defaultBatchGroup: batchConfig.batchGroup,
+        department: batchConfig.department || currentProfile.department
+      });
+    }
+    try {
+      await apiService.saveDefaultBatch({
+        academicYear: batchConfig.academicYear as string,
+        division: batchConfig.division as string,
+        batchGroup: batchConfig.batchGroup as string,
+        department: batchConfig.department,
+        email: currentProfile?.email
+      });
+    } catch (err) {
+      console.warn('Could not persist default batch to backend:', err);
+    }
+  };
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
   const [intendedView, setIntendedView] = useState<ViewMode | null>(null);
 
@@ -82,6 +133,8 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showPublishNoticeModal, setShowPublishNoticeModal] = useState(false);
+  const [showSendNoticeToDeviceModal, setShowSendNoticeToDeviceModal] = useState(false);
+  const [noticeForDeviceDispatch, setNoticeForDeviceDispatch] = useState<NoticeItem | null>(null);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showContactFacultyModal, setShowContactFacultyModal] = useState(false);
   const [selectedFacultyForContact, setSelectedFacultyForContact] = useState<FacultyMember | null>(null);
@@ -647,12 +700,13 @@ export default function App() {
           onNavigate={handleProtectedNavigate}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onOpenNotifications={() => requireAuthAction(() => setShowNotifications(true))}
+          onOpenNotifications={() => setShowNotifications(true)}
           onOpenHelp={() => setShowHelp(true)}
           onOpenEditProfile={() => requireAuthAction(() => setShowEditProfileModal(true))}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           canGoBack={viewHistory.length > 0}
           onGoBack={handleGoBack}
+          activeWorkingBatch={activeWorkingBatch}
         />
 
         {/* Global Updates Ticker */}
@@ -677,7 +731,7 @@ export default function App() {
         </div>
 
         {/* Dynamic View Container */}
-        <main className="flex-1 p-3 sm:p-6 max-w-[1440px] w-full mx-auto animate-in fade-in duration-150">
+        <main className="flex-1 p-3 sm:p-6 pb-24 lg:pb-6 max-w-[1440px] w-full mx-auto animate-in fade-in duration-150">
           {activeView === 'dashboard' && (
             <AdminDashboard
               onNavigate={handleProtectedNavigate}
@@ -700,6 +754,8 @@ export default function App() {
               studentsList={studentsList}
               onNavigate={handleProtectedNavigate}
               onOpenPublishNotice={() => requireAuthAction(() => setShowPublishNoticeModal(true))}
+              activeWorkingBatch={activeWorkingBatch}
+              onSaveDefaultBatch={handleSaveDefaultBatch}
             />
           )}
 
@@ -739,6 +795,10 @@ export default function App() {
               onOpenAssignmentModal={() => requireAuthAction(() => setShowUploadAssignment(true))}
               onOpenNoticeModal={() => requireAuthAction(() => setShowPublishNoticeModal(true))}
               onOpenMaterialModal={() => requireAuthAction(() => setShowUploadMaterial(true))}
+              currentProfile={currentProfile}
+              userRole={userRole}
+              activeWorkingBatch={activeWorkingBatch}
+              onSaveDefaultBatch={handleSaveDefaultBatch}
             />
           )}
 
@@ -756,6 +816,7 @@ export default function App() {
               defaultTargetRole="STUDENT"
               prefilledEmail={prefilledEmail}
               currentProfile={currentProfile}
+              activeWorkingBatch={activeWorkingBatch}
             />
           )}
 
@@ -769,6 +830,7 @@ export default function App() {
               defaultTargetRole="FACULTY"
               prefilledEmail={prefilledEmail}
               currentProfile={currentProfile}
+              activeWorkingBatch={activeWorkingBatch}
             />
           )}
 
@@ -798,6 +860,7 @@ export default function App() {
                 setShowContactFacultyModal(true);
               }}
               currentProfile={currentProfile}
+              userRole={userRole}
             />
           )}
 
@@ -809,6 +872,9 @@ export default function App() {
               onUpdateStudent={userRole === 'admin' ? handleUpdateStudent : undefined}
               onNavigate={handleProtectedNavigate}
               onAddStudentsBulk={userRole === 'admin' ? handleAddStudentsBulk : undefined}
+              activeWorkingBatch={activeWorkingBatch}
+              userRole={userRole}
+              currentProfile={currentProfile}
             />
           )}
 
@@ -841,10 +907,28 @@ export default function App() {
             />
           )}
 
+          {activeView === 'organization' && (
+            <DepartmentHierarchyView
+              userRole={userRole}
+              currentProfile={currentProfile}
+              activeWorkingBatch={activeWorkingBatch}
+              onSaveDefaultBatch={handleSaveDefaultBatch}
+            />
+          )}
+
           {activeView === 'analytics' && <AnalyticsView notices={notices} students={studentsList} emails={emailLogs} />}
 
           {activeView === 'settings' && <SettingsView currentProfile={currentProfile} />}
         </main>
+
+        {/* Mobile Bottom Navigation (Hidden on lg+ screens) */}
+        <MobileBottomNav
+          activeView={activeView}
+          onNavigate={handleProtectedNavigate}
+          userRole={userRole}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          unreadCount={notices.filter(n => n.priority === 'URGENT').length}
+        />
 
         {/* Footer */}
         <Footer onNavigate={handleProtectedNavigate} />
@@ -873,6 +957,10 @@ export default function App() {
         onCloseUploadMaterial={() => setShowUploadMaterial(false)}
         showNotifications={showNotifications}
         onCloseNotifications={() => setShowNotifications(false)}
+        onOpenDeviceDispatch={(n) => {
+          setNoticeForDeviceDispatch(n || null);
+          setShowSendNoticeToDeviceModal(true);
+        }}
         showHelp={showHelp}
         onCloseHelp={() => setShowHelp(false)}
       />
@@ -884,6 +972,16 @@ export default function App() {
         currentUserName={currentProfile?.name || 'Unknown Author'}
         currentUserRoleTitle={currentProfile?.roleTitle || 'Authorized Personnel'}
         studentsList={studentsList}
+      />
+
+      <SendNoticeToDeviceModal
+        isOpen={showSendNoticeToDeviceModal}
+        onClose={() => {
+          setShowSendNoticeToDeviceModal(false);
+          setNoticeForDeviceDispatch(null);
+        }}
+        notice={noticeForDeviceDispatch}
+        availableNotices={notices}
       />
 
       <EditProfileModal

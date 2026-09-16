@@ -67,6 +67,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/laboratories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/research-labs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/faculty/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/students/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/organization/**", "/api/organization/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/documents/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/analytics/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/questions/**").permitAll()
@@ -76,11 +78,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/scheduler/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/scraper/notices/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/news-events/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/placements/**").permitAll()
+                .requestMatchers("/api/v1/placements/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/activities/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/activities/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/email/contact-faculty").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/notices/*/read").permitAll()
+                .requestMatchers("/api/v1/users/**").permitAll()
+                .requestMatchers("/api/audit-logs/**", "/api/v1/audit/**").hasAnyRole("ADMIN", "HOD")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/students/change-requests/*/verify").hasAnyRole("ADMIN", "HOD")
                 // Protected mutations
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().permitAll()
@@ -102,13 +107,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

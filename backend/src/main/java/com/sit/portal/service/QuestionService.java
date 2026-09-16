@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,8 +109,27 @@ public class QuestionService {
     }
 
     public Optional<Question> upvoteQuestion(Long id) {
+        return toggleUpvoteQuestion(id, "anonymous_user");
+    }
+
+    public Optional<Question> toggleUpvoteQuestion(Long id, String userIdentifier) {
+        String cleanUser = (userIdentifier != null && !userIdentifier.trim().isEmpty())
+                ? userIdentifier.trim().toLowerCase()
+                : "anonymous_user";
+
         return questionRepository.findById(id).map(q -> {
-            q.setUpvotes((q.getUpvotes() != null ? q.getUpvotes() : 0) + 1);
+            List<String> upvotedUsers = q.getUpvotedBy() != null ? new ArrayList<>(q.getUpvotedBy()) : new ArrayList<>();
+            if (upvotedUsers.contains(cleanUser)) {
+                // Already liked -> Toggle off / unlike (enforces 1 like per user max)
+                upvotedUsers.remove(cleanUser);
+                q.setUpvotedBy(upvotedUsers);
+                q.setUpvotes(Math.max(0, (q.getUpvotes() != null ? q.getUpvotes() : 1) - 1));
+            } else {
+                // Like question
+                upvotedUsers.add(cleanUser);
+                q.setUpvotedBy(upvotedUsers);
+                q.setUpvotes((q.getUpvotes() != null ? q.getUpvotes() : 0) + 1);
+            }
             return questionRepository.save(q);
         });
     }
@@ -119,6 +139,15 @@ public class QuestionService {
             q.setStatus(status.toUpperCase());
             return questionRepository.save(q);
         });
+    }
+
+    public boolean canUserUpdateStatus(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) return true; // dev fallback
+        String email = authentication.getName().trim().toLowerCase();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) return false;
+        User user = userOpt.get();
+        return "admin".equalsIgnoreCase(user.getRole()) || "hod".equalsIgnoreCase(user.getRole()) || "faculty".equalsIgnoreCase(user.getRole());
     }
 
     public boolean canUserDeleteQuestion(Long id, Authentication authentication) {

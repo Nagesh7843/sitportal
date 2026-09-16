@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ViewMode, UploadAsset, StudentRecord, DepartmentEvent } from '@/types';
-import hodProfile from '@/assets/hod-profile.jpeg';
+import { ViewMode, UploadAsset, StudentRecord, DepartmentEvent, UserProfile, UserRole, WorkingBatchConfig } from '@/types';
+import { FacultyBatchesView } from '@/features/faculty/FacultyBatchesView';
 
 interface FacultyDashboardProps {
   onNavigate: (view: ViewMode, emailContext?: string) => void;
@@ -10,6 +10,10 @@ interface FacultyDashboardProps {
   onOpenAssignmentModal: () => void;
   onOpenNoticeModal: () => void;
   onOpenMaterialModal: () => void;
+  currentProfile?: UserProfile | null;
+  userRole?: UserRole;
+  activeWorkingBatch?: WorkingBatchConfig | null;
+  onSaveDefaultBatch?: (batchConfig: WorkingBatchConfig) => Promise<void> | void;
 }
 
 export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({
@@ -20,71 +24,77 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({
   onOpenAssignmentModal,
   onOpenNoticeModal,
   onOpenMaterialModal,
+  currentProfile,
+  userRole,
+  activeWorkingBatch,
+  onSaveDefaultBatch
 }) => {
-  const [studentFilter, setStudentFilter] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
-
-  const filteredStudents = students.filter(
-    (s) =>
-      s.name.toLowerCase().includes(studentFilter.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(studentFilter.toLowerCase())
-  );
+  const [activeTab, setActiveTab] = useState<'overview' | 'batches'>('overview');
 
   return (
     <div className="space-y-6">
-      {/* Top Grid: Profile & Content Creation Center */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Profile Summary Card */}
-        <div className="lg:col-span-4 bg-[#f3faff]/90 glass-card p-6 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="font-bold text-[20px] text-[#000666]">Faculty Profile</h2>
-              <span className="bg-[#d9e2ff] text-[#00429c] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                Active Status
+      {/* Navigation Tab Bar */}
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-[#d6d9e0] shadow-xs overflow-x-auto custom-scrollbar touch-scroll max-w-full">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'overview' ? 'bg-[#000666] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">dashboard</span>
+          <span>Faculty Overview</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('batches')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'batches' ? 'bg-[#000666] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">groups</span>
+          <span>My Assigned Batches & Student Monitoring</span>
+        </button>
+      </div>
+
+      {activeTab === 'batches' ? (
+        <FacultyBatchesView
+          facultyEmail={currentProfile?.email}
+          facultyDepartment={currentProfile?.department || 'CSE'}
+          isFacultyOnly={true}
+          onSendBatchNotice={(batchName) => {
+            onNavigate('notices');
+          }}
+          activeWorkingBatch={activeWorkingBatch}
+          onSaveDefaultBatch={onSaveDefaultBatch}
+        />
+      ) : (
+        <>
+          {/* Active Working Batch Minimal Strip */}
+          <div className="bg-white border border-slate-200 px-4 py-3 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-[11px] font-extrabold px-2 py-0.5 bg-[#000666] text-white rounded-lg shrink-0">
+                {currentProfile?.department || 'CSE'}
               </span>
-            </div>
-
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-[#c6c5d4] shrink-0">
-                <img
-                  src={hodProfile}
-                  alt="Dr. S. S. Gurav"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <h3 className="text-[16px] font-bold text-[#071e27]">CSE - CS402</h3>
-                <p className="text-[#454652] text-[13px] font-medium">Distributed Systems & Cloud Computing</p>
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="text-xs font-bold text-slate-500">Working Batch:</span>
+                <span className="text-xs font-extrabold text-slate-900">
+                  {activeWorkingBatch ? `${activeWorkingBatch.academicYear} • ${activeWorkingBatch.division} • ${activeWorkingBatch.batchGroup === 'ALL' ? 'All' : activeWorkingBatch.batchGroup}` : 'TE • Div A • A1'}
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Active Monitored" />
               </div>
             </div>
 
-            <div className="space-y-3 bg-[#e6f6ff] p-4 rounded-xl border border-[#dbf1fe] text-[13px]">
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Ongoing Research</span>
-                <span className="font-bold text-[#071e27]">Edge AI Mesh</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Student Mentors</span>
-                <span className="font-bold text-[#071e27]">12 Active</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Next Lecture</span>
-                <span className="font-bold text-[#2b5bb5]">2:00 PM (Hall 4)</span>
-              </div>
-            </div>
+            <button
+              onClick={() => setActiveTab('batches')}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px] text-[#000666]">groups</span>
+              <span>Monitor Batch</span>
+            </button>
           </div>
 
-          <button
-            onClick={() => onNavigate('curriculum')}
-            className="mt-6 w-full py-2.5 border-2 border-[#000666] text-[#000666] rounded-lg font-bold text-[13px] hover:bg-[#000666] hover:text-white transition-all shadow-xs"
-          >
-            View Full Curriculum
-          </button>
-        </div>
-
-        {/* Content Creation Center */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Full-width Content Creation & Recent Uploads Center */}
+          <div className="flex flex-col gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Upload Assignment Action Card */}
             <div
               onClick={onOpenAssignmentModal}
@@ -183,169 +193,7 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Grid: Student Performance & Events Calendar */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Student Performance Overview */}
-        <div className="lg:col-span-7 bg-white p-6 rounded-xl shadow-xs border border-[#c6c5d4]">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h2 className="font-bold text-[18px] text-[#071e27]">Student Performance Overview</h2>
-              <p className="text-[12px] text-[#454652]">Monitor attendance and academic progress</p>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="text"
-                value={studentFilter}
-                onChange={(e) => setStudentFilter(e.target.value)}
-                placeholder="Filter by Roll No or Name..."
-                className="text-[13px] border border-[#c6c5d4] px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000666] w-full sm:w-56"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {filteredStudents.map((st) => (
-              <div
-                key={st.id}
-                onClick={() => setSelectedStudent(st)}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-[#c6c5d4] rounded-xl hover:border-[#000666] hover:bg-[#f3faff] transition-all cursor-pointer gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${st.avatarBg || 'bg-[#d9e2ff] text-[#00429c]'} rounded-full flex items-center justify-center font-bold text-[14px]`}>
-                    {st.initials || st.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[14px] text-[#071e27]">{st.name}</p>
-                    <p className="text-[11px] text-[#454652]">ID: {st.rollNo} • Batch: {st.cohortBatch}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-right">
-                    <p className="text-[10px] text-[#454652] uppercase font-bold tracking-wider">PRN</p>
-                    <p className="text-[13px] font-mono text-[#071e27]">{st.prn}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-[#454652] uppercase font-bold tracking-wider">GPA</p>
-                    <p className={`text-[13px] font-bold ${st.gpa >= 3.5 ? 'text-emerald-600' : 'text-orange-500'}`}>
-                      {st.gpa}
-                    </p>
-                  </div>
-                  <button className="text-[#000666] hover:bg-[#d5ecf8] p-1.5 rounded-full transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">open_in_new</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-            {filteredStudents.length === 0 && (
-              <p className="py-10 text-center text-[13px] text-[#454652]">No student records have been added yet.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Department Events Calendar & Finals Prep Banner */}
-        <div className="lg:col-span-5 bg-[#f3faff]/90 glass-card p-6 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-[18px] text-[#071e27]">Department Events</h2>
-              <span className="text-[#454652] text-[12px] font-semibold">Nov 2024</span>
-            </div>
-
-            <div className="space-y-3">
-              {events.map((ev) => (
-                <div key={ev.id} className="flex gap-4 p-3 bg-white rounded-lg border border-[#c6c5d4]/40 shadow-2xs">
-                  <div className="flex flex-col items-center justify-center min-w-[50px] bg-[#1a237e] text-white rounded-lg p-2 shrink-0">
-                    <span className="text-[14px] font-bold">{ev.dateDay}</span>
-                    <span className="text-[10px] uppercase font-bold">{ev.dateMonth}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-[13px] font-bold text-[#071e27] truncate">{ev.title}</h4>
-                    <p className="text-[11px] text-[#454652]">{ev.location} • {ev.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Finals Prep Reminder Box */}
-          <div className="mt-6 p-4 bg-[#000666] text-white rounded-xl relative overflow-hidden shadow-md">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#759efd] mb-1">Reminder</p>
-            <h4 className="text-[16px] font-bold">Semester Finals Prep</h4>
-            <p className="text-[11px] opacity-80 mb-3">Please ensure all grades are uploaded by the 30th of this month.</p>
-            <button
-              onClick={() => onNavigate('students')}
-              className="bg-white text-[#000666] px-4 py-2 rounded-lg text-[12px] font-bold w-full hover:bg-[#cfe6f2] transition-colors"
-            >
-              Open Grade Portal
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Student Detail Modal */}
-      {selectedStudent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#c6c5d4] animate-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 ${selectedStudent.avatarBg || 'bg-[#d9e2ff] text-[#00429c]'} rounded-full flex items-center justify-center font-bold text-[18px]`}>
-                  {selectedStudent.initials}
-                </div>
-                <div>
-                  <h3 className="font-bold text-[18px] text-[#071e27]">{selectedStudent.name}</h3>
-                  <p className="text-[12px] text-[#454652]">Roll No: {selectedStudent.rollNo}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedStudent(null)}
-                className="text-[#767683] hover:text-[#071e27]"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-3 bg-[#e6f6ff] p-4 rounded-xl text-[13px] mb-4">
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Email:</span>
-                <span className="font-semibold text-[#071e27]">{selectedStudent.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Batch:</span>
-                <span className="font-semibold text-[#071e27]">{selectedStudent.cohortBatch}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#454652]">PRN:</span>
-                <span className="font-mono text-[#071e27]">{selectedStudent.prn}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#454652]">Current Cumulative GPA:</span>
-                <span className="font-bold text-emerald-600">{selectedStudent.gpa} / 4.00</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setSelectedStudent(null)}
-                className="px-4 py-2 border border-[#c6c5d4] rounded-lg text-[13px] font-semibold text-[#071e27] hover:bg-[#e6f6ff]"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  const studentEmail = selectedStudent.email;
-                  setSelectedStudent(null);
-                  onNavigate('bulk-email', studentEmail);
-                }}
-                className="px-4 py-2 bg-[#000666] text-white rounded-lg text-[13px] font-semibold hover:bg-[#1a237e] flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">send</span>
-                <span>Send Direct Email</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

@@ -21,8 +21,7 @@ export const AddFacultyModal: React.FC<AddFacultyModalProps> = ({
     qualification: '',
     teachingExperience: '',
     industrialExperience: '',
-    department: 'CSE',
-    status: 'ON CAMPUS'
+    department: 'CSE'
   });
 
   if (!isOpen) return null;
@@ -73,7 +72,7 @@ export const AddFacultyModal: React.FC<AddFacultyModalProps> = ({
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#000666]"
-                  placeholder="e.g., poornima@sitcoe.org.in"
+                  placeholder="e.g., poornima@sitcoe.ac.in or faculty@gmail.com"
                 />
               </div>
             </div>
@@ -94,16 +93,20 @@ export const AddFacultyModal: React.FC<AddFacultyModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 text-slate-600">Department</label>
+                <label className="block text-xs font-bold mb-1.5 text-slate-600">Institutional Department *</label>
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value as DepartmentCode })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#000666]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#000666] font-bold text-indigo-900"
                 >
-                  <option value="CSE">Computer Science & Engineering (CSE)</option>
-                  <option value="IT">Information Technology (IT)</option>
-                  <option value="E&TC">E&TC</option>
-                  <option value="AI&DS">AI & Data Science (AI&DS)</option>
+                  <option value="CSE">CSE - Computer Science & Engineering</option>
+                  <option value="AIDS">AIDS - Artificial Intelligence & Data Science</option>
+                  <option value="MECH">MECH - Mechanical Engineering</option>
+                  <option value="CIVIL">CIVIL - Civil Engineering</option>
+                  <option value="ENTC">ENTC - Electronics & Telecommunication</option>
+                  <option value="ELECTRICAL">ELECTRICAL - Electrical Engineering</option>
+                  <option value="MECHATRONICS">MECHATRONICS - Mechatronics Engineering</option>
+                  <option value="BASIC_SCIENCES">BASIC_SCIENCES - Basic Sciences & Humanities</option>
                 </select>
               </div>
             </div>

@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'dashboard', label: 'Admin Dashboard', icon: 'dashboard' },
+        { id: 'organization', label: 'Departments & Hierarchy', icon: 'domain' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'hod-dashboard', label: 'HOD Executive Hub', icon: 'shield' },
+        { id: 'organization', label: 'Departments & Hierarchy', icon: 'domain' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
@@ -50,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
         { id: 'faculty-portal', label: 'Faculty Hub', icon: 'badge' },
+        { id: 'organization', label: 'Departments & Hierarchy', icon: 'domain' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
@@ -82,6 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       // Public guest
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
+        { id: 'organization', label: 'Departments & Hierarchy', icon: 'domain' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
@@ -143,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Primary Navigation */}
-        <nav className="flex-1 space-y-1 px-2 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 space-y-1 px-2 overflow-y-auto custom-scrollbar touch-scroll safe-pb">
           {navItems.map((item) => {
             const isActive = activeView === item.id;
             return (

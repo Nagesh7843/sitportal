@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FacultyMember, UserProfile, ViewMode } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { FacultyMember, UserProfile, UserRole, ViewMode } from '@/types';
 
 interface FacultyDirectoryProps {
   facultyList: FacultyMember[];
@@ -10,6 +10,7 @@ interface FacultyDirectoryProps {
   onAddFacultyBulk?: (faculty: FacultyMember[]) => void;
   onContactFaculty?: (faculty: FacultyMember) => void;
   currentProfile?: UserProfile | null;
+  userRole?: UserRole | string;
 }
 
 export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
@@ -20,10 +21,22 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
   onAddFaculty,
   onAddFacultyBulk,
   onContactFaculty,
-  currentProfile
+  currentProfile,
+  userRole
 }) => {
+  const isStudentOrParent = userRole === 'student' || userRole === 'parent';
+  const assignedDept = (currentProfile?.department || 'CSE').toUpperCase();
+
   const [search, setSearch] = useState('');
+  const [deptFilter, setDeptFilter] = useState(() => isStudentOrParent ? assignedDept : 'ALL');
   const [rankFilter, setRankFilter] = useState('ALL');
+
+  useEffect(() => {
+    if (isStudentOrParent) {
+      setDeptFilter(assignedDept);
+      setRankFilter('ALL');
+    }
+  }, [isStudentOrParent, assignedDept]);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -49,12 +62,13 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
           records.push({
             name: row[0],
             email: row[1],
-            specialization: row[2] || 'General',
-            rank: row[3] || 'Assistant Professor',
-            designation: row[3] || 'Assistant Professor',
-            qualification: row[4] || '',
-            teachingExperience: row[5] || '',
-            industrialExperience: row[6] || '',
+            department: row[2] || 'CSE',
+            specialization: row[3] || 'General',
+            rank: row[4] || 'Assistant Professor',
+            designation: row[4] || 'Assistant Professor',
+            qualification: row[5] || '',
+            teachingExperience: row[6] || '',
+            industrialExperience: row[7] || '',
             status: 'ON CAMPUS'
           });
         }
@@ -76,95 +90,128 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
       f.name.toLowerCase().includes(search.toLowerCase()) ||
       f.specialization.toLowerCase().includes(search.toLowerCase());
     const matchesRank = rankFilter === 'ALL' || f.rank.includes(rankFilter);
-    return matchesSearch && matchesRank;
+    const fDept = (f.department || 'CSE').toUpperCase();
+    const matchesDept = isStudentOrParent
+      ? fDept === assignedDept || (assignedDept === 'CSE' && (fDept.includes('COMP') || fDept.includes('CSE')))
+      : (deptFilter === 'ALL' || fDept === deptFilter.toUpperCase());
+    return matchesSearch && matchesRank && matchesDept;
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-[#000666] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-[#000666] text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[28px] text-[#759efd]">groups</span>
-            Department Faculty Directory
+          <h1 className="text-xl sm:text-[24px] font-extrabold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[24px] sm:text-[28px] text-[#759efd]">groups</span>
+            <span>{isStudentOrParent ? `${assignedDept} Faculty Directory` : 'Department Faculty Directory'}</span>
           </h1>
-          <p className="text-[#cfe6f2] text-[13px] mt-1">
-            Professors, Assistant Professors & Department Coordinators
+          <p className="text-[#cfe6f2] text-xs sm:text-[13px] mt-1">
+            {isStudentOrParent
+              ? `Faculty members & academic advisors of ${assignedDept} Department`
+              : 'Professors, Assistant Professors & Department Coordinators'}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          {onAddFaculty && (
-            <button
-              onClick={onAddFaculty}
-              className="bg-white text-[#000666] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[18px]">person_add</span>
-              <span>Add Faculty</span>
-            </button>
-          )}
-          {onAddFacultyBulk && (
-            <>
-              <input 
-                type="file" 
-                accept=".csv" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                className="hidden" 
-              />
+        {!isStudentOrParent && (
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-center w-full md:w-auto">
+            {onAddFaculty && (
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-[#000666] border-2 border-white text-white font-bold px-4 py-2 rounded-xl text-[13px] hover:bg-white hover:text-[#000666] transition-colors shadow-xs flex items-center gap-2"
+                onClick={onAddFaculty}
+                className="flex-1 sm:flex-none justify-center bg-white text-[#000666] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                <span>Upload CSV</span>
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span>Add Faculty</span>
               </button>
-            </>
-          )}
-          <button
-            onClick={() => onNavigate('faculty-email')}
-            className="bg-[#759efd] text-[#00337c] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[18px]">mail</span>
-            <span>Contact All</span>
-          </button>
-        </div>
+            )}
+            {onAddFacultyBulk && (
+              <>
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload} 
+                  className="hidden" 
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 sm:flex-none justify-center bg-[#000666] border-2 border-white text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-[13px] hover:bg-white hover:text-[#000666] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                  <span>Upload CSV</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => onNavigate('faculty-email')}
+              className="flex-1 sm:flex-none justify-center bg-[#759efd] text-[#00337c] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">mail</span>
+              <span>Contact All</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
-      <div className="bg-white p-4 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by faculty name or domain specialization..."
-          className="w-full sm:w-80 bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-3.5 py-2 text-[13px] focus:ring-2 focus:ring-[#000666] outline-none"
+          placeholder={`Search ${isStudentOrParent ? assignedDept : ''} faculty by name or domain specialization...`}
+          className="w-full sm:w-80 bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-3.5 py-2 text-xs sm:text-[13px] focus:ring-2 focus:ring-[#000666] outline-none"
         />
 
-        <div className="flex items-center gap-2">
-          <span className="text-[12px] font-bold text-[#454652] uppercase">Rank:</span>
-          <select
-            value={rankFilter}
-            onChange={(e) => setRankFilter(e.target.value)}
-            className="bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-3 py-1.5 text-[13px] text-[#071e27] font-semibold"
-          >
-            <option value="ALL">All Ranks</option>
-            <option value="HOD">Head of Department</option>
-            <option value="Asst.">Assistant Professors</option>
-          </select>
-        </div>
+        {isStudentOrParent ? (
+          /* Minimal Department Scope Badge for Student and Parent */
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl">
+            <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#000666] text-white rounded-md">
+              {assignedDept}
+            </span>
+            <span className="text-xs font-bold text-[#000666]">
+              {filtered.length} Faculty Members Available
+            </span>
+          </div>
+        ) : (
+          /* Admin / Universal Multi-Department Filters */
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex-1 sm:flex-none">
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-bold outline-none focus:ring-2 focus:ring-[#000666]"
+              >
+                <option value="ALL">All Depts</option>
+                <option value="CSE">CSE</option>
+                <option value="AIDS">AIDS</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="ENTC">ENTC</option>
+                <option value="ELECTRICAL">ELECTRICAL</option>
+                <option value="MECHATRONICS">MECHATRONICS</option>
+                <option value="BASIC_SCIENCES">BASIC SCIENCES</option>
+              </select>
+            </div>
+
+            <div className="flex-1 sm:flex-none">
+              <select
+                value={rankFilter}
+                onChange={(e) => setRankFilter(e.target.value)}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-semibold focus:ring-2 focus:ring-[#000666] outline-none"
+              >
+                <option value="ALL">All Ranks</option>
+                <option value="HOD">Head of Department</option>
+                <option value="Asst.">Assistant Professors</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Faculty Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filtered.map((fac) => {
-          const statusColors = {
-            'ON CAMPUS': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-            'IN MEETING': 'bg-slate-100 text-slate-800 border-slate-300',
-            'IN LAB': 'bg-blue-100 text-blue-800 border-blue-300',
-            'OFF CAMPUS': 'bg-red-100 text-red-800 border-red-300',
-          }[fac.status];
-
           return (
             <div
               key={fac.id}
@@ -173,25 +220,16 @@ export const FacultyDirectoryView: React.FC<FacultyDirectoryProps> = ({
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-900 font-extrabold text-[10px] rounded uppercase border border-blue-200">
+                        {fac.department || 'CSE'}
+                      </span>
+                    </div>
                     <h3 className="font-bold text-[18px] text-[#071e27]">{fac.name}</h3>
                     <p className="text-[12px] text-[#2b5bb5] font-semibold">
                       {fac.designation || fac.rank}
                     </p>
                   </div>
-
-                  {onToggleFacultyStatus ? (
-                    <button
-                      onClick={() => onToggleFacultyStatus(String(fac.id))}
-                      title="Click to toggle status"
-                      className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-transform active:scale-95 ${statusColors}`}
-                    >
-                      {fac.status}
-                    </button>
-                  ) : (
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${statusColors}`}>
-                      {fac.status}
-                    </span>
-                  )}
                 </div>
 
                 <div className="space-y-2 bg-[#f3faff] p-3 rounded-xl text-[12px] border border-[#dbf1fe] mb-4">

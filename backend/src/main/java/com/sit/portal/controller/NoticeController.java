@@ -18,8 +18,15 @@ public class NoticeController {
     private NoticeService noticeService;
 
     @GetMapping
-    public List<Notice> getAllNotices() {
+    public List<Notice> getAllNotices(@RequestParam(required = false) Integer limit) {
+        if (limit != null && limit > 0) {
+            return noticeService.getTopNotices(limit);
+        }
         return noticeService.getAllNotices();
+    }
+
+    public List<Notice> getAllNotices() {
+        return getAllNotices(null);
     }
 
     @GetMapping("/{id}")

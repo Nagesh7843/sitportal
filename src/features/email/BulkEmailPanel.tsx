@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember, StudentRecord, UserProfile } from '@/types';
+import { EmailLog, ViewMode, AcademicYear, Division, BatchGroup, FacultyMember, StudentRecord, UserProfile, WorkingBatchConfig } from '@/types';
 
 interface BulkEmailPanelProps {
   emailLogs: EmailLog[];
@@ -10,6 +10,7 @@ interface BulkEmailPanelProps {
   defaultTargetRole?: 'STUDENT' | 'FACULTY';
   prefilledEmail?: string;
   currentProfile?: UserProfile | null;
+  activeWorkingBatch?: WorkingBatchConfig | null;
 }
 
 export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
@@ -20,7 +21,8 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   onNavigate,
   defaultTargetRole = 'STUDENT',
   prefilledEmail = '',
-  currentProfile
+  currentProfile,
+  activeWorkingBatch
 }) => {
   const [targetRole, setTargetRole] = useState<'STUDENT' | 'FACULTY'>(defaultTargetRole);
   const [priority, setPriority] = useState<'URGENT' | 'NORMAL'>('NORMAL');
@@ -43,6 +45,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
   const [facultySearchTerm, setFacultySearchTerm] = useState('');
 
   // Targeted Audience Filters (Students Class Mode)
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('ALL');
   const [selectedYears, setSelectedYears] = useState<AcademicYear[]>([]);
   const [selectedDivs, setSelectedDivs] = useState<Division[]>([]);
   const [selectedBatches, setSelectedBatches] = useState<BatchGroup[]>([]);
@@ -227,6 +230,7 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
               attachments: attachments.map(a => a.name),
               scheduledAt: scheduleForLater ? scheduledTime : null,
               filters: {
+                department: selectedDepartment,
                 studentEmails: targetRole === 'STUDENT' && studentTargetMode === 'INDIVIDUAL' ? selectedStudentEmails : [],
                 academicYears: targetRole === 'STUDENT' && studentTargetMode === 'CLASS' ? selectedYears : [],
                 divisions: targetRole === 'STUDENT' && studentTargetMode === 'CLASS' ? selectedDivs : [],
@@ -650,11 +654,67 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                 {/* MODE 2: Target Academic Class / Cohort */}
                 {studentTargetMode === 'CLASS' && (
                   <div className="space-y-4 bg-white p-4 rounded-xl border border-[#c6c5d4] shadow-2xs">
-                    {/* Step 1: Academic Year Selection */}
+                    {/* Faculty Active Working Batch Quick Target Shortcut */}
+                    {activeWorkingBatch && (
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3 rounded-xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-blue-800 text-[20px]">star</span>
+                          <div>
+                            <p className="text-xs font-bold text-blue-950">
+                              Active Default Batch: {activeWorkingBatch.academicYear} • {activeWorkingBatch.division} • {activeWorkingBatch.batchGroup === 'ALL' ? 'All Batches' : `Batch ${activeWorkingBatch.batchGroup}`}
+                            </p>
+                            <p className="text-[10px] text-blue-700">Pre-fill the target filters with your assigned default working batch.</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeWorkingBatch.department) setSelectedDepartment(activeWorkingBatch.department);
+                            if (activeWorkingBatch.academicYear) setSelectedYears([activeWorkingBatch.academicYear as AcademicYear]);
+                            if (activeWorkingBatch.division) setSelectedDivs([activeWorkingBatch.division as Division]);
+                            if (activeWorkingBatch.batchGroup && activeWorkingBatch.batchGroup !== 'ALL') {
+                              setSelectedBatches([activeWorkingBatch.batchGroup as BatchGroup]);
+                            } else {
+                              setSelectedBatches([]);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-[#000666] text-white text-xs font-bold rounded-lg shadow-xs hover:bg-[#1a237e] transition-all shrink-0 cursor-pointer active:scale-95"
+                        >
+                          Target My Batch
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step 0: Department Scope */}
                     <div>
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="w-5 h-5 rounded-full bg-[#000666] text-white text-[11px] font-bold flex items-center justify-center">1</span>
-                        <p className="text-[12px] font-bold text-[#454652]">Step 1: Select Academic Years</p>
+                        <p className="text-[12px] font-bold text-[#454652]">Step 1: Select Target Department</p>
+                      </div>
+                      <div className="pl-7">
+                        <select
+                          value={selectedDepartment}
+                          onChange={(e) => setSelectedDepartment(e.target.value)}
+                          className="bg-[#f3faff] border border-[#c6c5d4] text-[#000666] font-bold text-xs px-3 py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-[#000666] w-full max-w-sm"
+                        >
+                          <option value="ALL">🏛️ All 8 Departments (Campus Wide Broadcast)</option>
+                          <option value="CSE">💻 CSE - Computer Science & Engineering</option>
+                          <option value="AIDS">🤖 AIDS - AI & Data Science</option>
+                          <option value="MECH">⚙️ MECH - Mechanical Engineering</option>
+                          <option value="CIVIL">🏗️ CIVIL - Civil Engineering</option>
+                          <option value="ENTC">📡 ENTC - Electronics & Telecommunication</option>
+                          <option value="ELECTRICAL">⚡ ELECTRICAL - Electrical Engineering</option>
+                          <option value="MECHATRONICS">🦾 MECHATRONICS - Mechatronics</option>
+                          <option value="BASIC_SCIENCES">🔬 BASIC SCIENCES - Basic Sciences</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Step 1: Academic Year Selection */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-5 h-5 rounded-full bg-[#2b5bb5] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                        <p className="text-[12px] font-bold text-[#454652]">Step 2: Select Academic Years</p>
                       </div>
                       <div className="flex flex-wrap gap-2 pl-7">
                         {(['FE', 'SE', 'TE', 'BE'] as AcademicYear[]).map((y) => (
@@ -673,12 +733,12 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                       </div>
                     </div>
 
-                    {/* Step 2: Division Selection */}
+                    {/* Step 3: Division Selection */}
                     {selectedYears.length > 0 ? (
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="w-5 h-5 rounded-full bg-[#2b5bb5] text-white text-[11px] font-bold flex items-center justify-center">2</span>
-                          <p className="text-[12px] font-bold text-[#454652]">Step 2: Select Divisions</p>
+                          <span className="w-5 h-5 rounded-full bg-[#2b5bb5] text-white text-[11px] font-bold flex items-center justify-center">3</span>
+                          <p className="text-[12px] font-bold text-[#454652]">Step 3: Select Divisions</p>
                         </div>
                         <div className="flex flex-wrap gap-2 pl-7">
                           {(['Div A', 'Div B', 'Div C'] as Division[]).map((d) => (
@@ -700,12 +760,12 @@ export const BulkEmailPanel: React.FC<BulkEmailPanelProps> = ({
                       <p className="text-[11px] text-[#767683] italic pl-7">Select an academic year above to see division options.</p>
                     )}
 
-                    {/* Step 3: Batch Selection */}
+                    {/* Step 4: Batch Selection */}
                     {selectedDivs.length > 0 ? (
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="w-5 h-5 rounded-full bg-[#003909] text-[#a3f69c] text-[11px] font-bold flex items-center justify-center">3</span>
-                          <p className="text-[12px] font-bold text-[#454652]">Step 3: Select Batches (Optional)</p>
+                          <span className="w-5 h-5 rounded-full bg-[#003909] text-[#a3f69c] text-[11px] font-bold flex items-center justify-center">4</span>
+                          <p className="text-[12px] font-bold text-[#454652]">Step 4: Select Batches (Optional)</p>
                         </div>
                         <div className="flex flex-wrap gap-2 pl-7">
                           {(['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'] as BatchGroup[])

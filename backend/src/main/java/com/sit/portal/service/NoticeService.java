@@ -37,9 +37,20 @@ public class NoticeService {
     @Autowired
     private SettingService settingService;
 
+    @Autowired
+    private com.sit.portal.repository.StudentRepository studentRepository;
+
+    @Autowired
+    private com.sit.portal.repository.UserRepository userRepository;
+
     @Cacheable(value = "notices")
     public List<Notice> getAllNotices() {
         return noticeRepository.findAllPrioritizedAndLatest();
+    }
+
+    public List<Notice> getTopNotices(int limit) {
+        int max = limit <= 0 ? 15 : limit;
+        return noticeRepository.findTopNotices(org.springframework.data.domain.PageRequest.of(0, max));
     }
 
     /**
@@ -78,15 +89,94 @@ public class NoticeService {
         }
         Notice savedNotice = noticeRepository.save(notice);
 
-        // Broadcast Web Push Notification
+        // Targeted Web Push Notification
         try {
-            pushNotificationService.sendPushNotificationToAll(
-                "New Notice: " + savedNotice.getTitle(),
-                savedNotice.getContent()
-            );
+            List<String> targetEmails = resolveNoticeTargetEmails(savedNotice);
+            if (targetEmails != null && !targetEmails.isEmpty()) {
+                pushNotificationService.sendPushNotificationToUsers(
+                    targetEmails,
+                    "New Notice: " + savedNotice.getTitle(),
+                    savedNotice.getContent()
+                );
+            } else if (targetEmails == null) {
+                // College-wide notice (no filtering applied)
+                pushNotificationService.sendPushNotificationToAll(
+                    "New Notice: " + savedNotice.getTitle(),
+                    savedNotice.getContent()
+                );
+            }
         } catch (Exception ignored) {}
 
         return savedNotice;
+    }
+
+    private List<String> resolveNoticeTargetEmails(Notice notice) {
+        if (notice.getTargetAudience() == null || notice.getTargetAudience().isEmpty()) {
+            return null; // Indicates college-wide
+        }
+
+        java.util.Map<String, Object> target = notice.getTargetAudience();
+        List<String> depts = parseStringList(target.get("departments"));
+        List<String> roles = parseStringList(target.get("roles"));
+        List<String> years = parseStringList(target.get("academicYears"));
+        List<String> divs = parseStringList(target.get("divisions"));
+        List<String> batches = parseStringList(target.get("batches"));
+
+        if (depts.isEmpty() && roles.isEmpty() && years.isEmpty() && divs.isEmpty() && batches.isEmpty()) {
+            return null;
+        }
+
+        java.util.Set<String> matchedEmails = new java.util.HashSet<>();
+
+        boolean includeStudents = roles.isEmpty() || roles.stream().anyMatch(r -> r.equalsIgnoreCase("STUDENT") || r.equalsIgnoreCase("STUDENTS"));
+        boolean includeFaculty = roles.isEmpty() || roles.stream().anyMatch(r -> r.equalsIgnoreCase("FACULTY") || r.equalsIgnoreCase("TEACHER"));
+        boolean includeParents = roles.isEmpty() || roles.stream().anyMatch(r -> r.equalsIgnoreCase("PARENT") || r.equalsIgnoreCase("PARENTS"));
+
+        if (includeStudents || includeParents) {
+            List<com.sit.portal.entity.Student> students = studentRepository.findAll();
+            for (com.sit.portal.entity.Student s : students) {
+                boolean deptMatch = depts.isEmpty() || depts.stream().anyMatch(d -> d.equalsIgnoreCase("ALL") || (s.getDepartment() != null && s.getDepartment().equalsIgnoreCase(d)));
+                boolean yearMatch = years.isEmpty() || years.stream().anyMatch(y -> y.equalsIgnoreCase("ALL") || (s.getAcademicYear() != null && s.getAcademicYear().equalsIgnoreCase(y)));
+                boolean divMatch = divs.isEmpty() || divs.stream().anyMatch(dv -> dv.equalsIgnoreCase("ALL") || (s.getDivision() != null && s.getDivision().toLowerCase().contains(dv.toLowerCase().replace("div", "").trim())));
+                boolean batchMatch = batches.isEmpty() || batches.stream().anyMatch(b -> b.equalsIgnoreCase("ALL") || (s.getBatchGroup() != null && s.getBatchGroup().toLowerCase().contains(b.toLowerCase().replace("batch", "").trim())));
+
+                if (deptMatch && yearMatch && divMatch && batchMatch) {
+                    if (includeStudents && s.getEmail() != null) {
+                        matchedEmails.add(s.getEmail().trim().toLowerCase());
+                    }
+                    if (includeParents && s.getParentEmail() != null) {
+                        matchedEmails.add(s.getParentEmail().trim().toLowerCase());
+                    }
+                }
+            }
+        }
+
+        if (includeFaculty) {
+            List<com.sit.portal.entity.User> users = userRepository.findAll();
+            for (com.sit.portal.entity.User u : users) {
+                if ("FACULTY".equalsIgnoreCase(u.getRole()) || "HOD".equalsIgnoreCase(u.getRole())) {
+                    boolean deptMatch = depts.isEmpty() || depts.stream().anyMatch(d -> d.equalsIgnoreCase("ALL") || (u.getDepartment() != null && u.getDepartment().equalsIgnoreCase(d)));
+                    if (deptMatch && u.getEmail() != null) {
+                        matchedEmails.add(u.getEmail().trim().toLowerCase());
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(matchedEmails);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> parseStringList(Object obj) {
+        List<String> list = new ArrayList<>();
+        if (obj instanceof List<?>) {
+            for (Object item : (List<?>) obj) {
+                if (item != null) list.add(item.toString().trim());
+            }
+        } else if (obj instanceof String && !((String) obj).trim().isEmpty()) {
+            list.add(((String) obj).trim());
+        }
+        return list;
     }
 
     public Optional<Notice> getNoticeById(Long id) {

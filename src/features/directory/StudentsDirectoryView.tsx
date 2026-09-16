@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StudentRecord, ViewMode, AcademicYear, Division, BatchGroup } from '@/types';
+import { StudentRecord, ViewMode, AcademicYear, Division, BatchGroup, WorkingBatchConfig, UserProfile, UserRole } from '@/types';
+import { apiService } from '@/services/api';
 
 interface StudentsDirectoryViewProps {
   students: StudentRecord[];
@@ -8,6 +9,9 @@ interface StudentsDirectoryViewProps {
   onAddStudentsBulk?: (students: StudentRecord[]) => void;
   onDeleteStudent?: (id: string | number) => void;
   onUpdateStudent?: (id: string | number, student: Partial<StudentRecord>) => void;
+  activeWorkingBatch?: WorkingBatchConfig | null;
+  userRole?: UserRole | string;
+  currentProfile?: UserProfile | null;
 }
 
 export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
@@ -16,12 +20,49 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
   onNavigate,
   onAddStudentsBulk,
   onDeleteStudent,
-  onUpdateStudent
+  onUpdateStudent,
+  activeWorkingBatch,
+  userRole,
+  currentProfile
 }) => {
+  const isFaculty = userRole === 'faculty';
+
+  // Initialize filters based on userRole and activeWorkingBatch
   const [search, setSearch] = useState('');
-  const [yearFilter, setYearFilter] = useState<AcademicYear | 'ALL'>('ALL');
-  const [divisionFilter, setDivisionFilter] = useState<Division | 'ALL'>('ALL');
-  const [batchGroupFilter, setBatchGroupFilter] = useState<BatchGroup | 'ALL'>('ALL');
+  const [deptFilter, setDeptFilter] = useState<string>(() => {
+    if (isFaculty) {
+      return activeWorkingBatch?.department || currentProfile?.department || 'CSE';
+    }
+    return 'ALL';
+  });
+  const [yearFilter, setYearFilter] = useState<AcademicYear | 'ALL'>(() => {
+    if (isFaculty) {
+      return (activeWorkingBatch?.academicYear as AcademicYear) || 'SE';
+    }
+    return 'ALL';
+  });
+  const [divisionFilter, setDivisionFilter] = useState<Division | 'ALL'>(() => {
+    if (isFaculty) {
+      return (activeWorkingBatch?.division as Division) || 'Div A';
+    }
+    return 'ALL';
+  });
+  const [batchGroupFilter, setBatchGroupFilter] = useState<BatchGroup | 'ALL'>(() => {
+    if (isFaculty) {
+      return (activeWorkingBatch?.batchGroup as BatchGroup) || 'A1';
+    }
+    return 'ALL';
+  });
+
+  // Automatically lock/update filters for faculty when activeWorkingBatch or currentProfile changes
+  useEffect(() => {
+    if (isFaculty && activeWorkingBatch) {
+      if (activeWorkingBatch.department) setDeptFilter(activeWorkingBatch.department);
+      if (activeWorkingBatch.academicYear) setYearFilter(activeWorkingBatch.academicYear as AcademicYear);
+      if (activeWorkingBatch.division) setDivisionFilter(activeWorkingBatch.division as Division);
+      if (activeWorkingBatch.batchGroup) setBatchGroupFilter(activeWorkingBatch.batchGroup as BatchGroup);
+    }
+  }, [isFaculty, activeWorkingBatch]);
   
   // Edit Student Modal State
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
@@ -30,6 +71,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     rollNo: string;
     prn: string;
     email: string;
+    department: string;
     academicYear: AcademicYear;
     division: Division;
     batchGroup: BatchGroup;
@@ -37,6 +79,10 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     attendance: string;
     cohortBatch: string;
     status: 'Active' | 'Inactive';
+    qualificationPath: '12TH' | 'DIPLOMA';
+    tenthPercentage: string;
+    twelfthPercentage: string;
+    diplomaPercentage: string;
     parentName: string;
     parentEmail: string;
     parentPhone: string;
@@ -46,6 +92,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     rollNo: '',
     prn: '',
     email: '',
+    department: 'CSE',
     academicYear: 'SE',
     division: 'Div A',
     batchGroup: 'A1',
@@ -53,6 +100,10 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     attendance: '90',
     cohortBatch: '2024-2028',
     status: 'Active',
+    qualificationPath: '12TH',
+    tenthPercentage: '80',
+    twelfthPercentage: '75',
+    diplomaPercentage: '80',
     parentName: '',
     parentEmail: '',
     parentPhone: '',
@@ -67,13 +118,17 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     if (divisionFilter === 'Div C' && batchGroupFilter !== 'ALL' && !batchGroupFilter.startsWith('C')) setBatchGroupFilter('ALL');
   }, [divisionFilter, batchGroupFilter]);
 
-  const handleOpenEdit = (student: StudentRecord) => {
+  const handleOpenEdit = async (student: StudentRecord) => {
     setEditingStudent(student);
+    const prnKey = student.prn || student.rollNo;
+    
+    // Set base form data
     setEditForm({
       name: student.name || '',
       rollNo: student.rollNo || '',
       prn: student.prn || '',
       email: student.email || '',
+      department: student.department || 'CSE',
       academicYear: student.academicYear || 'SE',
       division: student.division || 'Div A',
       batchGroup: student.batchGroup || 'A1',
@@ -81,11 +136,33 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       attendance: (student.attendance !== undefined && student.attendance !== null ? student.attendance : 90).toString(),
       cohortBatch: student.cohortBatch || '2024-2028',
       status: student.status || 'Active',
+      qualificationPath: '12TH',
+      tenthPercentage: '80',
+      twelfthPercentage: '75',
+      diplomaPercentage: '80',
       parentName: student.parentName || '',
       parentEmail: student.parentEmail || '',
       parentPhone: student.parentPhone || '',
       parentRelationship: student.parentRelationship || 'Father'
     });
+
+    if (prnKey) {
+      try {
+        const acad = await apiService.getStudentAcademicData(prnKey);
+        if (acad) {
+          setEditForm(prev => ({
+            ...prev,
+            qualificationPath: acad.qualificationPath || '12TH',
+            tenthPercentage: (acad.tenthPercentage ?? 80).toString(),
+            twelfthPercentage: (acad.twelfthPercentage ?? 75).toString(),
+            diplomaPercentage: (acad.diplomaPercentage ?? 80).toString(),
+            gpa: (acad.cgpa ?? prev.gpa).toString(),
+          }));
+        }
+      } catch (err) {
+        console.warn('Could not load academic data for student edit:', err);
+      }
+    }
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -99,6 +176,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       rollNo: editForm.rollNo.trim(),
       prn: editForm.prn.trim(),
       email: editForm.email.trim(),
+      department: editForm.department,
       academicYear: editForm.academicYear,
       division: editForm.division,
       batchGroup: editForm.batchGroup,
@@ -113,6 +191,21 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     };
 
     onUpdateStudent(studentId, updatedData);
+
+    const prnKey = editForm.prn.trim() || editForm.rollNo.trim();
+    if (prnKey) {
+      apiService.saveStudentAcademicData(prnKey, {
+        prn: prnKey,
+        qualificationPath: editForm.qualificationPath,
+        tenthPercentage: parseFloat(editForm.tenthPercentage) || 0,
+        twelfthPercentage: editForm.qualificationPath === '12TH' ? parseFloat(editForm.twelfthPercentage) || 0 : 0,
+        diplomaPercentage: editForm.qualificationPath === 'DIPLOMA' ? parseFloat(editForm.diplomaPercentage) || 0 : 0,
+        cgpa: parseFloat(editForm.gpa) || 8.0,
+        activeBacklogs: 0,
+        totalBacklogs: 0
+      }).catch(err => console.warn('Failed saving academic data in edit:', err));
+    }
+
     setEditingStudent(null);
   };
 
@@ -168,54 +261,81 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
   };
 
   const filtered = students.filter((s) => {
+    // 1. Search Query
+    const q = search.toLowerCase().trim();
     const matchesSearch =
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase()) ||
-      (s.parentName && s.parentName.toLowerCase().includes(search.toLowerCase())) ||
-      (s.parentEmail && s.parentEmail.toLowerCase().includes(search.toLowerCase()));
+      !q ||
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.rollNo && s.rollNo.toLowerCase().includes(q)) ||
+      (s.prn && s.prn.toLowerCase().includes(q)) ||
+      (s.email && s.email.toLowerCase().includes(q)) ||
+      (s.parentName && s.parentName.toLowerCase().includes(q)) ||
+      (s.parentEmail && s.parentEmail.toLowerCase().includes(q));
 
-    const yrStr = (s.academicYear || '') as string;
-    const matchesYear =
-      yearFilter === 'ALL' ||
-      yrStr === yearFilter ||
-      (yearFilter === 'FE' && (yrStr === 'FY' || yrStr === 'First Year')) ||
-      (yearFilter === 'SE' && (yrStr === 'SY' || yrStr === 'Second Year')) ||
-      (yearFilter === 'TE' && (yrStr === 'TY' || yrStr === 'Third Year')) ||
-      (yearFilter === 'BE' && (yrStr === 'BY' || yrStr === 'B.Tech' || yrStr === 'Final Year'));
+    // 2. Department
+    const sDept = (s.department || 'CSE').toUpperCase().trim();
+    const dFilter = deptFilter.toUpperCase().trim();
+    let matchesDept = true;
+    if (dFilter !== 'ALL') {
+      matchesDept = sDept === dFilter || (dFilter === 'CSE' && (sDept.includes('COMP') || sDept.includes('CSE')));
+    }
 
-    const matchesDiv =
-      divisionFilter === 'ALL' ||
-      s.division === divisionFilter ||
-      (s.division && s.division.toLowerCase().replace(/\s+/g, '') === divisionFilter.toLowerCase().replace(/\s+/g, ''));
+    // 3. Year Level (Strict match: SE should only match SE/SY, TE should only match TE/TY, etc.)
+    const sYear = (s.academicYear || '').toUpperCase().trim();
+    const yFilter = (yearFilter || 'ALL').toUpperCase().trim();
+    let matchesYear = true;
+    if (yFilter !== 'ALL') {
+      if (yFilter === 'FE') {
+        matchesYear = sYear === 'FE' || sYear === 'FY' || sYear.includes('FIRST');
+      } else if (yFilter === 'SE') {
+        matchesYear = sYear === 'SE' || sYear === 'SY' || sYear.includes('SECOND');
+      } else if (yFilter === 'TE') {
+        matchesYear = sYear === 'TE' || sYear === 'TY' || sYear.includes('THIRD');
+      } else if (yFilter === 'BE') {
+        matchesYear = sYear === 'BE' || sYear === 'BY' || sYear === 'FINAL' || sYear.includes('FINAL');
+      } else {
+        matchesYear = sYear === yFilter;
+      }
+    }
 
-    const matchesBatchGroup =
-      batchGroupFilter === 'ALL' ||
-      s.batchGroup === batchGroupFilter ||
-      (s.batchGroup && s.batchGroup.toLowerCase().includes(batchGroupFilter.toLowerCase()));
+    // 4. Division (Strict match: Div A should only match Div A)
+    const sDiv = (s.division || '').toUpperCase().replace(/\s+/g, '');
+    const divFilterClean = (divisionFilter || 'ALL').toUpperCase().replace(/\s+/g, '');
+    let matchesDiv = true;
+    if (divFilterClean !== 'ALL') {
+      matchesDiv = sDiv === divFilterClean || sDiv === divFilterClean.replace('DIV', '');
+    }
 
-    return matchesSearch && matchesYear && matchesDiv && matchesBatchGroup;
+    // 5. Batch Group (Strict match: A1 should only match A1, not A3)
+    const sBatch = (s.batchGroup || '').toUpperCase().replace('BATCH', '').trim();
+    const bFilterClean = (batchGroupFilter || 'ALL').toUpperCase().replace('BATCH', '').trim();
+    let matchesBatchGroup = true;
+    if (bFilterClean !== 'ALL') {
+      matchesBatchGroup = sBatch === bFilterClean;
+    }
+
+    return matchesSearch && matchesDept && matchesYear && matchesDiv && matchesBatchGroup;
   });
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[#000666] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-[#000666] text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[28px] text-[#759efd]">school</span>
-            Student & Parent Roster Directory
+          <h1 className="text-xl sm:text-[24px] font-extrabold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[24px] sm:text-[28px] text-[#759efd]">school</span>
+            <span>Student & Parent Roster Directory</span>
           </h1>
-          <p className="text-[#cfe6f2] text-[13px] mt-1">
+          <p className="text-[#cfe6f2] text-xs sm:text-[13px] mt-1">
             Academic Years (FE, SE, TE, BE) • Parent/Guardian Login Records • PRN & Academic Performance
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-center w-full md:w-auto">
           {onAddStudent && (
             <button
               onClick={onAddStudent}
-              className="bg-white text-[#000666] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2"
+              className="flex-1 sm:flex-none justify-center bg-white text-[#000666] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#cfe6f2] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
               <span>Add Student</span>
@@ -232,7 +352,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-[#000666] border-2 border-white text-white font-bold px-4 py-2 rounded-xl text-[13px] hover:bg-white hover:text-[#000666] transition-colors shadow-xs flex items-center gap-2"
+                className="flex-1 sm:flex-none justify-center bg-[#000666] border-2 border-white text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-[13px] hover:bg-white hover:text-[#000666] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">upload_file</span>
                 <span>Upload CSV</span>
@@ -241,7 +361,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
           )}
           <button
             onClick={() => onNavigate('bulk-email')}
-            className="bg-[#759efd] text-[#00337c] font-bold px-4 py-2.5 rounded-xl text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2"
+            className="flex-1 sm:flex-none justify-center bg-[#759efd] text-[#00337c] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">campaign</span>
             <span>Send Notice</span>
@@ -249,87 +369,138 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
         </div>
       </div>
 
-      {/* Advanced Academic Hierarchy Controls */}
-      <div className="bg-white p-4 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col lg:flex-row justify-between items-center gap-4">
+      {/* Directory Filter / Scope Control Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-[#c6c5d4] shadow-xs flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 sm:gap-4">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by student, roll no, email, or parent name/email..."
-          className="w-full lg:w-80 bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-3.5 py-2 text-[13px] focus:ring-2 focus:ring-[#000666] outline-none"
+          className="w-full lg:w-80 bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-3.5 py-2 text-xs sm:text-[13px] focus:ring-2 focus:ring-[#000666] outline-none"
         />
 
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          {/* Year Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-[#454652] uppercase">Year:</span>
-            <select
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value as any)}
-              className="bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-[12px] text-[#071e27] font-semibold"
-            >
-              <option value="ALL">All Years</option>
-              <option value="FE">First Year (FE)</option>
-              <option value="SE">Second Year (SE)</option>
-              <option value="TE">Third Year (TE)</option>
-              <option value="BE">Final Year (BE)</option>
-            </select>
-          </div>
+        {isFaculty ? (
+          /* Faculty Scoped View: Minimal Batch Indicator & Switcher */
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            <div className="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-2">
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-[#000666] text-white rounded-md">
+                {deptFilter || 'CSE'}
+              </span>
+              <span className="text-xs font-bold text-slate-800">
+                {yearFilter} • {divisionFilter} • {batchGroupFilter === 'ALL' ? 'All Batches' : batchGroupFilter}
+              </span>
+              <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                {filtered.length} Students
+              </span>
+            </div>
 
-          {/* Division Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-[#454652] uppercase">Division:</span>
-            <select
-              value={divisionFilter}
-              onChange={(e) => setDivisionFilter(e.target.value as any)}
-              className="bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-[12px] text-[#071e27] font-semibold"
-            >
-              <option value="ALL">All Divisions</option>
-              <option value="Div A">Div A</option>
-              <option value="Div B">Div B</option>
-              <option value="Div C">Div C</option>
-            </select>
+            {/* Division Batch Quick Switcher */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+              {['A1', 'A2', 'A3', 'ALL'].map((bCode) => {
+                const isSel = batchGroupFilter === bCode;
+                return (
+                  <button
+                    key={bCode}
+                    type="button"
+                    onClick={() => setBatchGroupFilter(bCode as any)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      isSel ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    {bCode === 'ALL' ? 'All' : bCode}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        ) : (
+          /* Global Directory View Filters (Admin & Staff) */
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div>
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-bold focus:ring-2 focus:ring-[#000666] outline-none"
+              >
+                <option value="ALL">All Depts</option>
+                <option value="CSE">CSE</option>
+                <option value="AIDS">AIDS</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="ENTC">ENTC</option>
+                <option value="ELECTRICAL">ELECTRICAL</option>
+                <option value="MECHATRONICS">MECHATRONICS</option>
+              </select>
+            </div>
 
-          {/* Batch Group Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-[#454652] uppercase">Batch:</span>
-            <select
-              value={batchGroupFilter}
-              onChange={(e) => setBatchGroupFilter(e.target.value as any)}
-              className="bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-[12px] text-[#071e27] font-semibold"
-            >
-              <option value="ALL">All Batches</option>
-              {(divisionFilter === 'ALL' || divisionFilter === 'Div A') && (
-                <optgroup label="Div A Batches">
-                  <option value="A1">Batch A1</option>
-                  <option value="A2">Batch A2</option>
-                  <option value="A3">Batch A3</option>
-                </optgroup>
-              )}
-              {(divisionFilter === 'ALL' || divisionFilter === 'Div B') && (
-                <optgroup label="Div B Batches">
-                  <option value="B1">Batch B1</option>
-                  <option value="B2">Batch B2</option>
-                  <option value="B3">Batch B3</option>
-                </optgroup>
-              )}
-              {(divisionFilter === 'ALL' || divisionFilter === 'Div C') && (
-                <optgroup label="Div C Batches">
-                  <option value="C1">Batch C1</option>
-                  <option value="C2">Batch C2</option>
-                  <option value="C3">Batch C3</option>
-                </optgroup>
-              )}
-            </select>
+            <div>
+              <select
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value as AcademicYear | 'ALL')}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-bold focus:ring-2 focus:ring-[#000666] outline-none"
+              >
+                <option value="ALL">All Years</option>
+                <option value="FE">First Year (FE)</option>
+                <option value="SE">Second Year (SE)</option>
+                <option value="TE">Third Year (TE)</option>
+                <option value="BE">Final Year (BE)</option>
+              </select>
+            </div>
+
+            <div>
+              <select
+                value={divisionFilter}
+                onChange={(e) => {
+                  setDivisionFilter(e.target.value as Division | 'ALL');
+                  setBatchGroupFilter('ALL');
+                }}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-bold focus:ring-2 focus:ring-[#000666] outline-none"
+              >
+                <option value="ALL">All Divs</option>
+                <option value="Div A">Div A</option>
+                <option value="Div B">Div B</option>
+                <option value="Div C">Div C</option>
+              </select>
+            </div>
+
+            <div>
+              <select
+                value={batchGroupFilter}
+                onChange={(e) => setBatchGroupFilter(e.target.value as BatchGroup | 'ALL')}
+                className="w-full sm:w-auto bg-[#f3faff] border border-[#c6c5d4] rounded-lg px-2.5 py-1.5 text-xs text-[#071e27] font-bold focus:ring-2 focus:ring-[#000666] outline-none"
+              >
+                <option value="ALL">All Batches</option>
+                {(divisionFilter === 'ALL' || divisionFilter === 'Div A') && (
+                  <optgroup label="Div A Batches">
+                    <option value="A1">Batch A1</option>
+                    <option value="A2">Batch A2</option>
+                    <option value="A3">Batch A3</option>
+                  </optgroup>
+                )}
+                {(divisionFilter === 'ALL' || divisionFilter === 'Div B') && (
+                  <optgroup label="Div B Batches">
+                    <option value="B1">Batch B1</option>
+                    <option value="B2">Batch B2</option>
+                    <option value="B3">Batch B3</option>
+                  </optgroup>
+                )}
+                {(divisionFilter === 'ALL' || divisionFilter === 'Div C') && (
+                  <optgroup label="Div C Batches">
+                    <option value="C1">Batch C1</option>
+                    <option value="C2">Batch C2</option>
+                    <option value="C3">Batch C3</option>
+                  </optgroup>
+                )}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Roster Table Container */}
       <div className="bg-white rounded-2xl border border-[#c6c5d4] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar shadow-inner">
-          <table className="w-full text-left text-[11px] relative">
+        <div className="overflow-x-auto max-h-[480px] overflow-y-auto custom-scrollbar touch-scroll shadow-inner">
+          <table className="w-full text-left text-[11px] relative min-w-[720px]">
             <thead className="bg-[#e6f6ff] text-[#000666] font-bold border-b border-[#c6c5d4] sticky top-0 z-10 shadow-xs">
               <tr>
                 <th className="py-2.5 px-3">Student Name & Roll</th>
@@ -356,12 +527,17 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                     </div>
                   </td>
 
-                  {/* Academic Division */}
+                  {/* Academic Division & Department */}
                   <td className="py-2 px-3">
                     <div className="space-y-0.5">
-                      <span className="bg-[#d9e2ff] text-[#00429c] text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-block">
-                        {st.academicYear || 'SE'}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.2 bg-blue-100 text-blue-900 font-extrabold text-[9px] rounded uppercase border border-blue-200">
+                          {st.department || 'CSE'}
+                        </span>
+                        <span className="bg-[#d9e2ff] text-[#00429c] text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-block">
+                          {st.academicYear || 'SE'}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1">
                         <span className="bg-[#f3faff] text-[#000666] text-[9px] font-bold px-1 py-0.2 rounded border border-[#c6c5d4]">
                           {st.division || 'Div A'}
@@ -373,12 +549,17 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                     </div>
                   </td>
 
-                  {/* Academic Metrics */}
+                  {/* Academic Metrics & Dual-Path Invariant */}
                   <td className="py-2 px-3">
                     <div className="text-[10px] space-y-0.5">
-                      <p className="font-mono text-[#071e27]">PRN: {st.prn || 'N/A'}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[#071e27] font-bold">PRN: {st.prn || st.rollNo || 'N/A'}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase bg-indigo-50 text-indigo-800 border border-indigo-200">
+                          {st.prn?.includes('243') || st.prn?.includes('DSE') ? 'Diploma (DSE)' : '12th Regular'}
+                        </span>
+                      </div>
                       <p>
-                        CGPA: <strong className={st.gpa >= 7.5 ? 'text-emerald-700' : 'text-orange-700'}>{st.gpa} / 10.0</strong>
+                        CGPA: <strong className={st.gpa >= 7.5 ? 'text-emerald-700 font-bold' : 'text-orange-700 font-bold'}>{st.gpa} / 10.0</strong>
                       </p>
                       <p className="text-gray-500">
                         Att: <strong className="text-gray-800">{st.attendance ?? 90}%</strong>
@@ -532,6 +713,24 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                   </div>
 
                   <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Institutional Department</label>
+                    <select
+                      value={editForm.department}
+                      onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-xs font-bold text-indigo-900 focus:ring-2 focus:ring-[#000666] outline-none"
+                    >
+                      <option value="CSE">CSE - Computer Science & Engineering</option>
+                      <option value="AIDS">AIDS - Artificial Intelligence & Data Science</option>
+                      <option value="MECH">MECH - Mechanical Engineering</option>
+                      <option value="CIVIL">CIVIL - Civil Engineering</option>
+                      <option value="ENTC">ENTC - Electronics & Telecommunication</option>
+                      <option value="ELECTRICAL">ELECTRICAL - Electrical Engineering</option>
+                      <option value="MECHATRONICS">MECHATRONICS - Mechatronics Engineering</option>
+                      <option value="BASIC_SCIENCES">BASIC_SCIENCES - Basic Sciences & Humanities</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block text-[11px] font-bold text-gray-700 uppercase">Academic Year</label>
                     <select
                       value={editForm.academicYear}
@@ -604,6 +803,69 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                         onChange={(e) => setEditForm({ ...editForm, attendance: e.target.value })}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Dual Qualification Path & Academic Eligibility Details */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl space-y-2.5 border border-slate-200">
+                    <h5 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[15px] text-indigo-700">school</span>
+                      Admission Qualification Path (Placement Eligibility Engine)
+                    </h5>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Entry Path</label>
+                        <select
+                          value={editForm.qualificationPath}
+                          onChange={(e) => setEditForm({ ...editForm, qualificationPath: e.target.value as '12TH' | 'DIPLOMA' })}
+                          className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold bg-white text-indigo-900"
+                        >
+                          <option value="12TH">12th Standard Regular (HSC)</option>
+                          <option value="DIPLOMA">Diploma Lateral Entry (DSE)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">10th (SSC) %</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={editForm.tenthPercentage}
+                          onChange={(e) => setEditForm({ ...editForm, tenthPercentage: e.target.value })}
+                          className="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold bg-white"
+                        />
+                      </div>
+
+                      {editForm.qualificationPath === '12TH' ? (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">12th (HSC) %</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={editForm.twelfthPercentage}
+                            onChange={(e) => setEditForm({ ...editForm, twelfthPercentage: e.target.value })}
+                            className="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold bg-white"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[10px] font-bold text-amber-800 uppercase mb-0.5">Diploma Aggregate %</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={editForm.diplomaPercentage}
+                            onChange={(e) => setEditForm({ ...editForm, diplomaPercentage: e.target.value })}
+                            className="w-full border border-amber-300 bg-amber-50 rounded-lg p-2 text-xs font-bold text-amber-950"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 

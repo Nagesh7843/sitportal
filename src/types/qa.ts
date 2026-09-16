@@ -21,6 +21,7 @@ export interface QuestionItem {
   authorEmail?: string;
   status: 'OPEN' | 'ANSWERED' | 'RESOLVED';
   upvotes: number;
+  upvotedBy?: string[];
   viewsCount: number;
   answers: QuestionAnswerItem[];
   createdAt: string;

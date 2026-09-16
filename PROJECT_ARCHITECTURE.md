@@ -1,107 +1,162 @@
-# SITCOE Institutional Communication Portal — Architecture & Access Control Specification
+# SIT Institutional Portal — Architecture Notes
 
 **Sharad Institute of Technology College of Engineering (SITCOE)**  
-*Unified System Architecture, Role-Based Access Control (RBAC) Matrix, and Notification Visibility Specifications*
+*Current modular-monolith structure, data model, and implementation notes.*
 
 ---
 
-## 1. System Architecture Overview
+## 1. Core Objective
 
-The SITCOE Institutional Communication Portal is engineered as a multi-tier, automated communication and administrative platform for college-wide notifications, academic milestone scheduling, student-parent directory management, and verified Q&A resolution.
+The portal manages communication and academic information for SITCOE. Its data model supports a hierarchy of academic and organisational units:
+
+$$\text{College} \longrightarrow \text{Departments (8)} \longrightarrow \text{Programs} \longrightarrow \text{Years / Semesters} \longrightarrow \text{Divisions} \longrightarrow \text{Batches} \longrightarrow \text{Students}$$
+
+The same core student information is accessed appropriately by all five primary user personas:
+
+$$\mathbf{Student} \longleftrightarrow \mathbf{Faculty} \longleftrightarrow \mathbf{HOD} \longleftrightarrow \mathbf{Parent} \longleftrightarrow \mathbf{Admin}$$
+
+Backend authorisation scopes control what each user can view and change.
+
+---
+
+## 2. Main System Modules
 
 ```
-       ┌────────────────────────────────────────────────────────────────────────┐
-       │                        SITCOE Web Client (Vite + React)                │
-       │   [Notice Board]  [Academic Calendar]  [Students Directory]  [Q&A Forum]│
-       └──────────────────────────────────┬─────────────────────────────────────┘
-                                          │  REST APIs / JSON payloads
-       ┌──────────────────────────────────▼─────────────────────────────────────┐
-       │                     Spring Boot Backend (Java 17)                      │
-       │  ┌─────────────────────────┐  ┌─────────────────────────────────────┐  │
-       │  │ Official Web Scraper    │  │ Notice & Milestone Scheduler Job    │  │
-       │  │ (sitcoe.ac.in sync)     │  │ (Pre-Notice Generator + Expiry)     │  │
-       │  └─────────────────────────┘  └─────────────────────────────────────┘  │
-       └──────────────────────────────────┬─────────────────────────────────────┘
-                                          │
-       ┌──────────────────────────────────▼─────────────────────────────────────┐
-       │                       PostgreSQL / Mock Database                       │
-       │   [Notices] [Milestones] [Students] [Parents] [Audit Logs] [Email Logs] │
-       └────────────────────────────────────────────────────────────────────────┘
+SIT PORTAL (Modular Monolith)
+│
+├── 🔐 1. Authentication & Authorization (Role + Scope Resolution)
+├── 🏫 2. Organization Hierarchy (8 Departments, Programs, Divisions, Batches)
+├── 👨‍🎓 3. Student Core & Permanent PRN Invariant Management
+├── 👨‍🏫 4. Faculty Batch Supervision & Monitoring
+├── 👨‍👩‍👦 5. Parent Boundary & Verified Ward Isolation
+├── 📚 6. Academic Management & Multi-Term Lifecycles
+├── 📅 7. Academic Calendar (Scope-Aware Milestone Engine)
+├── 🔔 8. Notification Engine (Multi-Level Targeting Fan-Out)
+├── 💼 9. Placement Management & Opportunities
+├── 🎯 10. Placement Eligibility Engine (12th vs Diploma Qualification Paths)
+├── 🔄 11. Academic Year / Semester Transition Engine (Historical Preservation)
+└── 📝 12. Administrative Verification Desk & System Audit Trail
 ```
 
 ---
 
-## 2. Technology Stack
+## 3. Organization Hierarchy & Multi-Department Model
 
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS (Vanilla CSS tokens), Lucide & Google Material Symbols Icons.
-- **Backend**: Java 17, Spring Boot, Spring Data JPA, Spring Scheduler, JSOUP / Web Scraper.
-- **Database**: PostgreSQL (Entities: `Notice`, `AcademicCalendar`, `CalendarEvent`, `Student`, `Faculty`, `EmailLog`, `ActivityLog`).
-- **Communication Channels**: Automated Bulk Email Broadcaster, In-App Circular Stream, Live Activity Ledger.
+The college operates **8 Engineering Departments** on a single unified database using logical multi-department separation (`department_id`):
 
----
+1. `CSE` — Computer Science & Engineering
+2. `AIDS` — Artificial Intelligence & Data Science
+3. `MECH` — Mechanical Engineering
+4. `CIVIL` — Civil Engineering
+5. `ENTC` — Electronics & Telecommunication Engineering
+6. `ELECTRICAL` — Electrical Engineering
+7. `MECHATRONICS` — Mechatronics Engineering
+8. `BASIC_SCIENCES` — First Year & Basic Sciences
 
-## 3. Role-Based Access Control (RBAC) Matrix
-
-The system enforces granular role-based permissions across 6 distinct user profiles:
-
-| Feature / View Module | Admin | HOD | Faculty | Student | Parent | Public |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **SITCOE Central Notice Board (Read)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Publish Department/College Notice** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Delete Published Notice** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Inspect Live Scraper Feed (`sitcoe.ac.in`)** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Academic Calendar (Read Active Events)** | ✅ | ✅ | ✅ | ✅ (5d Limit) | ✅ (5d Limit) | ✅ (5d Limit) |
-| **Ingest Official Calendar Docs (`.docx` / PDF)** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Add / Delete Milestone Events** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Set Active Calendar Semester** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Students & Parents Directory (Read Roster)** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Add / Edit / Delete Student Credentials** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Bulk Student Roster CSV Upload** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Send Targeted Bulk Emails** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **View Email Transmission Audit Logs** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Post Question in Q&A Forum** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Post Official Verified Answer in Q&A Forum** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Central Document Library (Read / Download)** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Curriculum & Academic Structure (Read)** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **View Admin Command Center & Metrics** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Live System Activity Audit Trail Stream** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+### Hierarchical Breakdown
+$$\text{Department} \longrightarrow \text{Program} \longrightarrow \text{Academic Year} \longrightarrow \text{Semester} \longrightarrow \text{Division} \longrightarrow \text{Batch} \longrightarrow \text{Students}$$
 
 ---
 
-## 4. Visibility & Notification Targeting Controls
+## 4. Student Permanent PRN Identity & Multi-Term Progression
 
-### 4.1 Target Audience Visibility Scoping
-Every circular notice and academic calendar event has a declared **Audience Scope**:
-- `ALL`: Visible to all authenticated users and public visitors.
-- `STUDENT`: Visible only to authenticated Student accounts.
-- `FACULTY`: Visible only to Faculty & HOD accounts.
-- `PARENT`: Visible only to Parent/Guardian login accounts.
+- **PRN Invariant Principle**: The Permanent Registration Number (PRN) is the invariant student identity throughout their college tenure.
+- **Decoupled Enrollment**: A student's current academic location is maintained separately in `student_enrollments` records:
 
-### 4.2 Class & Division Scoping (Students Directory & Bulk Email)
-Targeted notifications can be filtered precisely down to specific cohorts:
-- **Academic Years**: `FE` / `FY` (First Year), `SE` / `SY` (Second Year), `TE` / `TY` (Third Year), `BE` / `BY` / `B.Tech` (Final Year).
-- **Divisions**: `Div A`, `Div B`, `Div C`.
-- **Batch Groups**: `A1`, `A2`, `A3`, `B1`, `B2`, `B3`, `C1`, `C2`, `C3`.
+$$\text{Student (PRN)} \longrightarrow \text{Enrollment Records } [\text{Term}_1 (\text{Archived}), \text{Term}_2 (\text{Archived}), \text{Term}_3 (\text{Active})]$$
 
-### 4.3 Academic Calendar Notice Expiry & Retention Engine
-- **Students & Parents Feed**: Academic milestone notices remain visible in the Student/Parent feed **until the academic event completion date PLUS 5 days** (`Current Date <= Event Completion Date + 5 days`).
-- **Auto-Expiration**: Once 5 days pass after event completion, the notice automatically expires and is hidden from Student and Parent views to keep feeds clutter-free.
-- **Admin/Faculty Archive**: Full historical milestone records remain accessible to Faculty and Admin in administrative logs.
+This allows students to transition across terms ($FY \rightarrow SY \rightarrow TY \rightarrow Final Year$) without altering their PRN or user account.
 
 ---
 
-## 5. System File Map & Key Components
+## 5. Student Self-Service & Administrative Verification
 
-- [`src/App.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/App.tsx): Central App Router, User Role State Management, and Layout Wrappers.
-- [`src/features/notices/NoticeFeedView.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/notices/NoticeFeedView.tsx): SITCOE Central Notice Board, Live Scraper Feed, and Compact Circular Cards.
-- [`src/features/calendar/AcademicCalendarView.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/calendar/AcademicCalendarView.tsx): Academic Calendar Scheduler, Document Ingestion (`.docx` / PDF), and 5-Day Event Retention Rule Feed.
-- [`src/features/directory/StudentsDirectoryView.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/directory/StudentsDirectoryView.tsx): Student & Parent Roster Directory, Compact Window Table, and Year Alias Filter Engine (`FE`/`FY`, `SE`/`SY`, `TE`/`TY`, `BE`/`BY`/`B.Tech`).
-- [`src/features/questions/CentralQuestionSystem.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/questions/CentralQuestionSystem.tsx): Institutional Q&A Forum for Verified Answers.
-- [`src/features/email/BulkEmailPanel.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/email/BulkEmailPanel.tsx): AI Email Drafter, Targeted Class Email Broadcaster, and Compact Audit Log Window.
-- [`src/features/dashboard/AdminDashboard.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/features/dashboard/AdminDashboard.tsx): Master Integrated Communication Ledger, Sender Directory, and Real-Time Transferred Email Tracker.
-- [`src/components/layout/Sidebar.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/components/layout/Sidebar.tsx): SITCOE Institutional Navigation Drawer.
-- [`src/components/layout/Footer.tsx`](file:///d:/SIT%20PORTAL/cse-department-portal/src/components/layout/Footer.tsx): SITCOE Footer & Institutional Credits.
-- [`LOGIN_TO_USER_ROLE_HLD.md`](file:///d:/SIT%20PORTAL/cse-department-portal/LOGIN_TO_USER_ROLE_HLD.md): Complete High-Level Design (HLD) specification for Authentication, Authorization, Role-Based Access Control (RBAC), and Persona Routing.
+- **Self-Service Updates**: Students may edit permitted profile fields (phone, address, personal email).
+- **Institution-Controlled Data**: Fields such as PRN, Department, Program, Division, Batch, and Official Academic Records require a verified **Student Change Request**.
+- **Approval Workflow**:
+  $$\text{Student Submits Request} \longrightarrow \text{Verification Desk (Admin/HOD)} \longrightarrow \text{Approve / Reject} \longrightarrow \text{Audit Log Recorded}$$
 
 ---
-*Specification Document Generated for SITCOE Communication Portal.*
+
+## 6. Faculty Batch Supervision & Role Separation
+
+- **Batch Supervision**: Faculty monitor assigned student lab/tutorial batches:
+  $$\text{Faculty} \longrightarrow \text{Assigned Batch} \longrightarrow \text{Student Roster Monitoring}$$
+- **Role vs Position Separation**:
+  - **Academic Position**: *Assistant Professor, Associate Professor, Professor, Head of Department*.
+  - **Portal Role**: *FACULTY, HOD, COORDINATOR, ADMIN*.
+
+---
+
+## 7. Parent Security Boundary & Ward Isolation
+
+Parents have strictly scoped access restricted to verified enrolled wards:
+$$\text{Parent Account} \longrightarrow \text{Verified Student Relationships} \longrightarrow \text{Permitted Ward Data Only}$$
+- Unauthorized queries for unassociated student PRNs return `403 Forbidden`.
+- A parent account can be linked to more than one enrolled student.
+
+---
+
+## 8. Backend Authorization & Scope Enforcement
+
+Security and scoping are enforced exclusively on the backend:
+$$\text{Request} \longrightarrow \text{JWT Auth} \longrightarrow \text{Role Extraction} \longrightarrow \text{Scope Resolution} \longrightarrow \text{Permission Check} \longrightarrow \text{Allow / Deny}$$
+
+---
+
+## 9. Academic Year / Semester Transition Engine
+
+Academic transitions never overwrite past data destructively:
+1. Fetch active term record where `is_current = true`.
+2. Update existing active record to `is_current = false` with `status = COMPLETED` or `ENROLLED`.
+3. Create new term record with `is_current = true`.
+4. Log transition action in `system_audit_logs`.
+
+---
+
+## 10. Placement Eligibility Engine (12th vs Diploma Qualification Paths)
+
+Mathematical qualification model:
+$$\text{Eligibility} = \begin{cases} 
+\text{CGPA} \ge \text{Min} \;\land\; 10^{\text{th}}\% \ge \text{Min} \;\land\; 12^{\text{th}}\% \ge \text{Min} & \text{if Path} = \mathbf{12TH} \\
+\text{CGPA} \ge \text{Min} \;\land\; 10^{\text{th}}\% \ge \text{Min} \;\land\; \text{Diploma}\% \ge \text{Min} & \text{if Path} = \mathbf{DIPLOMA}
+\end{cases}$$
+- No semester-wise CGPA requirement.
+- Evaluates candidate pools with detailed ineligibility reason breakdown.
+
+---
+
+## 11. Notification & Target Fan-Out Hierarchy
+
+Multi-level target scopes:
+$$\mathbf{COLLEGE} \;\big|\; \mathbf{DEPARTMENT} \;\big|\; \mathbf{PROGRAM} \;\big|\; \mathbf{YEAR} \;\big|\; \mathbf{DIVISION} \;\big|\; \mathbf{BATCH} \;\big|\; \mathbf{ROLE} \;\big|\; \mathbf{INDIVIDUAL}$$
+- Creator's authorized scope automatically restricts target selection.
+- Automated parent dispatch resolves associated parent contacts for targeted student cohorts.
+
+---
+
+## 12. Database Schema (Single PostgreSQL Database)
+
+```sql
+-- Logical Module Breakdown:
+-- AUTH: users, roles, permissions, fcm_tokens
+-- ORG: departments, programs, academic_years, semesters, divisions, batches
+-- STUDENTS: students, student_enrollments, student_academic_data, student_change_requests
+-- FACULTY: faculty, faculty_batch_assignments
+-- PARENTS: parents, parent_student_relationships
+-- CALENDAR: academic_calendars, calendar_events
+-- NOTIFICATIONS: notifications, notification_targets, notification_recipients
+-- PLACEMENT: placement_drives, recruiters, placed_student_achievements, placement_eligibility_rules, placement_eligibility_results
+-- AUDIT: system_audit_logs
+```
+
+---
+
+## 13. Verification checklist
+
+| Check | Command |
+| :--- | :--- |
+| Backend unit tests | `cd backend && mvn test` |
+| TypeScript check | `npm run lint` |
+| Frontend build | `npm run build` |
+| API requests | `postman_collection.json` |

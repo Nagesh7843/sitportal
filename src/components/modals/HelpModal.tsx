@@ -23,7 +23,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
         <div className="space-y-3 text-[13px] text-[#454652] mb-6">
           <p><strong>Broadcasting Emails:</strong> Access the Bulk Email Panel to send encrypted notices to student groups.</p>
-          <p><strong>Faculty Profiles:</strong> Click any faculty member in the table to toggle status between On Campus, In Lab, or In Meeting.</p>
+          <p><strong>Faculty Profiles:</strong> Browse the directory to view designations, qualifications, research domains, and office hours.</p>
           <p><strong>Emergency Alerts:</strong> Use the red FAB button at the bottom right to send urgent notices.</p>
         </div>
 

@@ -47,6 +47,15 @@ public class User {
 
     private String qualification;
 
+    @Column(name = "default_academic_year")
+    private String defaultAcademicYear;
+
+    @Column(name = "default_division")
+    private String defaultDivision;
+
+    @Column(name = "default_batch_group")
+    private String defaultBatchGroup;
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

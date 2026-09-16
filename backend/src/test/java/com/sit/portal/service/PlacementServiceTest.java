@@ -37,6 +37,12 @@ public class PlacementServiceTest {
     @Mock
     private ActivityLogRepository activityLogRepository;
 
+    @Mock
+    private NoticeRepository noticeRepository;
+
+    @Mock
+    private StudentRepository studentRepository;
+
     @InjectMocks
     private PlacementService placementService;
 

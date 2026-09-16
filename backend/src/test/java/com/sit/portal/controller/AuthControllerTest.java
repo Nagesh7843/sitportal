@@ -87,7 +87,7 @@ class AuthControllerTest {
         when(userRepository.findByEmail("unknown.person@gmail.com")).thenReturn(Optional.empty());
         when(facultyRepository.findByEmail("unknown.person@gmail.com")).thenReturn(Optional.empty());
         when(studentRepository.findByEmail("unknown.person@gmail.com")).thenReturn(Optional.empty());
-        when(studentRepository.findByParentEmail("unknown.person@gmail.com")).thenReturn(Optional.empty());
+        when(studentRepository.findByParentEmail("unknown.person@gmail.com")).thenReturn(java.util.Collections.emptyList());
 
         ResponseEntity<?> response = controller.googleLogin(Map.of("email", "unknown.person@gmail.com"));
 
@@ -101,16 +101,18 @@ class AuthControllerTest {
     @Test
     void rejectsRegistrationForNonRosterEmail() {
         when(userRepository.existsByEmail("unknown@gmail.com")).thenReturn(false);
-        when(facultyRepository.findByEmail("unknown@gmail.com")).thenReturn(Optional.empty());
-        when(studentRepository.existsByEmail("unknown@gmail.com")).thenReturn(false);
 
-        User request = User.builder().email("unknown@gmail.com").password("pass123").role("student").build();
+        Map<String, Object> request = Map.of(
+            "email", "unknown@gmail.com",
+            "password", "pass123",
+            "role", "student"
+        );
         ResponseEntity<?> response = controller.register(request);
 
-        assertEquals(400, response.getStatusCode().value());
+        assertEquals(403, response.getStatusCode().value());
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
-        assertTrue(((String) body.get("message")).contains("Registration denied"));
+        assertTrue(((String) body.get("message")).toLowerCase().contains("registration denied"));
         verify(userRepository, never()).save(any());
     }
 }

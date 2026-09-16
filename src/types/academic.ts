@@ -1,14 +1,23 @@
 export type AcademicYear = 'FE' | 'SE' | 'TE' | 'BE';
 export type Division = 'Div A' | 'Div B' | 'Div C';
 export type BatchGroup = 'A1' | 'A2' | 'A3' | 'B1' | 'B2' | 'B3' | 'C1' | 'C2' | 'C3';
-export type DepartmentCode = 'CSE' | 'IT' | 'E&TC' | 'AI&DS';
+export type DepartmentCode = 
+  | 'CSE' 
+  | 'AIDS' 
+  | 'MECH' 
+  | 'CIVIL' 
+  | 'ENTC' 
+  | 'ELECTRICAL' 
+  | 'MECHATRONICS' 
+  | 'BASIC_SCIENCES' 
+  | string;
 
 export interface FacultyMember {
   id?: string | number;
   name: string;
   specialization: string;
   rank: string;
-  status: 'ON CAMPUS' | 'IN MEETING' | 'IN LAB' | 'OFF CAMPUS';
+  status?: string;
   email: string;
   avatar?: string;
   officeHours?: string;
@@ -30,6 +39,7 @@ export interface StudentRecord {
   gpa: number;
   cohortBatch: string;
   email: string;
+  department?: string;
   avatarBg?: string;
   initials?: string;
   academicYear?: AcademicYear;
@@ -37,6 +47,11 @@ export interface StudentRecord {
   batchGroup?: BatchGroup;
   status?: 'Active' | 'Inactive';
   attendance?: number;
+  cgpa?: number;
+  tenthPercentage?: number;
+  twelfthPercentage?: number;
+  diplomaPercentage?: number;
+  qualificationPath?: string;
   parentName?: string;
   parentEmail?: string;
   parentPhone?: string;

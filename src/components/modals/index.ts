@@ -9,5 +9,6 @@ export * from './ActivityLogModal';
 export * from './EditProfileModal';
 export * from './ContactFacultyModal';
 export * from './AddEditCourseModal';
+export * from './SendNoticeToDeviceModal';
 export { ModalsContainer as Modals } from './ModalsContainer';
 export * from './ModalsContainer';

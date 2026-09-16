@@ -14,7 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -58,6 +60,12 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByEmail(cleanEmail);
         if (userOpt.isPresent()) {
             user = userOpt.get();
+            // Validate student domain
+            if ("student".equalsIgnoreCase(user.getRole()) && !cleanEmail.endsWith("@sitcoe.org.in") && !cleanEmail.endsWith("@sitcoe.ac.in")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Access Denied: Student accounts must use an official @sitcoe.org.in or @sitcoe.ac.in institutional email address to login.");
+                return ResponseEntity.status(403).body(err);
+            }
             // Validate password using BCrypt
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 Map<String, String> err = new HashMap<>();
@@ -81,54 +89,112 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    private static final String FACULTY_PASSCODE = "SIT-FACULTY-2026";
+    private static final String HOD_PASSCODE = "SIT-HOD-2026";
+
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User userRequest) {
-        String cleanEmail = userRequest.getEmail().trim().toLowerCase();
+    public ResponseEntity<?> register(@RequestBody Map<String, Object> req) {
+        String name = (String) req.get("name");
+        String email = (String) req.get("email");
+        String password = (String) req.get("password");
+        String role = (String) req.get("role");
+        String roleTitle = (String) req.get("roleTitle");
+        String department = (String) req.get("department");
+        String qualification = (String) req.get("qualification");
+        String specialization = (String) req.get("specialization");
+        String teachingExperience = (String) req.get("teachingExperience");
+        String industrialExperience = (String) req.get("industrialExperience");
+        String securityCode = (String) req.get("securityCode");
+
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "Email and password are required.");
+            return ResponseEntity.badRequest().body(err);
+        }
+
+        String cleanEmail = email.trim().toLowerCase();
         if (userRepository.existsByEmail(cleanEmail)) {
             Map<String, String> err = new HashMap<>();
             err.put("message", "User with this email already exists in PostgreSQL database.");
             return ResponseEntity.badRequest().body(err);
         }
 
-        Optional<Faculty> facOpt = facultyRepository.findByEmail(cleanEmail);
-        if ("parent".equalsIgnoreCase(userRequest.getRole())) {
-            userRequest.setRole("parent");
-            userRequest.setRoleTitle("Parent / Guardian");
-            if (userRequest.getName() == null || userRequest.getName().isEmpty()) {
-                userRequest.setName("Parent");
+        String targetRole = role != null ? role.trim().toLowerCase() : "student";
+
+        if ("student".equalsIgnoreCase(targetRole)) {
+            if (!cleanEmail.endsWith("@sitcoe.org.in") && !cleanEmail.endsWith("@sitcoe.ac.in")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Registration Denied: All student accounts must use an official institutional Google Workspace email ending with @sitcoe.org.in or @sitcoe.ac.in (e.g. prn.sitcoe@sitcoe.org.in). Personal email domains (@gmail.com, etc.) are not permitted.");
+                return ResponseEntity.status(403).body(err);
             }
-        } else if (facOpt.isPresent()) {
-            Faculty fac = facOpt.get();
-            String rank = fac.getRankTitle() != null ? fac.getRankTitle().toLowerCase() : "";
-            if (rank.contains("hod") || rank.contains("head")) {
-                userRequest.setRole("hod");
-                userRequest.setRoleTitle("Head of Department (HOD CSE)");
-            } else {
-                userRequest.setRole("faculty");
-                userRequest.setRoleTitle(fac.getRankTitle());
+            if (roleTitle == null || roleTitle.isEmpty()) {
+                roleTitle = (department != null ? department : "CSE") + " B.Tech Student";
             }
-            userRequest.setName(fac.getName());
-        } else if (studentRepository.existsByEmail(cleanEmail)) {
-            userRequest.setRole("student");
-            userRequest.setRoleTitle("B.Tech Student");
+        } else if ("faculty".equalsIgnoreCase(targetRole)) {
+            if (securityCode == null || !FACULTY_PASSCODE.equalsIgnoreCase(securityCode.trim())) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Invalid Faculty Institutional Verification Key. Please enter the valid SIT faculty key.");
+                return ResponseEntity.status(403).body(err);
+            }
+            if (roleTitle == null || roleTitle.isEmpty()) {
+                roleTitle = "Assistant Professor";
+            }
+            Faculty faculty = facultyRepository.findByEmail(cleanEmail)
+                    .orElse(Faculty.builder().email(cleanEmail).name(name != null ? name : "Faculty").build());
+            faculty.setName(name != null ? name : faculty.getName());
+            faculty.setDepartment(department != null ? department : "CSE");
+            faculty.setRankTitle(roleTitle);
+            faculty.setDesignation(roleTitle);
+            faculty.setQualification(qualification);
+            faculty.setSpecialization(specialization);
+            faculty.setTeachingExperience(teachingExperience);
+            faculty.setIndustrialExperience(industrialExperience);
+            faculty.setStatus("ON CAMPUS");
+            facultyRepository.save(faculty);
+
+        } else if ("hod".equalsIgnoreCase(targetRole)) {
+            if (securityCode == null || !HOD_PASSCODE.equalsIgnoreCase(securityCode.trim())) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Invalid HOD Institutional Security Key. Please enter the valid SIT HOD secret key.");
+                return ResponseEntity.status(403).body(err);
+            }
+            roleTitle = "Head of Department (HOD " + (department != null ? department : "CSE") + ")";
+            Faculty faculty = facultyRepository.findByEmail(cleanEmail)
+                    .orElse(Faculty.builder().email(cleanEmail).name(name != null ? name : "HOD").build());
+            faculty.setName(name != null ? name : faculty.getName());
+            faculty.setDepartment(department != null ? department : "CSE");
+            faculty.setRankTitle("Head of Department (HOD)");
+            faculty.setDesignation("Head of Department (HOD)");
+            faculty.setQualification(qualification);
+            faculty.setSpecialization(specialization);
+            faculty.setTeachingExperience(teachingExperience);
+            faculty.setIndustrialExperience(industrialExperience);
+            faculty.setStatus("ON CAMPUS");
+            facultyRepository.save(faculty);
+
+        } else if ("parent".equalsIgnoreCase(targetRole)) {
+            roleTitle = "Parent / Guardian";
         } else {
-            Map<String, String> err = new HashMap<>();
-            err.put("message", "Registration denied: Your email is not present in any pre-approved department database (Faculty or Student). For Parents, please select the Parent tab.");
-            return ResponseEntity.badRequest().body(err);
+            targetRole = "student";
+            if (roleTitle == null || roleTitle.isEmpty()) {
+                roleTitle = (department != null ? department : "CSE") + " B.Tech Student";
+            }
         }
 
-        userRequest.setEmail(cleanEmail);
-        userRequest.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-        
-        if (userRequest.getDepartment() == null || userRequest.getDepartment().isEmpty()) {
-            userRequest.setDepartment("Computer Science & Engineering");
-        }
-        
-        User savedUser = userRepository.save(userRequest);
+        User user = User.builder()
+                .name(name != null ? name : "SIT Member")
+                .email(cleanEmail)
+                .password(passwordEncoder.encode(password))
+                .role(targetRole)
+                .roleTitle(roleTitle)
+                .department(department != null ? department : "CSE")
+                .qualification(qualification)
+                .build();
+
+        User savedUser = userRepository.save(user);
 
         if ("parent".equalsIgnoreCase(savedUser.getRole())) {
-            // Auto link with existing student record matching parentEmail if present
-            studentRepository.findByParentEmail(cleanEmail).ifPresent(student -> {
+            studentRepository.findByParentEmail(cleanEmail).stream().findFirst().ifPresent(student -> {
                 Parent p = parentRepository.findByUserId(savedUser.getId())
                         .orElse(Parent.builder().userId(savedUser.getId()).build());
                 p.setUserId(savedUser.getId());
@@ -146,6 +212,141 @@ public class AuthController {
         response.put("token", token);
         response.put("user", savedUser);
         response.put("role", savedUser.getRole());
+        response.put("message", "Account registered and authenticated successfully.");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/parent/check-status")
+    public ResponseEntity<?> checkParentStatus(@RequestParam String email, @RequestParam(required = false) String prn) {
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required."));
+        }
+        String cleanEmail = email.trim().toLowerCase();
+        List<com.sit.portal.entity.Student> linkedStudents = studentRepository.findByParentEmail(cleanEmail);
+        Optional<User> existingUser = userRepository.findByEmail(cleanEmail);
+
+        if (linkedStudents.isEmpty()) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("email", cleanEmail);
+            res.put("isRegisteredUnderStudent", false);
+            res.put("hasPassword", false);
+            return ResponseEntity.ok(res);
+        }
+
+        com.sit.portal.entity.Student targetStudent = linkedStudents.get(0);
+        if (prn != null && !prn.trim().isEmpty()) {
+            String cleanPrn = prn.trim().toUpperCase();
+            Optional<com.sit.portal.entity.Student> matched = linkedStudents.stream()
+                    .filter(s -> cleanPrn.equalsIgnoreCase(s.getPrn()) || cleanPrn.equalsIgnoreCase(s.getRollNo()))
+                    .findFirst();
+            if (matched.isPresent()) {
+                targetStudent = matched.get();
+            } else {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "The entered Student PRN (" + cleanPrn + ") is not registered under this parent email address.");
+                return ResponseEntity.status(400).body(err);
+            }
+        }
+
+        List<Map<String, Object>> wardsList = new ArrayList<>();
+        for (com.sit.portal.entity.Student s : linkedStudents) {
+            Map<String, Object> w = new HashMap<>();
+            w.put("studentName", s.getName());
+            w.put("studentRollNo", s.getRollNo());
+            w.put("studentPrn", s.getPrn());
+            w.put("department", s.getDepartment());
+            w.put("academicYear", s.getAcademicYear());
+            w.put("division", s.getDivision());
+            wardsList.add(w);
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("email", cleanEmail);
+        res.put("isRegisteredUnderStudent", true);
+        res.put("hasPassword", existingUser.isPresent() && existingUser.get().getPassword() != null && !existingUser.get().getPassword().isEmpty());
+        res.put("parentName", targetStudent.getParentName() != null ? targetStudent.getParentName() : "Parent / Guardian");
+        res.put("studentName", targetStudent.getName());
+        res.put("studentRollNo", targetStudent.getRollNo());
+        res.put("studentPrn", targetStudent.getPrn());
+        res.put("department", targetStudent.getDepartment());
+        res.put("relationship", targetStudent.getParentRelationship());
+        res.put("wards", wardsList);
+        res.put("wardsCount", linkedStudents.size());
+
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/parent/setup-password")
+    public ResponseEntity<?> setupParentPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String password = body.get("password");
+        String prn = body.get("prn");
+        String parentName = body.get("parentName");
+
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required."));
+        }
+
+        String cleanEmail = email.trim().toLowerCase();
+        List<com.sit.portal.entity.Student> linkedStudents = studentRepository.findByParentEmail(cleanEmail);
+
+        if (linkedStudents.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No student registered with this parent email."));
+        }
+
+        if (prn != null && !prn.trim().isEmpty()) {
+            String cleanPrn = prn.trim().toUpperCase();
+            boolean prnMatches = linkedStudents.stream()
+                    .anyMatch(s -> cleanPrn.equalsIgnoreCase(s.getPrn()) || cleanPrn.equalsIgnoreCase(s.getRollNo()));
+            if (!prnMatches) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Student PRN verification failed for this parent email."));
+            }
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(cleanEmail);
+        User user;
+        if (userOpt.isPresent()) {
+            user = userOpt.get();
+            user.setPassword(passwordEncoder.encode(password));
+            user.setRole("parent");
+            if (user.getRoleTitle() == null) user.setRoleTitle("Parent / Guardian");
+            if (parentName != null && !parentName.trim().isEmpty()) user.setName(parentName.trim());
+        } else {
+            String defaultName = !linkedStudents.isEmpty() && linkedStudents.get(0).getParentName() != null
+                    ? linkedStudents.get(0).getParentName()
+                    : (parentName != null && !parentName.trim().isEmpty() ? parentName.trim() : "Parent");
+
+            user = User.builder()
+                    .name(defaultName)
+                    .email(cleanEmail)
+                    .password(passwordEncoder.encode(password))
+                    .role("parent")
+                    .roleTitle("Parent / Guardian")
+                    .department(!linkedStudents.isEmpty() ? linkedStudents.get(0).getDepartment() : "CSE")
+                    .build();
+        }
+
+        User savedUser = userRepository.save(user);
+
+        com.sit.portal.entity.Student primaryStudent = linkedStudents.get(0);
+        Parent p = parentRepository.findByUserId(savedUser.getId())
+                .orElse(Parent.builder().userId(savedUser.getId()).build());
+        p.setUserId(savedUser.getId());
+        p.setStudentRollNo(primaryStudent.getRollNo() != null ? primaryStudent.getRollNo() : primaryStudent.getPrn());
+        p.setStudentName(primaryStudent.getName());
+        if (primaryStudent.getParentRelationship() != null) p.setRelationship(primaryStudent.getParentRelationship());
+        if (primaryStudent.getParentPhone() != null) p.setAlternatePhone(primaryStudent.getParentPhone());
+        parentRepository.save(p);
+
+        String token = jwtUtils.generateToken(savedUser.getEmail(), savedUser.getRole());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", savedUser);
+        response.put("role", "parent");
+        response.put("wardsCount", linkedStudents.size());
+        response.put("message", "Parent password created successfully. Welcome to SIT Parent Portal.");
+
         return ResponseEntity.ok(response);
     }
 
@@ -186,6 +387,11 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByEmail(cleanEmail);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            if ("student".equalsIgnoreCase(user.getRole()) && !cleanEmail.endsWith("@sitcoe.org.in") && !cleanEmail.endsWith("@sitcoe.ac.in")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Access Denied: Student accounts must use an official institutional @sitcoe.org.in or @sitcoe.ac.in Google Workspace email. Personal email domains (@gmail.com, etc.) are not permitted for student accounts.");
+                return ResponseEntity.status(403).body(err);
+            }
             String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
             
             Map<String, Object> response = new HashMap<>();
@@ -226,6 +432,11 @@ public class AuthController {
         // 3. Check if email exists in Student database
         Optional<com.sit.portal.entity.Student> studentOpt = studentRepository.findByEmail(cleanEmail);
         if (studentOpt.isPresent()) {
+            if (!cleanEmail.endsWith("@sitcoe.org.in") && !cleanEmail.endsWith("@sitcoe.ac.in")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("message", "Access Denied: Students must use an official institutional @sitcoe.org.in or @sitcoe.ac.in Google Workspace email. Personal domains (@gmail.com, etc.) are not permitted.");
+                return ResponseEntity.status(403).body(err);
+            }
             com.sit.portal.entity.Student st = studentOpt.get();
             User newUser = User.builder()
                     .name(st.getName() != null && !st.getName().isEmpty() ? st.getName() : cleanEmail.split("@")[0])
@@ -246,9 +457,9 @@ public class AuthController {
         }
 
         // 4. Check if email exists as Parent email for an enrolled Student
-        Optional<com.sit.portal.entity.Student> parentStudentOpt = studentRepository.findByParentEmail(cleanEmail);
-        if (parentStudentOpt.isPresent()) {
-            com.sit.portal.entity.Student st = parentStudentOpt.get();
+        List<com.sit.portal.entity.Student> parentStudents = studentRepository.findByParentEmail(cleanEmail);
+        if (!parentStudents.isEmpty()) {
+            com.sit.portal.entity.Student st = parentStudents.get(0);
             User newUser = User.builder()
                     .name("Parent of " + st.getName())
                     .email(cleanEmail)
@@ -277,12 +488,70 @@ public class AuthController {
             return ResponseEntity.ok(response);
         }
 
-        // 5. If NOT found in any database records, STRICTLY DENY LOGIN
-        Map<String, String> err = new HashMap<>();
-        err.put("status", "403");
-        err.put("error", "ROSTER_NOT_FOUND");
-        err.put("message", "Access Denied: The Google account (" + cleanEmail + ") is not registered in the official Sharad Institute of Technology (SITCOE) & Trust Institutions roster. Only enrolled students, faculty, and verified guardians are permitted to log in.");
-        return ResponseEntity.status(403).body(err);
+        // 5. Check domain for new student Google registration / sign in
+        if (!cleanEmail.endsWith("@sitcoe.org.in") && !cleanEmail.endsWith("@sitcoe.ac.in")) {
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "Access Denied: Student accounts must use an official institutional @sitcoe.org.in or @sitcoe.ac.in Google Workspace email. Personal email domains (@gmail.com, etc.) are not allowed for student sign-in or registration.");
+            return ResponseEntity.status(403).body(err);
+        }
+
+        // Seamlessly provision and authenticate new Google-verified student account
+        String defaultName = cleanEmail.split("@")[0];
+        if (defaultName.contains(".")) {
+            String[] parts = defaultName.split("\\.");
+            StringBuilder sb = new StringBuilder();
+            for (String p : parts) {
+                if (!p.isEmpty()) {
+                    sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1)).append(" ");
+                }
+            }
+            defaultName = sb.toString().trim();
+        } else if (!defaultName.isEmpty()) {
+            defaultName = Character.toUpperCase(defaultName.charAt(0)) + defaultName.substring(1);
+        }
+
+        User newUser = User.builder()
+                .name(defaultName)
+                .email(cleanEmail)
+                .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                .role("student")
+                .roleTitle("B.Tech Student")
+                .department("CSE")
+                .build();
+        User savedUser = userRepository.save(newUser);
+
+        if (!studentRepository.existsByEmail(cleanEmail)) {
+            try {
+                String generatedRoll = "STU-" + Math.abs(cleanEmail.hashCode() % 9000 + 1000);
+                String generatedPrn = "24" + String.format("%08d", Math.abs(cleanEmail.hashCode() % 100000000));
+                com.sit.portal.entity.Student st = com.sit.portal.entity.Student.builder()
+                        .name(defaultName)
+                        .email(cleanEmail)
+                        .rollNo(generatedRoll)
+                        .prn(generatedPrn)
+                        .department("CSE")
+                        .academicYear("SE")
+                        .division("Div A")
+                        .batchGroup("A1")
+                        .cohortBatch("2024-2028")
+                        .gpa(8.5)
+                        .attendance(90.0)
+                        .status("Active")
+                        .build();
+                studentRepository.save(st);
+            } catch (Exception ex) {
+                // ignore
+            }
+        }
+
+        String token = jwtUtils.generateToken(savedUser.getEmail(), savedUser.getRole());
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", savedUser);
+        response.put("role", savedUser.getRole());
+        response.put("isNewUser", true);
+        response.put("message", "Google account verified and authenticated successfully.");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")

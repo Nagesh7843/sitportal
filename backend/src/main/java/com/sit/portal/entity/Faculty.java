@@ -20,6 +20,9 @@ public class Faculty {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(nullable = false)
     private String name;
 
@@ -61,6 +64,15 @@ public class Faculty {
 
     @Column(columnDefinition = "TEXT")
     private String avatar;
+
+    @Column(name = "default_academic_year")
+    private String defaultAcademicYear;
+
+    @Column(name = "default_division")
+    private String defaultDivision;
+
+    @Column(name = "default_batch_group")
+    private String defaultBatchGroup;
 
     @Column(name = "publications_count")
     @Builder.Default

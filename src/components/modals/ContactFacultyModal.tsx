@@ -19,27 +19,16 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
 }) => {
   const [senderName, setSenderName] = useState(currentProfile?.name || '');
   const [senderEmail, setSenderEmail] = useState(currentProfile?.email || '');
-  const [senderRole, setSenderRole] = useState(
-    currentProfile?.role === 'parent'
-      ? 'Parent / Guardian'
-      : currentProfile?.role === 'student'
-      ? 'Student'
-      : 'Parent / Guardian'
-  );
-  const [inquiryType, setInquiryType] = useState('Office Hours Appointment');
+  const [inquiryType, setInquiryType] = useState('Office Hours & Appointment');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [priority, setPriority] = useState<'NORMAL' | 'URGENT'>('NORMAL');
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Sync profile when opened or changed
   React.useEffect(() => {
     if (currentProfile) {
       if (currentProfile.name) setSenderName(currentProfile.name);
       if (currentProfile.email) setSenderEmail(currentProfile.email);
-      if (currentProfile.role === 'parent') setSenderRole('Parent / Guardian');
-      else if (currentProfile.role === 'student') setSenderRole('Student');
     }
   }, [currentProfile, isOpen]);
 
@@ -48,21 +37,16 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalName = senderName.trim() || (currentProfile?.name ? currentProfile.name : 'SIT Guest Visitor');
+    const finalName = senderName.trim() || currentProfile?.name || 'SIT Student';
     const finalEmail = senderEmail.trim();
 
-    if (!finalEmail || !finalEmail.includes('@') || !finalEmail.includes('.')) {
-      setErrorMessage('Please provide a valid email address so the faculty member can reply back to you.');
-      return;
-    }
-
-    if (!finalName) {
-      setErrorMessage('Please enter your full name.');
+    if (!finalEmail || !finalEmail.includes('@')) {
+      setErrorMessage('Please provide a valid email address.');
       return;
     }
 
     if (!subject.trim() || !message.trim()) {
-      setErrorMessage('Please fill in both the subject and your inquiry message.');
+      setErrorMessage('Please fill in both subject and message.');
       return;
     }
 
@@ -70,34 +54,30 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const displayNameWithRole = `${finalName} (${senderRole})`;
-
       await apiService.contactFaculty({
         facultyId: faculty.id,
         facultyName: faculty.name,
         facultyEmail: faculty.email,
-        studentName: displayNameWithRole,
+        studentName: finalName,
         studentEmail: finalEmail,
         studentPrn: (currentProfile as any)?.prn || (currentProfile as any)?.rollNo || 'N/A',
-        academicYear: (currentProfile as any)?.academicYear || 'CSE Department',
+        academicYear: (currentProfile as any)?.academicYear || 'CSE',
         division: (currentProfile as any)?.division || '',
         inquiryType: inquiryType,
         subject: subject.trim(),
         message: message.trim(),
-        priority: priority,
+        priority: 'NORMAL',
       });
 
       if (onSuccess) {
-        onSuccess(`Your inquiry has been emailed to ${faculty.name}!`);
-      } else {
-        alert(`Your message has been sent to ${faculty.name} (${faculty.email})! Replies will be delivered to ${finalEmail}.`);
+        onSuccess(`Message sent to ${faculty.name}!`);
       }
 
       setSubject('');
       setMessage('');
       onClose();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to transmit inquiry to faculty.');
+      setErrorMessage(err.message || 'Failed to send message.');
     } finally {
       setIsSending(false);
     }
@@ -105,221 +85,139 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-[#c6c5d4] max-h-[92vh] overflow-y-auto font-sans">
+      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto font-sans">
         {/* Header */}
-        <div className="flex justify-between items-start pb-4 border-b border-[#e2e8f0]">
+        <div className="flex justify-between items-start pb-4 border-b border-slate-100">
           <div>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#000666] text-[24px]">school</span>
-              <h2 className="text-[20px] font-extrabold text-[#071e27]">Contact Faculty Member</h2>
+              <span className="material-symbols-outlined text-[#000666] text-[24px]">mail</span>
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">Contact Faculty Member</h2>
             </div>
-            <p className="text-[13px] text-[#454652] mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Send an official direct inquiry & email to department faculty
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-[#767683] hover:text-[#071e27] hover:bg-slate-100 rounded-full transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[22px]">close</span>
           </button>
         </div>
 
-        {/* Target Faculty Badge */}
-        <div className="my-4 p-3.5 bg-gradient-to-r from-blue-50 via-[#f0f8ff] to-indigo-50 rounded-2xl border border-blue-200 flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-[#000666] text-white flex items-center justify-center font-bold text-[18px] shrink-0 shadow-xs">
-            {faculty.name.replace('Dr.', '').replace('Prof.', '').trim().charAt(0)}
+        {/* Target Faculty Details Card */}
+        <div className="my-4 p-4 bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 rounded-2xl border border-blue-200 flex items-center justify-between gap-3.5 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-xl bg-[#000666] text-white flex items-center justify-center font-extrabold text-[18px] shrink-0 shadow-xs">
+              {faculty.name.replace('Dr.', '').replace('Prof.', '').trim().charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <h4 className="font-bold text-sm sm:text-base text-slate-900 truncate">{faculty.name}</h4>
+              <p className="text-xs text-blue-700 font-semibold truncate">
+                {faculty.designation || faculty.rank} {faculty.specialization ? `• ${faculty.specialization}` : ''}
+              </p>
+              <p className="text-[11px] text-slate-500 truncate mt-0.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[13px]">mail</span>
+                <span>{faculty.email}</span>
+              </p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="font-bold text-[15px] text-[#071e27] truncate">{faculty.name}</h4>
-            <p className="text-[12px] text-[#2b5bb5] font-semibold truncate">
-              {faculty.designation || faculty.rank} &bull; {faculty.specialization}
-            </p>
-            <p className="text-[11px] text-[#64748b] truncate mt-0.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px]">mail</span>
-              {faculty.email}
-            </p>
-          </div>
+          <span className="px-2.5 py-1 bg-blue-100 text-blue-900 font-extrabold text-[10px] rounded-lg border border-blue-200 shrink-0">
+            {faculty.department || 'CSE'}
+          </span>
         </div>
+
+        {/* Sender Info Strip */}
+        {currentProfile && (
+          <div className="mb-4 px-3.5 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 flex items-center justify-between gap-2">
+            <div className="truncate">
+              <span className="text-slate-500">Sending as: </span>
+              <strong className="text-slate-900">{currentProfile.name}</strong>
+              <span className="text-slate-500"> ({currentProfile.role === 'parent' ? 'Parent' : 'Student'})</span>
+              {currentProfile.email && <span className="text-slate-500"> • {currentProfile.email}</span>}
+            </div>
+          </div>
+        )}
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-[12px] font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">error</span>
+          <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-medium flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">error</span>
             <span>{errorMessage}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Sender Identity Section */}
-          {!currentProfile ? (
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-[#000666]">person</span>
-                  Your Sender Details
-                </span>
-                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                  Direct Reply-To Active
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Your Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                    placeholder="e.g. Shankar Gaikwad"
-                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-[13px] text-slate-900 font-medium outline-none focus:border-[#000666]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Your Reply-To Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={senderEmail}
-                    onChange={(e) => setSenderEmail(e.target.value)}
-                    placeholder="e.g. yourname@gmail.com"
-                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-[13px] text-slate-900 font-medium outline-none focus:border-[#000666]"
-                  />
-                </div>
-              </div>
-
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {/* Sender inputs if unauthenticated / guest */}
+          {!currentProfile && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                  Your Role / Affiliation
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {(['Parent / Guardian', 'Student', 'Visitor / Prospective', 'Alumni'] as const).map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setSenderRole(role)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        senderRole === role
-                          ? 'bg-[#000666] text-white shadow-2xs'
-                          : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                      }`}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Your Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  placeholder="e.g. Shankar Gaikwad"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 outline-none focus:border-[#000666] focus:bg-white"
+                />
               </div>
-            </div>
-          ) : (
-            <div className="p-3.5 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-[12px] text-[#334155] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
-                <span className="text-[#64748b]">Sending as: </span>
-                <strong className="text-[#071e27]">{senderName || currentProfile.name}</strong>
-                <span className="text-slate-500 font-medium"> ({senderRole})</span>
-                {senderEmail && <span className="text-[#64748b]"> &bull; {senderEmail}</span>}
-              </div>
-              <div className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                Direct Reply-To Active
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Your Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={senderEmail}
+                  onChange={(e) => setSenderEmail(e.target.value)}
+                  placeholder="e.g. name@gmail.com"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 outline-none focus:border-[#000666] focus:bg-white"
+                />
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Inquiry Category */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#454652] uppercase mb-1">
-                Inquiry Category
-              </label>
-              <select
-                value={inquiryType}
-                onChange={(e) => setInquiryType(e.target.value)}
-                className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-2.5 text-[13px] font-semibold text-[#071e27] outline-none focus:border-[#000666]"
-              >
-                <option value="Office Hours Appointment">Office Hours Appointment</option>
-                <option value="Ward Academic Progress">Ward Academic Progress / Monitoring</option>
-                <option value="Project Guidance">Project Guidance / Capstone</option>
-                <option value="Doubt Resolution">Doubt Resolution / Concept Query</option>
-                <option value="Attendance Query">Attendance / Examination Query</option>
-                <option value="Recommendation Letter">Letter of Recommendation</option>
-                <option value="General Inquiry">General Inquiry</option>
-              </select>
-            </div>
-
-            {/* Urgency */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#454652] uppercase mb-1">
-                Priority Level
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPriority('NORMAL')}
-                  className={`py-2 px-3 rounded-xl text-[12px] font-bold border transition-all ${
-                    priority === 'NORMAL'
-                      ? 'bg-blue-50 text-[#000666] border-[#000666]'
-                      : 'bg-white text-[#767683] border-[#c6c5d4] hover:bg-slate-50'
-                  }`}
-                >
-                  Normal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPriority('URGENT')}
-                  className={`py-2 px-3 rounded-xl text-[12px] font-bold border transition-all ${
-                    priority === 'URGENT'
-                      ? 'bg-red-50 text-red-700 border-red-600'
-                      : 'bg-white text-[#767683] border-[#c6c5d4] hover:bg-slate-50'
-                  }`}
-                >
-                  Urgent
-                </button>
-              </div>
-            </div>
+          {/* Inquiry Category */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Inquiry Category</label>
+            <select
+              value={inquiryType}
+              onChange={(e) => setInquiryType(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:border-[#000666] focus:bg-white cursor-pointer"
+            >
+              <option value="Office Hours & Appointment">Office Hours & Appointment</option>
+              <option value="Academic Doubt & Concept Query">Academic Doubt & Concept Query</option>
+              <option value="Project & Capstone Guidance">Project & Capstone Guidance</option>
+              <option value="Ward Academic Progress / Monitoring">Ward Academic Progress / Monitoring</option>
+              <option value="Attendance & Exam Query">Attendance & Exam Query</option>
+              <option value="Letter of Recommendation">Letter of Recommendation</option>
+              <option value="General Inquiry">General Inquiry</option>
+            </select>
           </div>
 
-          {/* Subject */}
+          {/* Subject Line */}
           <div>
-            <label className="block text-[11px] font-bold text-[#454652] uppercase mb-1">
-              Subject Line
-            </label>
+            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Subject Line</label>
             <input
               type="text"
               required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="e.g. Inquiring regarding academic progress and office hours"
-              className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-3 text-[13px] text-[#071e27] font-medium outline-none focus:border-[#000666]"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-medium outline-none focus:border-[#000666] focus:bg-white"
             />
           </div>
 
           {/* Message Body */}
           <div>
-            <label className="block text-[11px] font-bold text-[#454652] uppercase mb-1">
-              Message / Description
-            </label>
+            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Message / Description</label>
             <textarea
               required
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your detailed inquiry or meeting request here. Please specify your preferred timing if asking for an appointment..."
-              className="w-full bg-[#f3faff] border border-[#c6c5d4] rounded-xl p-3 text-[13px] text-[#071e27] font-medium outline-none focus:border-[#000666] resize-none"
+              placeholder="Write your message or inquiry here..."
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-xs text-slate-900 outline-none focus:border-[#000666] focus:bg-white resize-none"
             />
-          </div>
-
-          {/* Institutional Note */}
-          <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[16px] text-amber-700 shrink-0 mt-0.5">info</span>
-            <span>
-              This inquiry is officially dispatched to the faculty member's institutional inbox. When the professor replies, the email will arrive directly in your personal inbox (<strong>{senderEmail || 'your email address'}</strong>).
-            </span>
           </div>
 
           {/* Action Buttons */}
@@ -328,19 +226,19 @@ export const ContactFacultyModal: React.FC<ContactFacultyModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSending}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#071e27] font-bold rounded-xl text-[13px] transition-colors"
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSending}
-              className="px-6 py-2.5 bg-[#000666] hover:bg-[#1a237e] text-white font-bold rounded-xl text-[13px] transition-all shadow-md flex items-center gap-2"
+              className="px-6 py-2.5 bg-[#000666] hover:bg-[#1a237e] text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             >
-              <span className={`material-symbols-outlined text-[18px] ${isSending ? 'animate-spin' : ''}`}>
+              <span className={`material-symbols-outlined text-[16px] ${isSending ? 'animate-spin' : ''}`}>
                 send
               </span>
-              <span>{isSending ? 'Transmitting...' : 'Send Inquiry to Faculty'}</span>
+              <span>{isSending ? 'Sending...' : 'Send Message'}</span>
             </button>
           </div>
         </form>

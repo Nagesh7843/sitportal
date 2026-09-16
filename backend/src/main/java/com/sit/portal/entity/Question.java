@@ -49,6 +49,11 @@ public class Question {
     @Builder.Default
     private Integer upvotes = 0;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "upvoted_by", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<String> upvotedBy = new ArrayList<>();
+
     @Column(name = "views_count")
     @Builder.Default
     private Integer viewsCount = 0;

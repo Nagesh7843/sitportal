@@ -28,6 +28,12 @@ public class PushSubscription {
     @Column(nullable = false)
     private String auth;
 
+    @Column(name = "user_email")
+    private String userEmail;
+
+    @Column(name = "user_id")
+    private Long userId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

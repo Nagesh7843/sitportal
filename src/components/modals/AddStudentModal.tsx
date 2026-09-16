@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StudentRecord, AcademicYear, Division, BatchGroup } from '@/types';
+import { apiService } from '@/services/api';
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [studentName, setStudentName] = useState('');
   const [studentRollNo, setStudentRollNo] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [department, setDepartment] = useState('CSE');
   const [studentBatch, setStudentBatch] = useState('2024-2028');
   const [academicYear, setAcademicYear] = useState<AcademicYear>('SE');
   const [division, setDivision] = useState<Division>('Div A');
@@ -27,6 +29,10 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
   const [studentPrn, setStudentPrn] = useState('');
   const [studentGpa, setStudentGpa] = useState('3.5');
   const [studentAttendance, setStudentAttendance] = useState('90');
+  const [qualificationPath, setQualificationPath] = useState<'12TH' | 'DIPLOMA'>('12TH');
+  const [tenthPercentage, setTenthPercentage] = useState('80');
+  const [twelfthPercentage, setTwelfthPercentage] = useState('75');
+  const [diplomaPercentage, setDiplomaPercentage] = useState('80');
   const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   const [parentPhone, setParentPhone] = useState('');
@@ -47,6 +53,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         name: studentName.trim(),
         rollNo: studentRollNo.trim(),
         prn: studentPrn,
+        department,
         gpa: Math.min(4, Math.max(0, Number(studentGpa) || 0)),
         attendance: Math.min(100, Math.max(0, Number(studentAttendance) || 90)),
         cohortBatch: studentBatch,
@@ -63,6 +70,21 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         status: 'Active'
       };
       onAddStudent(newStudent);
+
+      const prnKey = (studentPrn.trim() || studentRollNo.trim());
+      if (prnKey) {
+        apiService.saveStudentAcademicData(prnKey, {
+          prn: prnKey,
+          qualificationPath,
+          tenthPercentage: Number(tenthPercentage) || 0,
+          twelfthPercentage: qualificationPath === '12TH' ? Number(twelfthPercentage) || 0 : 0,
+          diplomaPercentage: qualificationPath === 'DIPLOMA' ? Number(diplomaPercentage) || 0 : 0,
+          cgpa: Number(studentGpa) || 7.5,
+          activeBacklogs: 0,
+          totalBacklogs: 0
+        }).catch(e => console.warn('Academic data sync warning:', e));
+      }
+
       setStudentName('');
       setStudentRollNo('');
       setStudentEmail('');
@@ -73,6 +95,9 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
       setStudentPrn('');
       setStudentGpa('3.5');
       setStudentAttendance('90');
+      setTenthPercentage('80');
+      setTwelfthPercentage('75');
+      setDiplomaPercentage('80');
       setParentName('');
       setParentEmail('');
       setParentPhone('');
@@ -178,7 +203,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Roll Number</label>
               <input
@@ -191,13 +216,30 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
               />
             </div>
             <div>
+              <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Department</label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full border border-[#c6c5d4] rounded-xl p-3 text-[13px] outline-none font-bold text-indigo-900"
+              >
+                <option value="CSE">CSE - Computer Science</option>
+                <option value="AIDS">AIDS - AI & Data Science</option>
+                <option value="MECH">MECH - Mechanical</option>
+                <option value="CIVIL">CIVIL - Civil Engg</option>
+                <option value="ENTC">ENTC - Electronics & TC</option>
+                <option value="ELECTRICAL">ELECTRICAL - Electrical</option>
+                <option value="MECHATRONICS">MECHATRONICS</option>
+                <option value="BASIC_SCIENCES">BASIC SCIENCES</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Academic Year</label>
               <select
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value as AcademicYear)}
                 className="w-full border border-[#c6c5d4] rounded-xl p-3 text-[13px] outline-none font-semibold text-[#071e27]"
               >
-
+                <option value="FE">First Year (FE)</option>
                 <option value="SE">Second Year (SE)</option>
                 <option value="TE">Third Year (TE)</option>
                 <option value="BE">Final Year (BE)</option>
@@ -281,13 +323,13 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                   type="text" 
                   value={studentPrn}
                   onChange={(e) => setStudentPrn(e.target.value)}
-                  placeholder="e.g. 2024CSE12345"
-                  className="w-full h-11 pl-4 pr-4 bg-white border border-[#c3d3d9] rounded-lg text-[14px] text-[#071e27] placeholder-[#7d828a] focus:outline-none focus:border-[#0060df] focus:ring-1 focus:ring-[#0060df] transition-all"
+                  placeholder="e.g. 2410104001"
+                  className="w-full h-11 pl-4 pr-4 bg-white border border-[#c3d3d9] rounded-lg text-[14px] text-[#071e27] placeholder-[#7d828a] focus:outline-none focus:border-[#0060df] focus:ring-1 focus:ring-[#0060df] transition-all font-mono"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">CGPA / SGPA (0-10)</label>
+              <label className="block text-[12px] font-bold text-[#454652] uppercase mb-1">Cumulative CGPA (0-10)</label>
               <input
                 type="number"
                 step="0.01"
@@ -295,8 +337,76 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
                 max={10}
                 value={studentGpa}
                 onChange={(e) => setStudentGpa(e.target.value)}
-                className="w-full border border-[#c6c5d4] rounded-xl p-3 text-[13px] outline-none focus:ring-2 focus:ring-[#000666]"
+                className="w-full border border-[#c6c5d4] rounded-xl p-2.5 text-[13px] outline-none focus:ring-2 focus:ring-[#000666] font-bold text-[#000666]"
               />
+            </div>
+          </div>
+
+          {/* Dual Qualification Path & Academic Eligibility Details */}
+          <div className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-200">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-indigo-700">school</span>
+                Placement Qualification Path (12th Regular vs. Lateral Entry Diploma)
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Admission Entry Path</label>
+                <select
+                  value={qualificationPath}
+                  onChange={(e) => setQualificationPath(e.target.value as '12TH' | 'DIPLOMA')}
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold bg-white text-indigo-900"
+                >
+                  <option value="12TH">12th Standard Regular (HSC)</option>
+                  <option value="DIPLOMA">Diploma Lateral Entry (DSE)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">10th (SSC) %</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  max={100}
+                  value={tenthPercentage}
+                  onChange={(e) => setTenthPercentage(e.target.value)}
+                  placeholder="e.g. 85.5"
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold bg-white"
+                />
+              </div>
+
+              {qualificationPath === '12TH' ? (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">12th (HSC) %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    max={100}
+                    value={twelfthPercentage}
+                    onChange={(e) => setTwelfthPercentage(e.target.value)}
+                    placeholder="e.g. 78.4"
+                    className="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold bg-white"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-bold text-amber-800 uppercase mb-1">Diploma Aggregate %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    max={100}
+                    value={diplomaPercentage}
+                    onChange={(e) => setDiplomaPercentage(e.target.value)}
+                    placeholder="e.g. 82.5"
+                    className="w-full border border-amber-300 bg-amber-50/50 rounded-lg p-2 text-xs font-semibold text-amber-950"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

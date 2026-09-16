@@ -23,6 +23,7 @@ export interface NoticeItem {
   content: string;
   authorName: string;
   authorRole: string;
+  department?: string;
   category: NoticeCategory;
   priority: NoticePriority;
   status: NoticeStatus;

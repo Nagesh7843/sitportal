@@ -35,7 +35,7 @@ export const aiService = {
     const modeFocus = {
       general: 'Focus on providing clean, concise, helpful guidance about the Sharad Institute of Technology (SITCOE) Portal and Trust institutions.',
       academic: 'Focus on curriculum, course credits, examination schemes, GPA calculations, and study materials.',
-      faculty: 'Focus on faculty designations, current campus location (ON CAMPUS, IN LAB, IN MEETING), research, and office hours.',
+      faculty: 'Focus on faculty designations, departments, research domains, specializations, and office hours.',
       notices: 'Focus on filtering circulars, urgent notices, submission deadlines, and academic targets.'
     }[mode];
 
@@ -45,15 +45,14 @@ ${modeFocus}
 LIVE INSTITUTIONAL DATA:
 - Institution: Sharad Institute of Technology (SITCOE) & Trust Units
 - Administration: Central Administration & Portal Controllers
-- Active Faculty Roster (${contextData.faculty.length}): ${contextData.faculty.map(f => `${f.name} [${f.status}] - Spec: ${f.specialization}, Office: ${f.officeHours || '9 AM - 5 PM'}`).join('; ')}
+- Active Faculty Roster (${contextData.faculty.length}): ${contextData.faculty.map(f => `${f.name} (${f.department || 'CSE'}) - Spec: ${f.specialization}, Office Hours: ${f.officeHours || '9 AM - 5 PM'}`).join('; ')}
 - Published Circulars (${contextData.notices.length}): ${contextData.notices.map(n => `[${n.priority}] "${n.title}" (Date: ${n.publishedAt})`).join('; ')}
 - Available Study Documents (${contextData.documents.length}): ${contextData.documents.map(d => `${d.title} [${d.category}]`).join('; ')}
 
 RESPONSE STYLE RULES:
 1. Be ultra-concise, elegant, and minimal. Introduce yourself as SIT AI when relevant.
 2. Use clean markdown formatting (bold highlights, bullet lists).
-3. If giving faculty status, explicitly state if they are ON CAMPUS, IN LAB, IN MEETING, or OFF CAMPUS.
-4. If asked about circulars or notices, highlight deadlines clearly.`;
+3. If asked about circulars or notices, highlight deadlines clearly.`;
 
     if (apiKey) {
       try {
@@ -106,11 +105,11 @@ RESPONSE STYLE RULES:
   ): string {
     const q = query.toLowerCase();
 
-    if (mode === 'faculty' || q.includes('faculty') || q.includes('professor') || q.includes('status')) {
+    if (mode === 'faculty' || q.includes('faculty') || q.includes('professor')) {
       const facList = context.faculty.length > 0 
-        ? context.faculty.map(f => `• **${f.name}**: ${f.status} (${f.specialization})`).join('\n')
-        : '• **Dr. A. S. Poornima**: ON CAMPUS\n• **Prof. Veena K**: IN LAB\n• **Dr. R. Kumar**: IN MEETING';
-      return `### 👨‍🏫 Faculty Status Directory\n\n${facList}\n\n*Note: Faculty status updates automatically upon campus check-in.*`;
+        ? context.faculty.map(f => `• **${f.name}** (${f.rank || f.designation || 'Faculty'}): ${f.specialization}`).join('\n')
+        : '• **Dr. A. S. Poornima** (HOD): Artificial Intelligence\n• **Prof. Veena K** (Associate Professor): Cloud Computing\n• **Dr. R. Kumar** (Professor): Distributed Systems';
+      return `### 👨‍🏫 Faculty Directory\n\n${facList}`;
     }
 
     if (mode === 'notices' || q.includes('notice') || q.includes('circular') || q.includes('urgent') || q.includes('exam')) {

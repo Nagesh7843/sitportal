@@ -1,6 +1,6 @@
 package com.sit.portal.controller;
 
-import com.sit.portal.entity.Student;
+import com.sit.portal.entity.*;
 import com.sit.portal.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -8,17 +8,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/students")
+@CrossOrigin(origins = "*")
 public class StudentController {
 
     @Autowired
     private StudentService studentService;
 
     @GetMapping
-    public List<Student> getAllStudents() {
-        return studentService.getAllStudents();
+    public List<Student> getAllStudents(@RequestParam(required = false) String department) {
+        return studentService.getAllStudents(department);
     }
 
     @GetMapping("/me")
@@ -70,5 +72,68 @@ public class StudentController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
+    }
+
+    // --- Enrollment History Endpoints ---
+    @GetMapping("/{prn}/enrollments")
+    public ResponseEntity<List<StudentEnrollment>> getStudentEnrollments(@PathVariable String prn) {
+        return ResponseEntity.ok(studentService.getEnrollmentHistory(prn));
+    }
+
+    @PostMapping("/{prn}/enrollments")
+    public ResponseEntity<StudentEnrollment> addEnrollment(
+            @PathVariable String prn,
+            @RequestBody StudentEnrollment enrollment) {
+        enrollment.setPrn(prn);
+        return ResponseEntity.status(201).body(studentService.enrollStudent(enrollment));
+    }
+
+    // --- Academic Data Endpoints (CGPA, 10th, 12th/Diploma) ---
+    @GetMapping("/{prn}/academic-data")
+    public ResponseEntity<StudentAcademicData> getAcademicData(@PathVariable String prn) {
+        return studentService.getAcademicDataByPrn(prn)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{prn}/academic-data")
+    public ResponseEntity<StudentAcademicData> saveAcademicData(
+            @PathVariable String prn,
+            @RequestBody StudentAcademicData data) {
+        data.setPrn(prn);
+        return ResponseEntity.ok(studentService.saveOrUpdateAcademicData(data));
+    }
+
+    // --- Self-Service Change Requests Endpoints ---
+    @PostMapping("/{prn}/change-requests")
+    public ResponseEntity<StudentChangeRequest> submitChangeRequest(
+            @PathVariable String prn,
+            @RequestBody StudentChangeRequest request) {
+        request.setPrn(prn);
+        return ResponseEntity.status(201).body(studentService.submitChangeRequest(request));
+    }
+
+    @GetMapping("/change-requests")
+    public ResponseEntity<List<StudentChangeRequest>> getChangeRequests(
+            @RequestParam(required = false) String prn,
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(studentService.getChangeRequests(prn, status));
+    }
+
+    @PutMapping("/change-requests/{id}/verify")
+    public ResponseEntity<StudentChangeRequest> verifyChangeRequest(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload) {
+        String status = (String) payload.getOrDefault("status", "APPROVED");
+        String comments = (String) payload.get("comments");
+        Long verifierId = null;
+        if (payload.get("verifiedByUserId") != null) {
+            try {
+                verifierId = Long.parseLong(payload.get("verifiedByUserId").toString());
+            } catch (Exception ignored) {}
+        }
+        return studentService.verifyChangeRequest(id, status, verifierId, comments)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

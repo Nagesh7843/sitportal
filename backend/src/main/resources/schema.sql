@@ -1,16 +1,107 @@
 -- PostgreSQL Schema for sitportaldb (Communication Portal)
 
--- 1. Departments Table (Multi-department ready)
+-- 1. Departments Table (All 8 SITCOE Engineering Departments)
 CREATE TABLE IF NOT EXISTS departments (
     id BIGSERIAL PRIMARY KEY,
     code VARCHAR(20) UNIQUE NOT NULL,
-    name VARCHAR(150) NOT NULL
+    name VARCHAR(150) NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE'
 );
 
--- Seed default department
-INSERT INTO departments (code, name) 
-VALUES ('CSE', 'Computer Science & Engineering')
+-- Seed all 8 SITCOE Departments
+INSERT INTO departments (code, name, status) 
+VALUES 
+('CSE', 'Computer Science & Engineering', 'ACTIVE'),
+('AIDS', 'Artificial Intelligence & Data Science', 'ACTIVE'),
+('MECH', 'Mechanical Engineering', 'ACTIVE'),
+('CIVIL', 'Civil Engineering', 'ACTIVE'),
+('ENTC', 'Electronics & Telecommunication Engineering', 'ACTIVE'),
+('ELECTRICAL', 'Electrical Engineering', 'ACTIVE'),
+('MECHATRONICS', 'Mechatronics Engineering', 'ACTIVE'),
+('BASIC_SCIENCES', 'Basic Sciences & Humanities', 'ACTIVE')
+ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status;
+
+-- 1b. Programs Table
+CREATE TABLE IF NOT EXISTS programs (
+    id BIGSERIAL PRIMARY KEY,
+    department_id BIGINT REFERENCES departments(id) ON DELETE CASCADE,
+    code VARCHAR(30) UNIQUE NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    degree VARCHAR(50) DEFAULT 'B.Tech'
+);
+
+INSERT INTO programs (department_id, code, name, degree)
+VALUES
+(1, 'BTECH_CSE', 'B.Tech in Computer Science & Engineering', 'B.Tech'),
+(2, 'BTECH_AIDS', 'B.Tech in Artificial Intelligence & Data Science', 'B.Tech'),
+(3, 'BTECH_MECH', 'B.Tech in Mechanical Engineering', 'B.Tech'),
+(4, 'BTECH_CIVIL', 'B.Tech in Civil Engineering', 'B.Tech'),
+(5, 'BTECH_ENTC', 'B.Tech in Electronics & Telecommunication Engineering', 'B.Tech'),
+(6, 'BTECH_ELEC', 'B.Tech in Electrical Engineering', 'B.Tech'),
+(7, 'BTECH_MTRX', 'B.Tech in Mechatronics Engineering', 'B.Tech'),
+(8, 'FE_GENERAL', 'First Year Basic Sciences & Humanities Core', 'B.Tech')
 ON CONFLICT (code) DO NOTHING;
+
+-- 1c. Academic Years Table
+CREATE TABLE IF NOT EXISTS academic_years (
+    id BIGSERIAL PRIMARY KEY,
+    year_name VARCHAR(50) UNIQUE NOT NULL,
+    is_current BOOLEAN DEFAULT FALSE
+);
+
+INSERT INTO academic_years (year_name, is_current)
+VALUES 
+('2024-2025', FALSE),
+('2025-2026', TRUE),
+('2026-2027', FALSE)
+ON CONFLICT (year_name) DO NOTHING;
+
+-- 1d. Semesters Table
+CREATE TABLE IF NOT EXISTS semesters (
+    id BIGSERIAL PRIMARY KEY,
+    academic_year_id BIGINT REFERENCES academic_years(id) ON DELETE CASCADE,
+    semester_number INT NOT NULL,
+    semester_type VARCHAR(20) NOT NULL, -- ODD / EVEN
+    is_active BOOLEAN DEFAULT FALSE
+);
+
+-- 1e. Divisions Table
+CREATE TABLE IF NOT EXISTS divisions (
+    id BIGSERIAL PRIMARY KEY,
+    department_id BIGINT REFERENCES departments(id) ON DELETE CASCADE,
+    academic_year_id BIGINT REFERENCES academic_years(id) ON DELETE CASCADE,
+    year_level VARCHAR(20) NOT NULL, -- FE, SE, TE, BE
+    name VARCHAR(20) NOT NULL
+);
+
+-- Seed Divisions for CSE Department (id: 1)
+INSERT INTO divisions (department_id, academic_year_id, year_level, name)
+VALUES
+(1, 2, 'SE', 'Div A'),
+(1, 2, 'SE', 'Div B'),
+(1, 2, 'TE', 'Div A'),
+(1, 2, 'TE', 'Div B'),
+(1, 2, 'BE', 'Div A'),
+(1, 2, 'BE', 'Div B')
+ON CONFLICT DO NOTHING;
+
+-- 1f. Batches Table
+CREATE TABLE IF NOT EXISTS batches (
+    id BIGSERIAL PRIMARY KEY,
+    division_id BIGINT REFERENCES divisions(id) ON DELETE CASCADE,
+    name VARCHAR(20) NOT NULL
+);
+
+-- Seed Batches for Division 1 & 2
+INSERT INTO batches (division_id, name)
+VALUES
+(1, 'Batch A1'),
+(1, 'Batch A2'),
+(1, 'Batch A3'),
+(2, 'Batch B1'),
+(2, 'Batch B2'),
+(2, 'Batch B3')
+ON CONFLICT DO NOTHING;
 
 -- 2. Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -309,6 +400,151 @@ CREATE TABLE IF NOT EXISTS notice_reads (
     read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 23. Student Enrollments Table (Historical Progression Preserved)
+CREATE TABLE IF NOT EXISTS student_enrollments (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    academic_year_id BIGINT REFERENCES academic_years(id),
+    department_id BIGINT REFERENCES departments(id),
+    program_id BIGINT REFERENCES programs(id),
+    year_level VARCHAR(20) NOT NULL, -- FE, SE, TE, BE
+    semester_id BIGINT REFERENCES semesters(id),
+    division_id BIGINT REFERENCES divisions(id),
+    batch_id BIGINT REFERENCES batches(id),
+    is_current BOOLEAN DEFAULT TRUE,
+    status VARCHAR(20) DEFAULT 'ENROLLED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 24. Student Academic Data Table (CGPA, 10th, 12th / Diploma for Placement Eligibility)
+CREATE TABLE IF NOT EXISTS student_academic_data (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT UNIQUE REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) UNIQUE NOT NULL,
+    cgpa NUMERIC(4, 2) DEFAULT 0.00,
+    tenth_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    twelfth_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    diploma_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    qualification_path VARCHAR(20) DEFAULT '12TH', -- '12TH' or 'DIPLOMA'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 25. Student Change Requests Table (Self-Service Verification Workflow)
+CREATE TABLE IF NOT EXISTS student_change_requests (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    old_value TEXT,
+    new_value TEXT NOT NULL,
+    reason TEXT,
+    status VARCHAR(30) DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
+    verified_by_user_id BIGINT REFERENCES users(id),
+    verified_at TIMESTAMP,
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 26. Faculty Batch Assignments Table (Faculty -> Batch -> Students)
+CREATE TABLE IF NOT EXISTS faculty_batch_assignments (
+    id BIGSERIAL PRIMARY KEY,
+    faculty_id BIGINT REFERENCES faculty(id) ON DELETE CASCADE,
+    batch_id BIGINT REFERENCES batches(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_faculty_batch UNIQUE(faculty_id, batch_id)
+);
+
+-- 27. Parent-Student Relationships Table (Security Boundary for Parent Data Access)
+CREATE TABLE IF NOT EXISTS parent_student_relationships (
+    id BIGSERIAL PRIMARY KEY,
+    parent_id BIGINT REFERENCES parents(id) ON DELETE CASCADE,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    relationship_type VARCHAR(50) DEFAULT 'Parent/Guardian',
+    status VARCHAR(20) DEFAULT 'VERIFIED', -- VERIFIED, PENDING, REJECTED
+    verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_parent_student UNIQUE(parent_id, student_id)
+);
+
+-- 28. Notification Targets Table (Targeting by College, Dept, Program, Year, Division, Batch, Individual)
+CREATE TABLE IF NOT EXISTS notification_targets (
+    id BIGSERIAL PRIMARY KEY,
+    notification_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    scope_type VARCHAR(50) NOT NULL, -- COLLEGE, DEPARTMENT, PROGRAM, YEAR, SEMESTER, DIVISION, BATCH, INDIVIDUAL
+    scope_id VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 29. Notification Recipients Table (Recipient Fan-Out & Read/Delivery State)
+CREATE TABLE IF NOT EXISTS notification_recipients (
+    id BIGSERIAL PRIMARY KEY,
+    notification_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    user_email VARCHAR(150),
+    delivery_status VARCHAR(30) DEFAULT 'DELIVERED', -- PENDING, DELIVERED, FAILED
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP,
+    delivered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_notification_recipient UNIQUE(notification_id, user_id)
+);
+
+-- 30. Placement Eligibility Rules Table
+CREATE TABLE IF NOT EXISTS placement_eligibility_rules (
+    id BIGSERIAL PRIMARY KEY,
+    placement_drive_id BIGINT REFERENCES placement_drives(id) ON DELETE CASCADE,
+    minimum_cgpa NUMERIC(4, 2) DEFAULT 6.00,
+    minimum_tenth_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    minimum_twelfth_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    minimum_diploma_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    allowed_departments VARCHAR(255) DEFAULT 'CSE,AIDS,MECH,CIVIL,ENTC,ELECTRICAL,MECHATRONICS',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 31. Placement Eligibility Results Table (Precomputed Student Eligibility Evaluation)
+CREATE TABLE IF NOT EXISTS placement_eligibility_results (
+    id BIGSERIAL PRIMARY KEY,
+    placement_drive_id BIGINT REFERENCES placement_drives(id) ON DELETE CASCADE,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    is_eligible BOOLEAN NOT NULL,
+    evaluation_reason TEXT,
+    evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_drive_student_eval UNIQUE(placement_drive_id, student_id)
+);
+
+-- 32. System Audit Logs Table (Accountability & Change Traceability)
+CREATE TABLE IF NOT EXISTS system_audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT,
+    user_email VARCHAR(150),
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100) NOT NULL,
+    entity_id VARCHAR(100),
+    old_value TEXT,
+    new_value TEXT,
+    result VARCHAR(50) DEFAULT 'SUCCESS',
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 33. Device Notice Deliveries Table (Per-Device Duplicate Prevention & Exactly-Once Delivery)
+CREATE TABLE IF NOT EXISTS device_notice_deliveries (
+    id BIGSERIAL PRIMARY KEY,
+    notice_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    device_endpoint VARCHAR(1000) NOT NULL,
+    user_email VARCHAR(150),
+    device_type VARCHAR(100) DEFAULT 'Web Browser',
+    delivery_status VARCHAR(30) DEFAULT 'DELIVERED', -- DELIVERED, SKIPPED_DUPLICATE, FAILED
+    idempotency_key VARCHAR(255),
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_notice_device_delivery UNIQUE(notice_id, device_endpoint)
+);
+
 -- Production Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
@@ -316,11 +552,20 @@ CREATE INDEX IF NOT EXISTS idx_notices_status_pub ON notices(status, published_a
 CREATE INDEX IF NOT EXISTS idx_students_email ON students(email);
 CREATE INDEX IF NOT EXISTS idx_students_roll ON students(roll_no);
 CREATE INDEX IF NOT EXISTS idx_students_prn ON students(prn);
-CREATE INDEX IF NOT EXISTS idx_faculty_email ON faculty(email);
+CREATE INDEX IF NOT EXISTS idx_faculty_email ON faculty(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_ts ON activity_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_questions_status_created ON questions(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notice_reads_notice_user ON notice_reads(notice_id, user_identifier);
 CREATE INDEX IF NOT EXISTS idx_placed_achievers_batch ON placed_students_achievements(batch_year, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_placement_drives_date ON placement_drives(drive_date);
-
-
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_prn ON student_enrollments(prn, is_current);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_batch ON student_enrollments(batch_id, is_current);
+CREATE INDEX IF NOT EXISTS idx_student_academic_prn ON student_academic_data(prn);
+CREATE INDEX IF NOT EXISTS idx_faculty_batch_fac ON faculty_batch_assignments(faculty_id);
+CREATE INDEX IF NOT EXISTS idx_parent_student_parent ON parent_student_relationships(parent_id);
+CREATE INDEX IF NOT EXISTS idx_notification_recip_user ON notification_recipients(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_placement_eval_drive ON placement_eligibility_results(placement_drive_id, is_eligible);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON system_audit_logs(entity_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_notice ON device_notice_deliveries(notice_id);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_endpoint ON device_notice_deliveries(device_endpoint);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_email ON device_notice_deliveries(user_email);

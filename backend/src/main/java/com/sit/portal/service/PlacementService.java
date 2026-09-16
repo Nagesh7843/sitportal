@@ -32,6 +32,12 @@ public class PlacementService {
     @Autowired
     private ActivityLogRepository activityLogRepository;
 
+    @Autowired
+    private NoticeRepository noticeRepository;
+
+    @Autowired
+    private com.sit.portal.repository.StudentRepository studentRepository;
+
     public Map<String, Object> getPlacementSummary() {
         Map<String, Object> response = new HashMap<>();
         List<PlacementStat> statsList = statRepository.findAll();
@@ -49,34 +55,21 @@ public class PlacementService {
     }
 
     public PlacementStat updateStats(PlacementStat stat) {
-        List<PlacementStat> statsList = statRepository.findAll();
-        PlacementStat target;
-        if (statsList.isEmpty()) {
-            target = stat;
-        } else {
-            target = statsList.get(0);
-            if (stat.getHighestPackage() != null) target.setHighestPackage(stat.getHighestPackage());
-            if (stat.getAveragePackage() != null) target.setAveragePackage(stat.getAveragePackage());
-            if (stat.getPlacementRatio() != null) target.setPlacementRatio(stat.getPlacementRatio());
-            if (stat.getTotalOffers() != null) target.setTotalOffers(stat.getTotalOffers());
-            if (stat.getBatchYear() != null) target.setBatchYear(stat.getBatchYear());
-            if (stat.getBannerImageUrl() != null) target.setBannerImageUrl(stat.getBannerImageUrl());
-            if (stat.getDescription() != null) target.setDescription(stat.getDescription());
+        List<PlacementStat> existing = statRepository.findAll();
+        if (!existing.isEmpty()) {
+            PlacementStat toUpdate = existing.get(0);
+            if (stat.getHighestPackage() != null) toUpdate.setHighestPackage(stat.getHighestPackage());
+            if (stat.getAveragePackage() != null) toUpdate.setAveragePackage(stat.getAveragePackage());
+            if (stat.getPlacementRatio() != null) toUpdate.setPlacementRatio(stat.getPlacementRatio());
+            if (stat.getTotalOffers() != null) toUpdate.setTotalOffers(stat.getTotalOffers());
+            if (stat.getBatchYear() != null) toUpdate.setBatchYear(stat.getBatchYear());
+            if (stat.getBannerImageUrl() != null) toUpdate.setBannerImageUrl(stat.getBannerImageUrl());
+            if (stat.getDescription() != null) toUpdate.setDescription(stat.getDescription());
+            toUpdate.setUpdatedAt(LocalDateTime.now());
+            return statRepository.save(toUpdate);
         }
-        target.setUpdatedAt(LocalDateTime.now());
-        PlacementStat saved = statRepository.save(target);
-
-        activityLogRepository.save(ActivityLog.builder()
-                .title("Placement Statistics Updated")
-                .subtitle("Batch " + (saved.getBatchYear() != null ? saved.getBatchYear() : "Latest") + " metrics & overview updated")
-                .icon("insights")
-                .colorBg("bg-blue-100")
-                .colorIcon("text-blue-700")
-                .type("PLACEMENT")
-                .createdAt(LocalDateTime.now())
-                .build());
-
-        return saved;
+        stat.setUpdatedAt(LocalDateTime.now());
+        return statRepository.save(stat);
     }
 
     public PlacementRecruiter addRecruiter(PlacementRecruiter recruiter) {
@@ -115,10 +108,48 @@ public class PlacementService {
         }
         PlacementDrive savedDrive = driveRepository.save(drive);
 
-        String title = "New Placement Drive: " + savedDrive.getCompanyName();
+        String title = "💼 Upcoming Placement Drive: " + savedDrive.getCompanyName();
         String message = "Placement drive for " + savedDrive.getRole() + (savedDrive.getPackageLpa() != null ? " (" + savedDrive.getPackageLpa() + ")" : "")
                 + " scheduled for " + (savedDrive.getDriveDate() != null ? savedDrive.getDriveDate() : "upcoming dates") + ".";
-        pushNotificationService.sendPushNotificationToAll(title, message);
+
+        // Create and save portal Notice in database
+        try {
+            Notice notice = Notice.builder()
+                    .title(title)
+                    .content(message + (savedDrive.getEligibility() != null ? "\n\nEligibility Criteria: " + savedDrive.getEligibility() : "") + (savedDrive.getLocation() != null ? "\nLocation: " + savedDrive.getLocation() : ""))
+                    .authorName("Training & Placement Cell")
+                    .authorRole("T&P Officer")
+                    .category("Placement")
+                    .priority("HIGH")
+                    .status("PUBLISHED")
+                    .publishedAt(LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a")))
+                    .build();
+            noticeRepository.save(notice);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to create notice for placement drive: " + e.getMessage());
+        }
+
+        // Targeted Push Notification to eligible departments and year students
+        try {
+            String allowedDepts = savedDrive.getAllowedDepartments();
+            String allowedYears = savedDrive.getAllowedAcademicYears();
+            List<String> targetEmails = new ArrayList<>();
+
+            List<com.sit.portal.entity.Student> allStudents = studentRepository.findAll();
+            for (com.sit.portal.entity.Student s : allStudents) {
+                boolean deptOk = allowedDepts == null || allowedDepts.isBlank() || allowedDepts.toUpperCase().contains(s.getDepartment() != null ? s.getDepartment().toUpperCase() : "");
+                boolean yearOk = allowedYears == null || allowedYears.isBlank() || allowedYears.toUpperCase().contains(s.getAcademicYear() != null ? s.getAcademicYear().toUpperCase() : "");
+                if (deptOk && yearOk && s.getEmail() != null) {
+                    targetEmails.add(s.getEmail().trim().toLowerCase());
+                }
+            }
+
+            if (!targetEmails.isEmpty()) {
+                pushNotificationService.sendPushNotificationToUsers(targetEmails, title, message);
+            } else {
+                pushNotificationService.sendPushNotificationToAll(title, message);
+            }
+        } catch (Exception ignored) {}
 
         activityLogRepository.save(ActivityLog.builder()
                 .title("New Placement Drive Scheduled")
@@ -140,6 +171,12 @@ public class PlacementService {
             if (updated.getPackageLpa() != null) existing.setPackageLpa(updated.getPackageLpa());
             if (updated.getDriveDate() != null) existing.setDriveDate(updated.getDriveDate());
             if (updated.getEligibility() != null) existing.setEligibility(updated.getEligibility());
+            if (updated.getMinimumCgpa() != null) existing.setMinimumCgpa(updated.getMinimumCgpa());
+            if (updated.getMinimumTenthPercentage() != null) existing.setMinimumTenthPercentage(updated.getMinimumTenthPercentage());
+            if (updated.getMinimumTwelfthPercentage() != null) existing.setMinimumTwelfthPercentage(updated.getMinimumTwelfthPercentage());
+            if (updated.getMinimumDiplomaPercentage() != null) existing.setMinimumDiplomaPercentage(updated.getMinimumDiplomaPercentage());
+            if (updated.getAllowedDepartments() != null) existing.setAllowedDepartments(updated.getAllowedDepartments());
+            if (updated.getAllowedAcademicYears() != null) existing.setAllowedAcademicYears(updated.getAllowedAcademicYears());
             if (updated.getLocation() != null) existing.setLocation(updated.getLocation());
             if (updated.getApplyDeadline() != null) existing.setApplyDeadline(updated.getApplyDeadline());
             if (updated.getStatus() != null) existing.setStatus(updated.getStatus());
@@ -200,6 +237,7 @@ public class PlacementService {
         String bannerImageUrl = (String) req.getOrDefault("bannerImageUrl", "");
         String batchYear = (String) req.getOrDefault("batchYear", "2025-2026");
         String companyLogoUrl = (String) req.getOrDefault("companyLogoUrl", "");
+        String congratulationsMessage = (String) req.getOrDefault("congratulationsMessage", "Heartiest congratulations to our talented student achievers!");
 
         List<Map<String, String>> students = (List<Map<String, String>>) req.getOrDefault("placedStudents", List.of());
         int count = students != null ? students.size() : 0;
@@ -231,6 +269,31 @@ public class PlacementService {
 
                 savedAchievers.add(achieverRepository.save(ach));
             }
+        }
+
+        // Save official Notice in database
+        String noticeTitle = "🎉 Placement Selection Announcement: " + companyName;
+        String noticeContent = (congratulationsMessage != null && !congratulationsMessage.isBlank() ? congratulationsMessage : "Heartiest congratulations to our talented student achievers!")
+                + "\n\nCompany: " + companyName
+                + "\nRole: " + role
+                + (packageLpa != null && !packageLpa.isBlank() ? "\nPackage Offered: " + packageLpa : "")
+                + "\nAcademic Batch: " + batchYear
+                + (count > 0 ? "\nTotal Students Selected: " + count : "");
+
+        try {
+            Notice notice = Notice.builder()
+                    .title(noticeTitle)
+                    .content(noticeContent)
+                    .authorName("Training & Placement Cell")
+                    .authorRole("T&P Officer")
+                    .category("Placement")
+                    .priority("HIGH")
+                    .status("PUBLISHED")
+                    .publishedAt(LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a")))
+                    .build();
+            noticeRepository.save(notice);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to create notice for placement announcement: " + e.getMessage());
         }
 
         String pushTitle = "🎉 Placement Notice: " + companyName;

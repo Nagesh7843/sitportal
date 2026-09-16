@@ -25,7 +25,8 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
   const [status, setStatus] = useState<NoticeStatus>('PUBLISHED');
   const [scheduledFor, setScheduledFor] = useState('');
   
-  // Target Audience State
+  // Target Audience & Department Scope State
+  const [targetDepartment, setTargetDepartment] = useState<string>('ALL');
   const [audienceType, setAudienceType] = useState<'GLOBAL' | 'YEARS' | 'INDIVIDUAL'>('GLOBAL');
   const [selectedYears, setSelectedYears] = useState<AcademicYear[]>([]);
   const [selectedStudentEmails, setSelectedStudentEmails] = useState<string[]>([]);
@@ -134,7 +135,9 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
 
     const expiresAt = calculateExpiresAt();
 
-    const targetAudience: any = {};
+    const targetAudience: any = {
+      department: targetDepartment
+    };
     if (audienceType === 'YEARS') {
       targetAudience.academicYear = selectedYears;
     } else if (audienceType === 'INDIVIDUAL') {
@@ -146,6 +149,7 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
       content: content.trim(),
       authorName: currentUserName,
       authorRole: currentUserRoleTitle,
+      department: targetDepartment,
       category,
       priority,
       status,
@@ -287,13 +291,31 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
           </div>
 
           {/* Target Audience Targeting Section */}
-          <div className="bg-[#e6f6ff] p-4 rounded-xl border border-[#c6c5d4] space-y-3">
-            <div className="flex justify-between items-center">
-              <h4 className="text-[12px] font-bold text-[#000666] uppercase tracking-wider flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px]">groups</span>
-                Target Audience
-              </h4>
-              <span className="text-[11px] text-[#454652]">Who should receive this notice</span>
+          <div className="bg-[#f3faff] p-4 rounded-xl border border-[#c6c5d4] space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="block text-[12px] font-bold text-[#454652] uppercase">
+                Target Audience & Department Scope
+              </label>
+              
+              {/* Department Target Scope Dropdown */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-600">Dept:</span>
+                <select
+                  value={targetDepartment}
+                  onChange={(e) => setTargetDepartment(e.target.value)}
+                  className="bg-white border border-[#c6c5d4] rounded-lg px-2.5 py-1 text-[11px] font-extrabold text-[#000666] outline-none"
+                >
+                  <option value="ALL">🏛️ All 8 Departments (Campus Wide)</option>
+                  <option value="CSE">💻 CSE - Computer Science</option>
+                  <option value="AIDS">🤖 AIDS - AI & Data Science</option>
+                  <option value="MECH">⚙️ MECH - Mechanical</option>
+                  <option value="CIVIL">🏗️ CIVIL - Civil Engg</option>
+                  <option value="ENTC">📡 ENTC - Electronics & TC</option>
+                  <option value="ELECTRICAL">⚡ ELECTRICAL - Electrical</option>
+                  <option value="MECHATRONICS">🦾 MECHATRONICS</option>
+                  <option value="BASIC_SCIENCES">🔬 BASIC SCIENCES</option>
+                </select>
+              </div>
             </div>
 
             {/* Audience Tabs */}
@@ -307,7 +329,7 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
                     : 'bg-white text-[#454652] border border-[#c6c5d4]'
                 }`}
               >
-                🌐 Global Notice (All Department)
+                🌐 Entire Department Scope
               </button>
               <button
                 type="button"
@@ -349,7 +371,7 @@ export const NoticePublishModal: React.FC<NoticePublishModalProps> = ({
                           : 'bg-[#f3faff] text-[#454652] border-[#c6c5d4]'
                       }`}
                     >
-                      {y} CSE
+                      {y} {targetDepartment === 'ALL' ? 'Students' : targetDepartment}
                     </button>
                   ))}
                 </div>

@@ -10,6 +10,9 @@ import java.util.List;
 @Repository
 public interface FacultyRepository extends JpaRepository<Faculty, Long> {
     Optional<Faculty> findByEmail(String email);
+    Optional<Faculty> findByUserId(Long userId);
+    List<Faculty> findByDepartment(String department);
+    List<Faculty> findByDepartmentIgnoreCase(String department);
 
     @org.springframework.data.jpa.repository.Query("SELECT f.email FROM Faculty f WHERE :hasIds = false OR f.id IN :ids")
     List<String> findEmailsByIds(@org.springframework.data.repository.query.Param("hasIds") boolean hasIds, @org.springframework.data.repository.query.Param("ids") List<Long> ids);

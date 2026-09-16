@@ -1,6 +1,10 @@
-import React from 'react';
-import { FacultyMember, NoticeItem, StudentRecord, UserProfile, ViewMode } from '@/types';
-import { Shield, Award, Users, Megaphone, FileText, Mail, ChevronRight, Activity, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { FacultyMember, NoticeItem, StudentRecord, UserProfile, ViewMode, WorkingBatchConfig } from '@/types';
+import { Shield, Award, Users, Megaphone, FileText, Mail, ChevronRight, Activity, Bell, FolderCheck, CheckCircle2, History, Sparkles } from 'lucide-react';
+import { FacultyBatchesView } from '@/features/faculty/FacultyBatchesView';
+import { ChangeRequestApprovalDesk } from '@/features/admin/ChangeRequestApprovalDesk';
+import { SystemAuditTrailView } from '@/features/admin/SystemAuditTrailView';
+import { PlacementEligibilityHubTab } from '@/features/placement';
 
 interface HodDashboardProps {
   currentProfile: UserProfile | null;
@@ -9,6 +13,8 @@ interface HodDashboardProps {
   studentsList: StudentRecord[];
   onNavigate: (view: ViewMode) => void;
   onOpenPublishNotice: () => void;
+  activeWorkingBatch?: WorkingBatchConfig | null;
+  onSaveDefaultBatch?: (batchConfig: WorkingBatchConfig) => Promise<void> | void;
 }
 
 export const HodDashboard: React.FC<HodDashboardProps> = ({
@@ -17,14 +23,83 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
   notices,
   studentsList,
   onNavigate,
-  onOpenPublishNotice
+  onOpenPublishNotice,
+  activeWorkingBatch,
+  onSaveDefaultBatch
 }) => {
-  const onCampusCount = facultyList.filter(f => f.status === 'ON CAMPUS').length;
-  const inLabCount = facultyList.filter(f => f.status === 'IN LAB').length;
-  const inMeetingCount = facultyList.filter(f => f.status === 'IN MEETING').length;
+  const [activeTab, setActiveTab] = useState<'overview' | 'batches' | 'change-requests' | 'placement' | 'audit'>('overview');
+  const userDept = currentProfile?.department || 'CSE';
+  const scopedFaculty = facultyList.filter(f => !f.department || f.department.toUpperCase() === userDept.toUpperCase());
+  const scopedStudents = studentsList.filter(s => !s.department || s.department.toUpperCase() === userDept.toUpperCase());
+  const scopedNotices = notices;
 
   return (
     <div className="space-y-6 font-sans text-slate-800">
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto custom-scrollbar touch-scroll max-w-full">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'overview' ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" />
+          <span>HOD Leadership Overview</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('batches')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'batches' ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <FolderCheck className="w-3.5 h-3.5" />
+          <span>Batch & Lab Supervision</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('change-requests')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'change-requests' ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Change Verification Desk</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('placement')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'placement' ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span>Placement Eligibility</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('audit')}
+          className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'audit' ? 'bg-[#000666] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>Activity Audit</span>
+        </button>
+      </div>
+
+      {activeTab === 'batches' && (
+        <FacultyBatchesView
+          facultyEmail={currentProfile?.email}
+          facultyDepartment={userDept}
+          isFacultyOnly={true}
+          onSendBatchNotice={() => onNavigate('notices')}
+          activeWorkingBatch={activeWorkingBatch}
+          onSaveDefaultBatch={onSaveDefaultBatch}
+        />
+      )}
+      {activeTab === 'change-requests' && <ChangeRequestApprovalDesk />}
+      {activeTab === 'placement' && <PlacementEligibilityHubTab onNavigateNotice={() => onNavigate('notices')} />}
+      {activeTab === 'audit' && <SystemAuditTrailView />}
+
+      {activeTab === 'overview' && (
+        <>
       
       {/* HOD Executive Header */}
       <section className="bg-gradient-to-r from-[#000666] via-[#1a237e] to-[#002171] text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
@@ -35,10 +110,10 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
               Department Leadership & Monitoring Hub
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Welcome, {currentProfile?.name || 'Dr. A. S. Poornima'} (HOD CSE)
+              Welcome, {currentProfile?.name || 'Dr. A. S. Poornima'} (HOD {userDept})
             </h1>
             <p className="text-cyan-100 text-xs sm:text-sm max-w-xl">
-              Computer Science & Engineering Department • Siddaganga Institute of Technology
+              {userDept === 'CSE' ? 'Computer Science & Engineering' : userDept} Department • Siddaganga Institute of Technology
             </p>
           </div>
 
@@ -70,11 +145,9 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">{facultyList.length || 42}</p>
+          <p className="text-2xl font-extrabold text-slate-900">{scopedFaculty.length}</p>
           <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
-            <span className="text-emerald-600 font-bold">{onCampusCount || 28} On Campus</span>
-            <span>•</span>
-            <span>{inLabCount || 8} In Lab</span>
+            <span className="text-indigo-600 font-bold">{scopedFaculty.length} Academic Faculty</span>
           </div>
         </div>
 
@@ -85,8 +158,8 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
               <Award className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">{studentsList.length || 1240}</p>
-          <p className="text-xs text-slate-500 mt-2">B.Tech Batches (2022 - 2026)</p>
+          <p className="text-2xl font-extrabold text-slate-900">{scopedStudents.length}</p>
+          <p className="text-xs text-slate-500 mt-2">B.Tech Batches ({userDept})</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow">
@@ -117,15 +190,15 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
       {/* Main Grid Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left 2 Cols: Live Faculty Presence Matrix */}
+        {/* Left 2 Cols: Faculty Directory Overview */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-600" />
-                Department Faculty Presence Matrix
+                Department Faculty Directory
               </h3>
-              <p className="text-xs text-slate-500">Live campus check-in and availability status</p>
+              <p className="text-xs text-slate-500">Faculty members, designations, and specializations</p>
             </div>
             <button
               onClick={() => onNavigate('faculty')}
@@ -148,13 +221,8 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
                   </div>
                 </div>
 
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase ${
-                  fac.status === 'ON CAMPUS' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-                  fac.status === 'IN LAB' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
-                  fac.status === 'IN MEETING' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-                  'bg-slate-200 text-slate-700'
-                }`}>
-                  {fac.status}
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {fac.department || 'CSE'}
                 </span>
               </div>
             ))}
@@ -201,6 +269,8 @@ export const HodDashboard: React.FC<HodDashboardProps> = ({
         </div>
 
       </div>
+        </>
+      )}
     </div>
   );
 };

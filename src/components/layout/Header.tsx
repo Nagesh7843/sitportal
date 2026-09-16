@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserProfile, ViewMode } from '@/types';
+import { UserProfile, ViewMode, WorkingBatchConfig } from '@/types';
 
 interface HeaderProps {
   currentProfile: UserProfile | null;
@@ -15,6 +15,7 @@ interface HeaderProps {
   unreadCount?: number;
   canGoBack?: boolean;
   onGoBack?: () => void;
+  activeWorkingBatch?: WorkingBatchConfig | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,7 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileSidebar,
   unreadCount = 0,
   canGoBack,
-  onGoBack
+  onGoBack,
+  activeWorkingBatch
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -187,52 +189,58 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Profile Dropdown Menu */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-[#c6c5d4] py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-4 py-3 border-b border-[#c6c5d4] bg-[#f3faff] rounded-t-2xl">
-                  <p className="text-[13px] font-bold text-[#071e27]">{currentProfile.name}</p>
-                  <p className="text-[11px] text-[#454652] truncate">{currentProfile.email}</p>
-                  <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#000666] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
-                    {currentProfile.role}
-                  </span>
-                </div>
+              <>
+                <div 
+                  onClick={() => setShowProfileMenu(false)}
+                  className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent"
+                />
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-[#c6c5d4] py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-4 py-3 border-b border-[#c6c5d4] bg-[#f3faff] rounded-t-2xl">
+                    <p className="text-[13px] font-bold text-[#071e27]">{currentProfile.name}</p>
+                    <p className="text-[11px] text-[#454652] truncate">{currentProfile.email}</p>
+                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#000666] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+                      {currentProfile.role}
+                    </span>
+                  </div>
 
-                <div className="py-1">
-                  {onOpenEditProfile && (
+                  <div className="py-1">
+                    {onOpenEditProfile && (
+                      <button
+                        onClick={() => {
+                          onOpenEditProfile();
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#f3faff] text-[13px] font-semibold text-[#071e27] transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-[#000666]">edit_square</span>
+                        <span>Edit My Profile</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
-                        onOpenEditProfile();
+                        onNavigate('settings');
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#f3faff] text-[13px] font-semibold text-[#071e27] transition-colors"
+                      className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#f3faff] text-[13px] font-semibold text-[#071e27] transition-colors cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[18px] text-[#000666]">edit_square</span>
-                      <span>Edit My Profile</span>
+                      <span className="material-symbols-outlined text-[18px] text-[#454652]">settings</span>
+                      <span>Account Settings</span>
                     </button>
-                  )}
 
-                  <button
-                    onClick={() => {
-                      onNavigate('settings');
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#f3faff] text-[13px] font-semibold text-[#071e27] transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-[#454652]">settings</span>
-                    <span>Account Settings</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowProfileMenu(false);
-                      onLogout();
-                    }}
-                    className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#ffdad6] text-[13px] font-bold text-[#ba1a1a] transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-[#ba1a1a]">logout</span>
-                    <span>Sign Out of Portal</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        onLogout();
+                      }}
+                      className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[#ffdad6] text-[13px] font-bold text-[#ba1a1a] transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-[#ba1a1a]">logout</span>
+                      <span>Sign Out of Portal</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}

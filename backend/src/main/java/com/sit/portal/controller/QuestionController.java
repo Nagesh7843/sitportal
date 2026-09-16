@@ -59,17 +59,38 @@ public class QuestionController {
     }
 
     @PostMapping("/{id}/upvote")
-    public ResponseEntity<?> upvoteQuestion(@PathVariable Long id) {
-        return questionService.upvoteQuestion(id)
+    public ResponseEntity<?> upvoteQuestion(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestParam(required = false) String userIdentifier,
+            Authentication authentication
+    ) {
+        String uid = null;
+        if (authentication != null && authentication.getName() != null) {
+            uid = authentication.getName();
+        } else if (body != null && body.get("userIdentifier") != null) {
+            uid = body.get("userIdentifier").toString();
+        } else if (userIdentifier != null && !userIdentifier.trim().isEmpty()) {
+            uid = userIdentifier;
+        }
+        return questionService.toggleUpvoteQuestion(id, uid)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    public ResponseEntity<?> upvoteQuestion(Long id) {
+        return upvoteQuestion(id, null, null, null);
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateQuestionStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> statusUpdate
+            @RequestBody Map<String, String> statusUpdate,
+            Authentication authentication
     ) {
+        if (authentication != null && !questionService.canUserUpdateStatus(authentication)) {
+            return ResponseEntity.status(403).body(Map.of("message", "Permission denied: Only faculty, HOD, and administrators can update question status. Question posters can only view the status."));
+        }
         String newStatus = statusUpdate.get("status");
         if (newStatus == null || newStatus.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Status is required."));
@@ -77,6 +98,10 @@ public class QuestionController {
         return questionService.updateQuestionStatus(id, newStatus)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    public ResponseEntity<?> updateQuestionStatus(Long id, Map<String, String> statusUpdate) {
+        return updateQuestionStatus(id, statusUpdate, null);
     }
 
     @DeleteMapping("/{id}")

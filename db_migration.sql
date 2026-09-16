@@ -306,19 +306,166 @@ CREATE TABLE IF NOT EXISTS notice_reads (
     read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- -----------------------------------------------------------------------------
+-- 23. STUDENT ENROLLMENTS & ACADEMIC DATA TABLES
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS student_enrollments (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    academic_year_id BIGINT,
+    department_id BIGINT,
+    program_id BIGINT,
+    year_level VARCHAR(20) NOT NULL, -- FE, SE, TE, BE
+    semester_id BIGINT,
+    division_id BIGINT,
+    batch_id BIGINT,
+    is_current BOOLEAN DEFAULT TRUE,
+    status VARCHAR(20) DEFAULT 'ENROLLED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS student_academic_data (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT UNIQUE REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) UNIQUE NOT NULL,
+    cgpa NUMERIC(4, 2) DEFAULT 0.00,
+    tenth_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    twelfth_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    diploma_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    qualification_path VARCHAR(20) DEFAULT '12TH',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS student_change_requests (
+    id BIGSERIAL PRIMARY KEY,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    old_value TEXT,
+    new_value TEXT NOT NULL,
+    reason TEXT,
+    status VARCHAR(30) DEFAULT 'PENDING',
+    verified_by_user_id BIGINT,
+    verified_at TIMESTAMP,
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- 24. FACULTY BATCH ASSIGNMENTS & PARENT RELATIONSHIPS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS faculty_batch_assignments (
+    id BIGSERIAL PRIMARY KEY,
+    faculty_id BIGINT REFERENCES faculty(id) ON DELETE CASCADE,
+    batch_id BIGINT,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS parent_student_relationships (
+    id BIGSERIAL PRIMARY KEY,
+    parent_id BIGINT REFERENCES parents(id) ON DELETE CASCADE,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    relationship_type VARCHAR(50) DEFAULT 'Parent/Guardian',
+    status VARCHAR(20) DEFAULT 'VERIFIED',
+    verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- 25. NOTIFICATION TARGETS & RECIPIENTS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notification_targets (
+    id BIGSERIAL PRIMARY KEY,
+    notification_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    scope_type VARCHAR(50) NOT NULL,
+    scope_id VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_recipients (
+    id BIGSERIAL PRIMARY KEY,
+    notification_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    user_email VARCHAR(150),
+    delivery_status VARCHAR(30) DEFAULT 'DELIVERED',
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP,
+    delivered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- 26. PLACEMENT ELIGIBILITY RULES & RESULTS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS placement_eligibility_rules (
+    id BIGSERIAL PRIMARY KEY,
+    placement_drive_id BIGINT REFERENCES placement_drives(id) ON DELETE CASCADE,
+    minimum_cgpa NUMERIC(4, 2) DEFAULT 6.00,
+    minimum_tenth_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    minimum_twelfth_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    minimum_diploma_percentage NUMERIC(5, 2) DEFAULT 60.00,
+    allowed_departments VARCHAR(255) DEFAULT 'CSE,AIDS,MECH,CIVIL,ENTC,ELECTRICAL,MECHATRONICS',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS placement_eligibility_results (
+    id BIGSERIAL PRIMARY KEY,
+    placement_drive_id BIGINT REFERENCES placement_drives(id) ON DELETE CASCADE,
+    student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    prn VARCHAR(50) NOT NULL,
+    is_eligible BOOLEAN NOT NULL,
+    evaluation_reason TEXT,
+    evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- 27. SYSTEM AUDIT LOGS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS system_audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT,
+    user_email VARCHAR(150),
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100) NOT NULL,
+    entity_id VARCHAR(100),
+    old_value TEXT,
+    new_value TEXT,
+    result VARCHAR(50) DEFAULT 'SUCCESS',
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- 28. DEVICE NOTICE DELIVERIES (PER-DEVICE EXACTLY-ONCE DEDUPLICATION)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS device_notice_deliveries (
+    id BIGSERIAL PRIMARY KEY,
+    notice_id BIGINT REFERENCES notices(id) ON DELETE CASCADE,
+    device_endpoint VARCHAR(1000) NOT NULL,
+    user_email VARCHAR(150),
+    device_type VARCHAR(100) DEFAULT 'Web Browser',
+    delivery_status VARCHAR(30) DEFAULT 'DELIVERED',
+    idempotency_key VARCHAR(255),
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_notice_device_delivery UNIQUE(notice_id, device_endpoint)
+);
+
 -- Production Performance Indexes
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_notices_status_pub ON notices(status, published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_students_email ON students(email);
-CREATE INDEX IF NOT EXISTS idx_students_roll ON students(roll_no);
-CREATE INDEX IF NOT EXISTS idx_students_prn ON students(prn);
-CREATE INDEX IF NOT EXISTS idx_faculty_email ON faculty(email);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_ts ON activity_logs(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_questions_status_created ON questions(status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_notice_reads_notice_user ON notice_reads(notice_id, user_identifier);
-CREATE INDEX IF NOT EXISTS idx_placed_achievers_batch ON placed_students_achievements(batch_year, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_placement_drives_date ON placement_drives(drive_date);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_prn ON student_enrollments(prn, is_current);
+CREATE INDEX IF NOT EXISTS idx_student_academic_prn ON student_academic_data(prn);
+CREATE INDEX IF NOT EXISTS idx_faculty_batch_fac ON faculty_batch_assignments(faculty_id);
+CREATE INDEX IF NOT EXISTS idx_parent_student_parent ON parent_student_relationships(parent_id);
+CREATE INDEX IF NOT EXISTS idx_notification_recip_user ON notification_recipients(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_placement_eval_drive ON placement_eligibility_results(placement_drive_id, is_eligible);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON system_audit_logs(entity_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_notice ON device_notice_deliveries(notice_id);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_endpoint ON device_notice_deliveries(device_endpoint);
+CREATE INDEX IF NOT EXISTS idx_device_deliveries_email ON device_notice_deliveries(user_email);
+
 
 
 

@@ -66,7 +66,15 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
     }
   };
 
-  const student = parentData?.linkedStudent;
+  const [selectedStudentPrn, setSelectedStudentPrn] = useState<string>('');
+
+  const allWards: any[] = parentData?.linkedStudents && parentData.linkedStudents.length > 0
+    ? parentData.linkedStudents
+    : (parentData?.linkedStudent ? [parentData.linkedStudent] : []);
+
+  const student = (selectedStudentPrn && allWards.find(s => s.prn === selectedStudentPrn || s.rollNo === selectedStudentPrn))
+    || allWards[0]
+    || parentData?.linkedStudent;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -104,6 +112,41 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
           </div>
         </div>
       </div>
+
+      {/* Multiple Children / Ward Switcher */}
+      {allWards.length > 1 && (
+        <div className="bg-white border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+              <span className="material-symbols-outlined text-[20px]">diversity_1</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-slate-900">Enrolled Children ({allWards.length} Wards)</h4>
+              <p className="text-[11px] text-slate-500">Switch child profile to view respective academic progress</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {allWards.map((w: any) => {
+              const isSelected = (student?.prn && w.prn === student.prn) || (student?.rollNo && w.rollNo === student.rollNo);
+              return (
+                <button
+                  key={w.prn || w.rollNo}
+                  type="button"
+                  onClick={() => setSelectedStudentPrn(w.prn || w.rollNo)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#00337c] text-white shadow-xs'
+                      : 'bg-slate-50 hover:bg-amber-50 text-slate-700 border border-slate-200'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px]">school</span>
+                  <span>{w.name} ({w.department || 'CSE'})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Linked Student Card */}
       <div className="bg-white rounded-2xl border border-[#d6d9e0] p-6 shadow-xs">

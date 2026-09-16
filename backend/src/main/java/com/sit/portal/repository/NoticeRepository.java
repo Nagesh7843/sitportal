@@ -1,6 +1,7 @@
 package com.sit.portal.repository;
 
 import com.sit.portal.entity.Notice;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,11 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
     
     @Query("SELECT n FROM Notice n ORDER BY n.id DESC")
     List<Notice> findAllPrioritizedAndLatest();
+
+    @Query("SELECT n FROM Notice n ORDER BY n.id DESC")
+    List<Notice> findTopNotices(Pageable pageable);
+
+    List<Notice> findTop15ByOrderByIdDesc();
 
     List<Notice> findByOrderByCreatedAtDesc();
 

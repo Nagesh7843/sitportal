@@ -119,8 +119,9 @@ export const CentralQuestionSystem: React.FC<CentralQuestionSystemProps> = ({
 
   const handleUpvote = async (id: number) => {
     try {
-      const updated = await apiService.upvoteQuestion(id);
-      setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, upvotes: updated.upvotes } : q)));
+      const userKey = currentProfile?.email || currentProfile?.name || 'anonymous_user';
+      const updated = await apiService.upvoteQuestion(id, userKey);
+      setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, upvotes: updated.upvotes, upvotedBy: updated.upvotedBy } : q)));
     } catch (err) {
       console.warn('Upvote error:', err);
     }
@@ -290,15 +291,25 @@ export const CentralQuestionSystem: React.FC<CentralQuestionSystemProps> = ({
                   <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line">{q.content}</p>
                 </div>
 
-                {/* Upvote Pill */}
-                <button
-                  onClick={() => handleUpvote(q.id)}
-                  className="flex flex-col items-center justify-center p-2 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-[#00337c] text-gray-600 border border-gray-200 transition-colors shrink-0"
-                  title="Upvote / Helpful"
-                >
-                  <span className="material-symbols-outlined text-[18px]">thumb_up</span>
-                  <span className="text-xs font-bold mt-0.5">{q.upvotes || 0}</span>
-                </button>
+                {/* Upvote Pill (1 like per user limit) */}
+                {(() => {
+                  const userKey = (currentProfile?.email || currentProfile?.name || 'anonymous_user').toLowerCase();
+                  const isUpvoted = q.upvotedBy && q.upvotedBy.map((u: string) => u.toLowerCase()).includes(userKey);
+                  return (
+                    <button
+                      onClick={() => handleUpvote(q.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all shrink-0 cursor-pointer ${
+                        isUpvoted
+                          ? 'bg-[#00337c] text-white border-[#00337c] shadow-xs'
+                          : 'bg-gray-50 hover:bg-blue-50 hover:text-[#00337c] text-gray-600 border-gray-200'
+                      }`}
+                      title={isUpvoted ? 'Remove your upvote (1 like per user)' : 'Upvote / Helpful (1 like per user)'}
+                    >
+                      <span className={`material-symbols-outlined text-[18px] ${isUpvoted ? 'font-fill text-white' : ''}`}>thumb_up</span>
+                      <span className="text-xs font-bold mt-0.5">{q.upvotes || 0}</span>
+                    </button>
+                  );
+                })()}
               </div>
 
               {/* Answers Section */}
@@ -341,17 +352,18 @@ export const CentralQuestionSystem: React.FC<CentralQuestionSystemProps> = ({
                         setActiveQuestionForAnswer(q);
                         setShowAnswerModal(true);
                       }}
-                      className="px-3 py-1.5 bg-[#00337c] text-white hover:bg-blue-900 font-semibold rounded-lg transition-colors inline-flex items-center gap-1"
+                      className="px-3 py-1.5 bg-[#00337c] text-white hover:bg-blue-900 font-semibold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">reply</span>
                       Post Official Answer
                     </button>
                   )}
 
-                  {(canAnswer || q.authorRole === userRole) && (
+                  {/* Only Admin, HOD, and Faculty can mark as resolved or reopen query; Question posters only view updated status */}
+                  {canAnswer && (
                     <button
                       onClick={() => handleToggleResolve(q.id, q.status)}
-                      className={`px-3 py-1.5 rounded-lg font-semibold transition-colors inline-flex items-center gap-1 text-[11px] ${
+                      className={`px-3 py-1.5 rounded-lg font-semibold transition-colors inline-flex items-center gap-1 text-[11px] cursor-pointer ${
                         q.status === 'RESOLVED'
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'

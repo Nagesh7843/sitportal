@@ -6,8 +6,11 @@ const getRawApiUrl = () => {
     const cleanUrl = envUrl.replace(/\/$/, '');
     return cleanUrl.endsWith('/api/v1') ? cleanUrl : `${cleanUrl}/api/v1`;
   }
-  if (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost:3000')) {
-    return `${window.location.origin}/api/v1`;
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return `http://${host}:8080/api/v1`;
+    }
   }
   return 'http://localhost:8080/api/v1';
 };
@@ -42,7 +45,19 @@ export const apiService = {
     return data;
   },
 
-  async registerUser(userData: { name: string; email: string; password: string; role: string; roleTitle: string; department?: string }) {
+  async registerUser(userData: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    roleTitle?: string;
+    department?: string;
+    qualification?: string;
+    specialization?: string;
+    teachingExperience?: string;
+    industrialExperience?: string;
+    securityCode?: string;
+  }) {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -57,6 +72,35 @@ export const apiService = {
       localStorage.setItem('sit_portal_jwt_token', data.token);
     }
     return data;
+  },
+
+  async checkParentStatus(email: string, prn?: string) {
+    const query = prn && prn.trim() 
+      ? `email=${encodeURIComponent(email.trim().toLowerCase())}&prn=${encodeURIComponent(prn.trim())}`
+      : `email=${encodeURIComponent(email.trim().toLowerCase())}`;
+    const response = await fetch(`${API_BASE_URL}/auth/parent/check-status?${query}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to check parent status');
+    }
+    return await response.json();
+  },
+
+  async setupParentPassword(data: { email: string; password: string; prn?: string; parentName?: string }) {
+    const response = await fetch(`${API_BASE_URL}/auth/parent/setup-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Parent password setup failed');
+    }
+    const resData = await response.json();
+    if (resData.token) {
+      localStorage.setItem('sit_portal_jwt_token', resData.token);
+    }
+    return resData;
   },
 
   async loginWithGoogle(email: string, idToken?: string) {
@@ -83,8 +127,9 @@ export const apiService = {
   },
 
   // Notice Endpoints (PostgreSQL sitportaldb)
-  async fetchNotices(): Promise<NoticeItem[]> {
-    const response = await fetch(`${API_BASE_URL}/notices`, { headers: getAuthHeaders() });
+  async fetchNotices(limit?: number): Promise<NoticeItem[]> {
+    const url = limit && limit > 0 ? `${API_BASE_URL}/notices?limit=${limit}` : `${API_BASE_URL}/notices`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch notices from database');
     return await response.json();
   },
@@ -165,8 +210,11 @@ export const apiService = {
   },
 
   // Student Endpoints (PostgreSQL sitportaldb)
-  async fetchStudents(): Promise<StudentRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/students`, { headers: getAuthHeaders() });
+  async fetchStudents(department?: string): Promise<StudentRecord[]> {
+    const url = department && department !== 'ALL'
+      ? `${API_BASE_URL}/students?department=${encodeURIComponent(department)}`
+      : `${API_BASE_URL}/students`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch students from database');
     return await response.json();
   },
@@ -216,8 +264,11 @@ export const apiService = {
   },
 
   // Faculty Endpoints (PostgreSQL sitportaldb)
-  async fetchFaculty(): Promise<FacultyMember[]> {
-    const response = await fetch(`${API_BASE_URL}/faculty`, { headers: getAuthHeaders() });
+  async fetchFaculty(department?: string): Promise<FacultyMember[]> {
+    const url = department && department !== 'ALL'
+      ? `${API_BASE_URL}/faculty?department=${encodeURIComponent(department)}`
+      : `${API_BASE_URL}/faculty`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch faculty from database');
     return await response.json();
   },
@@ -533,11 +584,13 @@ export const apiService = {
     return await response.json();
   },
 
-  async subscribeToWebPush(subscription: any): Promise<string> {
+  async subscribeToWebPush(subscription: any, userEmail?: string): Promise<string> {
+    const email = userEmail || localStorage.getItem('sit_portal_user_email') || '';
     const payload = {
       endpoint: subscription.endpoint,
       p256dh: subscription.keys ? subscription.keys.p256dh : '',
-      auth: subscription.keys ? subscription.keys.auth : ''
+      auth: subscription.keys ? subscription.keys.auth : '',
+      userEmail: email
     };
 
     const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
@@ -561,6 +614,47 @@ export const apiService = {
     return await response.text();
   },
 
+  async fetchRegisteredDevices(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/push/devices`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch registered devices');
+    return await response.json();
+  },
+
+  async previewTargetDevices(criteria?: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/push/preview-target-devices`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(criteria || {})
+    });
+    if (!response.ok) throw new Error('Failed to preview target devices');
+    return await response.json();
+  },
+
+  async sendNoticeToTargetDevices(data: {
+    noticeId?: number;
+    title?: string;
+    message?: string;
+    criteria: any;
+    idempotencyKey?: string;
+  }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/push/send-notice-criteria`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'Failed to dispatch notification to devices' }));
+      throw new Error(err.message || 'Failed to dispatch notification to devices');
+    }
+    return await response.json();
+  },
+
+  async fetchNoticeDeviceDeliveries(noticeId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/push/deliveries/${noticeId}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch notice delivery history');
+    return await response.json();
+  },
+
   // Real-time Analytics Statistics
   async fetchAnalyticsStats() {
     const response = await fetch(`${API_BASE_URL}/analytics/stats`, { headers: getAuthHeaders() });
@@ -575,17 +669,37 @@ export const apiService = {
     return await response.json();
   },
 
-  async fetchUserProfile() {
-    const response = await fetch(`${API_BASE_URL}/users/profile`, { headers: getAuthHeaders() });
+  async fetchUserProfile(email?: string) {
+    let lookupEmail = email;
+    if (!lookupEmail) {
+      const session = localStorage.getItem('sit_portal_auth_session');
+      if (session) {
+        try { lookupEmail = JSON.parse(session).email; } catch (e) {}
+      }
+    }
+    const url = lookupEmail
+      ? `${API_BASE_URL}/users/profile?email=${encodeURIComponent(lookupEmail)}`
+      : `${API_BASE_URL}/users/profile`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error('Failed to fetch user profile');
     return await response.json();
   },
 
   async updateUserProfile(profileData: Record<string, any>) {
-    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    let lookupEmail = profileData.email;
+    if (!lookupEmail) {
+      const session = localStorage.getItem('sit_portal_auth_session');
+      if (session) {
+        try { lookupEmail = JSON.parse(session).email; } catch (e) {}
+      }
+    }
+    const url = lookupEmail
+      ? `${API_BASE_URL}/users/profile?email=${encodeURIComponent(lookupEmail)}`
+      : `${API_BASE_URL}/users/profile`;
+    const response = await fetch(url, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify(profileData),
+      body: JSON.stringify({ ...profileData, email: lookupEmail }),
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -594,15 +708,48 @@ export const apiService = {
     return await response.json();
   },
 
-  async changePassword(passwords: { currentPassword: string; newPassword: string }) {
-    const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+  async changePassword(passwords: { currentPassword: string; newPassword: string; email?: string }) {
+    let lookupEmail = passwords.email;
+    if (!lookupEmail) {
+      const session = localStorage.getItem('sit_portal_auth_session');
+      if (session) {
+        try { lookupEmail = JSON.parse(session).email; } catch (e) {}
+      }
+    }
+    const url = lookupEmail
+      ? `${API_BASE_URL}/users/change-password?email=${encodeURIComponent(lookupEmail)}`
+      : `${API_BASE_URL}/users/change-password`;
+    const response = await fetch(url, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify(passwords),
+      body: JSON.stringify({ ...passwords, email: lookupEmail }),
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Failed to change password');
+    }
+    return await response.json();
+  },
+
+  async saveDefaultBatch(batchData: { academicYear: string; division: string; batchGroup: string; department?: string; email?: string }) {
+    let lookupEmail = batchData.email;
+    if (!lookupEmail) {
+      const session = localStorage.getItem('sit_portal_auth_session');
+      if (session) {
+        try { lookupEmail = JSON.parse(session).email; } catch (e) {}
+      }
+    }
+    const url = lookupEmail
+      ? `${API_BASE_URL}/users/default-batch?email=${encodeURIComponent(lookupEmail)}`
+      : `${API_BASE_URL}/users/default-batch`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ ...batchData, email: lookupEmail }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to save default working batch');
     }
     return await response.json();
   },
@@ -678,10 +825,16 @@ export const apiService = {
     return await response.json();
   },
 
-  async upvoteQuestion(id: number) {
+  async upvoteQuestion(id: number, userIdentifier?: string) {
+    const headers = getAuthHeaders();
+    const body = userIdentifier ? JSON.stringify({ userIdentifier }) : undefined;
+    if (body) {
+      headers['Content-Type'] = 'application/json';
+    }
     const response = await fetch(`${API_BASE_URL}/questions/${id}/upvote`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers,
+      body,
     });
     if (!response.ok) throw new Error('Failed to upvote question');
     return await response.json();
@@ -1021,6 +1174,318 @@ export const apiService = {
       body: JSON.stringify(settings)
     });
     if (!response.ok) throw new Error('Failed to update system settings in database');
+    return await response.json();
+  },
+
+  // Organization Hierarchy (All 8 Departments, Programs, Academic Years, Divisions, Batches)
+  async getHierarchyStats(): Promise<{ totalStudents: number; departments: any[] }> {
+    const response = await fetch(`${API_BASE_URL.replace('/v1', '')}/organization/hierarchy-stats`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch hierarchy stats');
+    return await response.json();
+  },
+
+  async getDepartments(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL.replace('/v1', '')}/organization/departments`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch departments');
+    return await response.json();
+  },
+
+  async getPrograms(departmentId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL.replace('/v1', '')}/organization/departments/${departmentId}/programs`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch programs');
+    return await response.json();
+  },
+
+  async getAcademicYears(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL.replace('/v1', '')}/organization/academic-years`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch academic years');
+    return await response.json();
+  },
+
+  async getDivisions(departmentId: number | string, yearLevel?: string): Promise<any[]> {
+    const url = yearLevel
+      ? `${API_BASE_URL.replace('/v1', '')}/organization/departments/${departmentId}/divisions?yearLevel=${encodeURIComponent(yearLevel)}`
+      : `${API_BASE_URL.replace('/v1', '')}/organization/departments/${departmentId}/divisions`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch divisions');
+    return await response.json();
+  },
+
+  async getBatches(divisionId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL.replace('/v1', '')}/organization/divisions/${divisionId}/batches`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch batches');
+    return await response.json();
+  },
+
+  async getProgramsByDepartment(departmentId: number | string): Promise<any[]> {
+    return this.getPrograms(departmentId);
+  },
+
+  async getDivisionsByDepartment(departmentId: number | string, yearLevel?: string): Promise<any[]> {
+    return this.getDivisions(departmentId, yearLevel);
+  },
+
+  async getBatchesByDivision(divisionId: number | string): Promise<any[]> {
+    return this.getBatches(divisionId);
+  },
+
+  // Student Enrollment Progression & Self-Service
+  async getStudentEnrollments(prn: string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(prn)}/enrollments`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch student enrollments');
+    return await response.json();
+  },
+
+  async addStudentEnrollment(prn: string, enrollment: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(prn)}/enrollments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(enrollment)
+    });
+    if (!response.ok) throw new Error('Failed to add student enrollment');
+    return await response.json();
+  },
+
+  async getStudentAcademicData(prn: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(prn)}/academic-data`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch academic data');
+    return await response.json();
+  },
+
+  async saveStudentAcademicData(prn: string, data: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(prn)}/academic-data`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to save academic data');
+    return await response.json();
+  },
+
+  async submitStudentChangeRequest(prn: string, request: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(prn)}/change-requests`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(request)
+    });
+    if (!response.ok) throw new Error('Failed to submit change request');
+    return await response.json();
+  },
+
+  async getStudentChangeRequests(prn?: string, status?: string): Promise<any[]> {
+    let url = `${API_BASE_URL}/students/change-requests`;
+    const params = new URLSearchParams();
+    if (prn) params.append('prn', prn);
+    if (status) params.append('status', status);
+    if (params.toString()) url += `?${params.toString()}`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch change requests');
+    return await response.json();
+  },
+
+  async verifyStudentChangeRequest(id: number | string, payload: { status: string; verifiedByUserId?: number; comments?: string }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/students/change-requests/${id}/verify`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Failed to verify change request');
+    return await response.json();
+  },
+
+  // Faculty Batch Monitoring
+  async getMyFacultyBatches(email?: string): Promise<any[]> {
+    const url = email ? `${API_BASE_URL}/faculty/me/batches?email=${encodeURIComponent(email)}` : `${API_BASE_URL}/faculty/me/batches`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch faculty assigned batches');
+    return await response.json();
+  },
+
+  async getFacultyBatches(facultyId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${facultyId}/batches`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch faculty batches');
+    return await response.json();
+  },
+
+  async assignFacultyBatch(facultyId: number | string, batchId: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${facultyId}/batches/${batchId}`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to assign batch to faculty');
+    return await response.json();
+  },
+
+  async removeFacultyBatch(facultyId: number | string, batchId: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/faculty/${facultyId}/batches/${batchId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to remove batch assignment');
+    return await response.json();
+  },
+
+  async getBatchStudents(batchId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/faculty/batches/${batchId}/students`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch students for batch');
+    return await response.json();
+  },
+
+  // Parent Verified Ward Data
+  async getParentRelationships(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/parents/me/relationships`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch parent relationships');
+    return await response.json();
+  },
+
+  async getVerifiedWardData(prn: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/parents/me/students/${encodeURIComponent(prn)}`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch verified ward information');
+    return await response.json();
+  },
+
+  // Placement Eligibility Engine
+  async evaluatePlacementEligibility(driveId: number | string, userId?: number): Promise<any[]> {
+    const url = userId
+      ? `${API_BASE_URL}/placements/drives/${driveId}/evaluate?userId=${userId}`
+      : `${API_BASE_URL}/placements/drives/${driveId}/evaluate`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to evaluate placement eligibility');
+    return await response.json();
+  },
+
+  async getEligibleStudentsForDrive(driveId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${driveId}/eligible-students`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch eligible students');
+    return await response.json();
+  },
+
+  async getPlacementEvaluationDetails(driveId: number | string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${driveId}/evaluation-details`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch placement evaluation details');
+    return await response.json();
+  },
+
+  async getPlacementEligibilityRule(driveId: number | string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${driveId}/eligibility-rule`, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch placement eligibility rule');
+    return await response.json();
+  },
+
+  async savePlacementEligibilityRule(driveId: number | string, rule: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/placements/drives/${driveId}/eligibility-rule`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(rule)
+    });
+    if (!response.ok) throw new Error('Failed to save placement eligibility rule');
+    return await response.json();
+  },
+
+  async evaluateEligibilityPreview(criteria: any): Promise<{
+    totalEvaluated: number;
+    eligibleCount: number;
+    ineligibleCount: number;
+    eligibilityPercentage: number;
+    eligibleStudents: any[];
+    ineligibleStudents: any[];
+    summaryText: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/placements/eligibility/evaluate-preview`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(criteria)
+    });
+    if (!response.ok) throw new Error('Failed to evaluate eligibility preview');
+    return await response.json();
+  },
+
+  async publishTargetedDriveNotification(driveId: number | string, userId?: number): Promise<{
+    status: string;
+    noticeId: number;
+    companyName: string;
+    role: string;
+    eligibleStudentsCount: number;
+    associatedParentsCount: number;
+    totalUsersNotified: number;
+    message: string;
+  }> {
+    const url = userId
+      ? `${API_BASE_URL}/placements/drives/${driveId}/publish-targeted-notification?userId=${userId}`
+      : `${API_BASE_URL}/placements/drives/${driveId}/publish-targeted-notification`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to publish targeted placement drive notifications');
+    return await response.json();
+  },
+
+  // Institutional Academic Year Transition Endpoints
+
+  async transitionStudent(data: {
+    prn: string;
+    targetAcademicYearId: number;
+    targetYearLevel: string;
+    targetDivisionId?: number;
+    targetBatchId?: number;
+  }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/organization/academic-years/transition`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to transition student to next term');
+    return await response.json();
+  },
+
+  async transitionCohort(data: {
+    prns: string[];
+    targetAcademicYearId: number;
+    targetYearLevel: string;
+    targetDivisionId?: number;
+    targetBatchId?: number;
+  }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/organization/academic-years/transition/cohort`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to transition student cohort');
+    return await response.json();
+  },
+
+  // Audit Logs
+  async fetchAuditLogs(entityType?: string): Promise<any[]> {
+    const url = entityType
+      ? `${API_BASE_URL.replace('/v1', '')}/audit-logs?entityType=${encodeURIComponent(entityType)}`
+      : `${API_BASE_URL.replace('/v1', '')}/audit-logs`;
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch audit logs');
+    return await response.json();
+  },
+
+  // Direct Student Device Push Notification
+  async sendDirectBatchNotification(data: {
+    title: string;
+    message: string;
+    department?: string;
+    yearLevel?: string;
+    division?: string;
+    batchCode?: string;
+    urgency?: string;
+    sendEmail?: boolean;
+    studentEmails?: string[];
+  }): Promise<{ status: string; targetStudentCount: number; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/notifications/send-direct-batch`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to send direct device notification');
     return await response.json();
   }
 };

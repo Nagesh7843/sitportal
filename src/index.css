@@ -75,3 +75,37 @@
   animation-play-state: paused;
 }
 
+/* Mobile & Touch Responsive Enhancements */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Ensure mobile tables scroll horizontally smoothly */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari Input auto-zoom fix for small font sizes on mobile */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+

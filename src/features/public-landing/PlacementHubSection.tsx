@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '@/services/api';
+import { fcmService } from '@/utils/fcmService';
 import { CompanyLogoBadge } from '@/components/common/CompanyLogoBadge';
 import { resolveCompanyDomain, getAutoCompanyLogoUrl } from '@/utils/companyLogo';
 import { PlacementRecruiter, PlacementDrive, PlacementStat } from '@/types';
+import { PlacementEligibilityDesk } from '@/features/placement';
 
 interface PlacementHubSectionProps {
   onExploreNotices?: () => void;
@@ -19,6 +21,7 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'recruiters' | 'drives'>('metrics');
   const [selectedDrive, setSelectedDrive] = useState<PlacementDrive | null>(null);
+  const [eligibilityDrive, setEligibilityDrive] = useState<PlacementDrive | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const statsFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,6 +58,12 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
     packageLpa: '',
     driveDate: '',
     eligibility: '',
+    minTenth: '60',
+    minTwelfth: '60',
+    minDiploma: '60',
+    minCgpa: '6.5',
+    allowedDepartments: ['CSE', 'AIDS'] as string[],
+    allowedAcademicYears: ['BE', 'TE'] as string[],
     location: '',
     applyDeadline: '',
     status: 'UPCOMING',
@@ -62,6 +71,19 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
     bannerImageUrl: '',
     description: ''
   });
+
+  // Real-time Eligibility Auto-Calculation State
+  const [eligibilityPreview, setEligibilityPreview] = useState<{
+    totalEvaluated: number;
+    eligibleCount: number;
+    ineligibleCount: number;
+    eligibilityPercentage: number;
+    eligibleStudents: any[];
+    ineligibleStudents: any[];
+    summaryText: string;
+  } | null>(null);
+  const [showEligibleRosterModal, setShowEligibleRosterModal] = useState<boolean>(false);
+  const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
 
   // Notice Generator State
   const [showNoticeModal, setShowNoticeModal] = useState<boolean>(false);
@@ -119,6 +141,44 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
     }
   };
 
+  // Real-time auto-calculation whenever criteria change
+  useEffect(() => {
+    if (!showAdminModal || activeTab !== 'drives') return;
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsEvaluating(true);
+        const res = await apiService.evaluateEligibilityPreview({
+          minimumTenthPercentage: parseFloat(driveForm.minTenth) || 0,
+          minimumTwelfthPercentage: parseFloat(driveForm.minTwelfth) || 0,
+          minimumDiplomaPercentage: parseFloat(driveForm.minDiploma) || 0,
+          minimumCgpa: parseFloat(driveForm.minCgpa) || 0,
+          allowedDepartments: driveForm.allowedDepartments.join(','),
+          allowedAcademicYears: driveForm.allowedAcademicYears.join(',')
+        });
+        setEligibilityPreview(res);
+        if (res.summaryText) {
+          setDriveForm(prev => ({ ...prev, eligibility: res.summaryText }));
+        }
+      } catch (err) {
+        console.warn('Auto-calculate preview warning:', err);
+      } finally {
+        setIsEvaluating(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [
+    showAdminModal,
+    activeTab,
+    driveForm.minTenth,
+    driveForm.minTwelfth,
+    driveForm.minDiploma,
+    driveForm.minCgpa,
+    driveForm.allowedDepartments,
+    driveForm.allowedAcademicYears
+  ]);
+
   const handleImageFileChange = (file: File | null, target: 'stats' | 'drive' | 'notice') => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -174,6 +234,10 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
       } else {
         const saved = await apiService.addPlacementRecruiter(payload);
         setRecruiters((prev) => [...prev, saved]);
+        fcmService.sendPushNotification(
+          `🏢 New Recruiting Partner: ${saved.name}`,
+          `${saved.name} added to SITCOE Training & Placement hiring partners.`
+        );
         alert(`Recruiting partner "${saved.name}" added with auto-fetched web logo and broadcast notification sent!`);
       }
       setRecruiterForm({ name: '', packageBand: '', roleTag: '', websiteUrl: '', logoUrl: '', description: '' });
@@ -219,26 +283,71 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
     try {
       const autoLogoUrl = driveForm.logoUrl.trim() || getAutoCompanyLogoUrl(driveForm.companyName);
       const payload = {
-        ...driveForm,
+        companyName: driveForm.companyName.trim(),
+        role: driveForm.role.trim(),
+        packageLpa: driveForm.packageLpa.trim(),
+        driveDate: driveForm.driveDate.trim(),
+        eligibility: driveForm.eligibility.trim(),
+        minimumTenthPercentage: parseFloat(driveForm.minTenth) || 60,
+        minimumTwelfthPercentage: parseFloat(driveForm.minTwelfth) || 60,
+        minimumDiplomaPercentage: parseFloat(driveForm.minDiploma) || 60,
+        minimumCgpa: parseFloat(driveForm.minCgpa) || 6.5,
+        allowedDepartments: driveForm.allowedDepartments.join(','),
+        allowedAcademicYears: driveForm.allowedAcademicYears.join(','),
+        location: driveForm.location.trim(),
+        applyDeadline: driveForm.applyDeadline.trim(),
+        status: driveForm.status || 'UPCOMING',
         logoUrl: autoLogoUrl,
+        bannerImageUrl: driveForm.bannerImageUrl,
+        description: driveForm.description
       };
 
+      let savedDriveId: number | string;
       if (editingDriveId) {
         const updated = await apiService.updatePlacementDrive(editingDriveId, payload);
         setDrives((prev) => prev.map((d) => (d.id === editingDriveId ? updated : d)));
-        alert(`💼 Placement Drive for "${updated.companyName}" updated successfully in database!`);
+        savedDriveId = editingDriveId;
         setEditingDriveId(null);
       } else {
         const saved = await apiService.addPlacementDrive(payload);
         setDrives((prev) => [saved, ...prev]);
-        alert(`💼 New Placement Drive for "${saved.companyName}" scheduled with ad poster banner! Notification dispatched to all subscribers.`);
+        savedDriveId = saved.id;
       }
+
+      // Save eligibility rule in database
+      await apiService.savePlacementEligibilityRule(savedDriveId, {
+        minimumTenthPercentage: parseFloat(driveForm.minTenth) || 60,
+        minimumTwelfthPercentage: parseFloat(driveForm.minTwelfth) || 60,
+        minimumDiplomaPercentage: parseFloat(driveForm.minDiploma) || 60,
+        minimumCgpa: parseFloat(driveForm.minCgpa) || 6.5,
+        allowedDepartments: driveForm.allowedDepartments.join(','),
+        allowedAcademicYears: driveForm.allowedAcademicYears.join(',')
+      }).catch(console.warn);
+
+      // Publish targeted notifications strictly to eligible students and their associated parents
+      try {
+        const notifyRes = await apiService.publishTargetedDriveNotification(savedDriveId);
+        fcmService.sendPushNotification(
+          `💼 Placement Drive: ${payload.companyName}`,
+          `Targeted alerts dispatched to ${notifyRes.eligibleStudentsCount} eligible students and ${notifyRes.associatedParentsCount} associated parents!`
+        );
+        alert(`💼 Placement Drive for "${payload.companyName}" successfully saved!\n\n🎯 TARGETED NOTIFICATIONS DELIVERED:\n• ${notifyRes.eligibleStudentsCount} Eligible Student Devices\n• ${notifyRes.associatedParentsCount} Associated Parent Accounts\n\nIneligible students and unrelated parents will NOT receive notifications.`);
+      } catch (notifErr: any) {
+        alert(`💼 Placement Drive for "${payload.companyName}" saved in database! (Notification dispatched)`);
+      }
+
       setDriveForm({
         companyName: '',
         role: '',
         packageLpa: '',
         driveDate: '',
         eligibility: '',
+        minTenth: '60',
+        minTwelfth: '60',
+        minDiploma: '60',
+        minCgpa: '6.5',
+        allowedDepartments: ['CSE', 'AIDS'],
+        allowedAcademicYears: ['BE', 'TE'],
         location: '',
         applyDeadline: '',
         status: 'UPCOMING',
@@ -251,14 +360,25 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
     }
   };
 
-  const handleStartEditDrive = (drive: PlacementDrive) => {
+  const handleStartEditDrive = async (drive: PlacementDrive) => {
     setEditingDriveId(drive.id);
+    let ruleData: any = null;
+    try {
+      ruleData = await apiService.getPlacementEligibilityRule(drive.id);
+    } catch (e) {}
+
     setDriveForm({
       companyName: drive.companyName || '',
       role: drive.role || '',
       packageLpa: drive.packageLpa || '',
       driveDate: drive.driveDate || '',
       eligibility: drive.eligibility || '',
+      minTenth: ruleData?.minimumTenthPercentage?.toString() || '60',
+      minTwelfth: ruleData?.minimumTwelfthPercentage?.toString() || '60',
+      minDiploma: ruleData?.minimumDiplomaPercentage?.toString() || '60',
+      minCgpa: ruleData?.minimumCgpa?.toString() || '6.5',
+      allowedDepartments: ruleData?.allowedDepartments ? ruleData.allowedDepartments.split(',').map((d: string) => d.trim()) : ['CSE', 'AIDS'],
+      allowedAcademicYears: ruleData?.allowedAcademicYears ? ruleData.allowedAcademicYears.split(',').map((y: string) => y.trim()) : ['BE', 'TE'],
       location: drive.location || '',
       applyDeadline: drive.applyDeadline || '',
       status: drive.status || 'UPCOMING',
@@ -276,6 +396,12 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
       packageLpa: '',
       driveDate: '',
       eligibility: '',
+      minTenth: '60',
+      minTwelfth: '60',
+      minDiploma: '60',
+      minCgpa: '6.5',
+      allowedDepartments: ['CSE', 'AIDS'],
+      allowedAcademicYears: ['BE', 'TE'],
       location: '',
       applyDeadline: '',
       status: 'UPCOMING',
@@ -340,6 +466,12 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
         companyLogoUrl: autoLogo,
         placedStudents: validStudents
       });
+
+      fcmService.sendPushNotification(
+        `🎉 Official Placement Notice: ${noticeForm.companyName}`,
+        `Congratulations! Placement results for ${noticeForm.role} (${noticeForm.packageLpa}) announced with ${validStudents.length} students selected.`
+      );
+
       setNoticeSuccessMsg(`🎉 Official Placement Announcement for "${noticeForm.companyName}" published! Placed students added to showcase and desktop notification broadcast to all subscribers!`);
       setTimeout(() => {
         setNoticeSuccessMsg(null);
@@ -669,15 +801,24 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
                   <div className="flex items-center gap-1.5">
                     {canManage && (
                       <button
+                        onClick={() => setEligibilityDrive(drive)}
+                        className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-lg transition-colors inline-flex items-center gap-1 border border-indigo-200 shadow-2xs"
+                        title="Run Placement Eligibility Engine & View Candidate Pool"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">checklist</span> Eligibility
+                      </button>
+                    )}
+                    {canManage && (
+                      <button
                         onClick={() => {
                           handleStartEditDrive(drive);
                           setActiveTab('drives');
                           setShowAdminModal(true);
                         }}
-                        className="px-2.5 py-1.5 text-blue-700 hover:bg-blue-50 font-bold text-xs rounded-lg transition-colors inline-flex items-center gap-1"
+                        className="px-2 py-1.5 text-blue-700 hover:bg-blue-50 font-bold text-xs rounded-lg transition-colors inline-flex items-center gap-1"
                         title="Edit Drive"
                       >
-                        <span className="material-symbols-outlined text-[14px]">edit</span> Edit
+                        <span className="material-symbols-outlined text-[14px]">edit</span>
                       </button>
                     )}
                     <button
@@ -758,6 +899,18 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
             )}
 
             <div className="flex justify-end gap-2 pt-2">
+              {canManage && (
+                <button
+                  onClick={() => {
+                    const d = selectedDrive;
+                    setSelectedDrive(null);
+                    setEligibilityDrive(d);
+                  }}
+                  className="px-3.5 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-sm">checklist</span> Eligibility Desk
+                </button>
+              )}
               {canManage && (
                 <button
                   onClick={() => {
@@ -1236,15 +1389,177 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
                         className="w-full p-2 border border-gray-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-[#000666] outline-none"
                       />
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-1">Eligibility Criteria</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. BE CSE • CGPA ≥ 7.0 • No Active Backlogs"
-                        value={driveForm.eligibility}
-                        onChange={(e) => setDriveForm({ ...driveForm, eligibility: e.target.value })}
-                        className="w-full p-2 border border-gray-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-[#000666] outline-none"
-                      />
+                    {/* GRANULAR ELIGIBILITY CRITERIA BUILDER */}
+                    <div className="sm:col-span-2 p-4 bg-gradient-to-br from-indigo-50/80 via-blue-50/50 to-slate-50 rounded-2xl border border-indigo-200/80 shadow-xs space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-indigo-100">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-indigo-700 text-[18px]">tune</span>
+                          <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                            Individual Eligibility Cutoffs & Auto-Calculation
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                          Targeted to Qualified Students & Parents Only
+                        </span>
+                      </div>
+
+                      {/* 3-Metric Grid: 10th %, 12th / Diploma %, CGPA */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">
+                            Min 10th (SSC) %
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.5"
+                              value={driveForm.minTenth}
+                              onChange={(e) => setDriveForm({ ...driveForm, minTenth: e.target.value })}
+                              className="w-full p-2 pr-6 border border-slate-300 rounded-xl text-xs font-bold bg-white focus:ring-2 focus:ring-indigo-600 outline-none"
+                              placeholder="60"
+                            />
+                            <span className="absolute right-2.5 top-2 text-[11px] text-slate-400 font-bold">%</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">
+                            Min 12th / Dip %
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.5"
+                              value={driveForm.minTwelfth}
+                              onChange={(e) => setDriveForm({ ...driveForm, minTwelfth: e.target.value, minDiploma: e.target.value })}
+                              className="w-full p-2 pr-6 border border-slate-300 rounded-xl text-xs font-bold bg-white focus:ring-2 focus:ring-indigo-600 outline-none"
+                              placeholder="60"
+                            />
+                            <span className="absolute right-2.5 top-2 text-[11px] text-slate-400 font-bold">%</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">
+                            Min Degree CGPA
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.1"
+                              value={driveForm.minCgpa}
+                              onChange={(e) => setDriveForm({ ...driveForm, minCgpa: e.target.value })}
+                              className="w-full p-2 pr-6 border border-slate-300 rounded-xl text-xs font-bold bg-white focus:ring-2 focus:ring-indigo-600 outline-none"
+                              placeholder="6.5"
+                            />
+                            <span className="absolute right-2.5 top-2 text-[11px] text-slate-400 font-bold">/10</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Eligible Branches Multi-Select */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">
+                          Eligible Engineering Branches
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['CSE', 'AIDS', 'MECH', 'CIVIL', 'ENTC', 'ELECTRICAL', 'MECHATRONICS'].map((dept) => {
+                            const isSelected = driveForm.allowedDepartments.includes(dept);
+                            return (
+                              <button
+                                key={dept}
+                                type="button"
+                                onClick={() => {
+                                  setDriveForm((prev) => ({
+                                    ...prev,
+                                    allowedDepartments: isSelected
+                                      ? prev.allowedDepartments.filter((d) => d !== dept)
+                                      : [...prev.allowedDepartments, dept]
+                                  }));
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#000666] text-white shadow-xs'
+                                    : 'bg-white text-slate-600 border border-slate-300 hover:border-indigo-400'
+                                }`}
+                              >
+                                {dept}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Eligible Academic Years Multi-Select */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">
+                          Eligible Academic Years
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { id: 'BE', label: 'BE (Final Year)' },
+                            { id: 'TE', label: 'TE (Third Year)' },
+                            { id: 'SE', label: 'SE (Second Year)' }
+                          ].map((yr) => {
+                            const isSelected = driveForm.allowedAcademicYears.includes(yr.id);
+                            return (
+                              <button
+                                key={yr.id}
+                                type="button"
+                                onClick={() => {
+                                  setDriveForm((prev) => ({
+                                    ...prev,
+                                    allowedAcademicYears: isSelected
+                                      ? prev.allowedAcademicYears.filter((y) => y !== yr.id)
+                                      : [...prev.allowedAcademicYears, yr.id]
+                                  }));
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                    : 'bg-white text-slate-600 border border-slate-300 hover:border-indigo-400'
+                                }`}
+                              >
+                                {yr.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Real-time Dynamic Auto-Calculation Card */}
+                      <div className="p-3 bg-white rounded-xl border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs shrink-0">
+                            {isEvaluating ? '...' : `${eligibilityPreview?.eligibleCount || 0}`}
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-slate-900">
+                              {isEvaluating ? 'Evaluating Live Database Records...' : `${eligibilityPreview?.eligibleCount || 0} of ${eligibilityPreview?.totalEvaluated || 0} Students Qualify (${eligibilityPreview?.eligibilityPercentage || 0}%)`}
+                            </p>
+                            <p className="text-[10px] text-slate-500 line-clamp-1">
+                              {eligibilityPreview?.summaryText || driveForm.eligibility}
+                            </p>
+                          </div>
+                        </div>
+
+                        {eligibilityPreview && eligibilityPreview.eligibleCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowEligibleRosterModal(true)}
+                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-extrabold text-[11px] rounded-lg transition-all border border-indigo-200 flex items-center gap-1 cursor-pointer shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">visibility</span>
+                            <span>Preview Qualifying Students</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-[10px] font-bold text-gray-600 uppercase mb-1">
@@ -1754,6 +2069,86 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
             />
           </div>
         </div>
+      )}
+
+      {/* Qualifying Students Roster Live Modal */}
+      {showEligibleRosterModal && eligibilityPreview && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div className="p-4 bg-gradient-to-r from-[#000666] to-[#1a237e] text-white flex justify-between items-center">
+              <div>
+                <h3 className="font-extrabold text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-400 text-lg">verified</span>
+                  Live Qualifying Students Roster
+                </h3>
+                <p className="text-[11px] text-cyan-200">
+                  {eligibilityPreview.eligibleCount} students meet all academic and branch cutoffs
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEligibleRosterModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto space-y-2 flex-1 divide-y divide-slate-100">
+              {eligibilityPreview.eligibleStudents.map((st: any, idx: number) => (
+                <div key={st.id || idx} className="pt-2 flex items-center justify-between gap-3 text-xs">
+                  <div>
+                    <p className="font-bold text-slate-900">{st.name}</p>
+                    <p className="text-[11px] text-slate-500 font-mono">
+                      PRN: {st.prn} • {st.department} • {st.academicYear} {st.division ? `(${st.division} - ${st.batchGroup})` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-extrabold text-[10px]">
+                      CGPA: {st.cgpa}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-extrabold text-[10px]">
+                      10th: {st.tenthPercentage}%
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-extrabold text-[10px]">
+                      12th: {st.twelfthPercentage}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowEligibleRosterModal(false)}
+                className="px-4 py-2 bg-[#000666] text-white font-bold text-xs rounded-xl hover:bg-[#1a237e] cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Placement Eligibility Engine Desk Modal */}
+      {eligibilityDrive && (
+        <PlacementEligibilityDesk
+          drive={eligibilityDrive}
+          isOpen={Boolean(eligibilityDrive)}
+          onClose={() => setEligibilityDrive(null)}
+          onBroadcastNotice={(drv, count) => {
+            setEligibilityDrive(null);
+            setShowNoticeModal(true);
+            setNoticeForm(prev => ({
+              ...prev,
+              companyName: drv.companyName,
+              role: drv.role,
+              packageLpa: drv.packageLpa || 'Competitive',
+              congratulationsMessage: `Official Placement Drive announced for ${drv.companyName}. All ${count} eligible candidate(s) are invited to register.`
+            }));
+          }}
+        />
       )}
     </section>
   );

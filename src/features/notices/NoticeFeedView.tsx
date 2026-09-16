@@ -306,7 +306,7 @@ export const NoticeFeedView: React.FC<NoticeFeedViewProps> = ({
             Institutional Notice Feed ({filteredNotices.length} Circulars)
           </h3>
           <span className="text-[11px] font-bold text-gray-500">
-            Real-Time Auto-Synchronized Feed
+            Latest updates
           </span>
         </div>
 

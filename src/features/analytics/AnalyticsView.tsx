@@ -65,7 +65,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ notices, students,
             Communication & System Analytics
           </h1>
           <p className="text-[#cfe6f2] text-[13px] mt-1">
-            Real-time PostgreSQL tracking records, delivery audits, student read rates, and category statistics.
+            View delivery records, read rates, and category statistics.
           </p>
         </div>
 

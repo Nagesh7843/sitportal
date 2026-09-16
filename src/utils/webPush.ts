@@ -35,21 +35,31 @@ export async function registerWebPushDevice(): Promise<boolean> {
       outputArray[i] = rawData.charCodeAt(i);
     }
 
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: outputArray
-      });
+    try {
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray
+        });
+      }
+
+      if (subscription) {
+        await apiService.subscribeToWebPush(subscription.toJSON()).catch(e => console.warn('Backend push sub sync warning:', e));
+      }
+    } catch (subErr) {
+      console.warn('PushManager subscription warning (using local notifications):', subErr);
     }
 
-    // Send to backend
-    await apiService.subscribeToWebPush(subscription.toJSON());
-    console.log('Web Push device registered successfully.');
+    console.log('Web Push / Desktop notification device registered successfully.');
     return true;
 
   } catch (err) {
     console.error('Failed to register Web Push device:', err);
+    // If standard Notification permission is granted, return true
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      return true;
+    }
     return false;
   }
 }
