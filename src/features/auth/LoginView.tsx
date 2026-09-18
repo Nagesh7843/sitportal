@@ -279,18 +279,49 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           return;
         }
 
-        // 1. Register User in Database
-        const dbUser = await apiService.registerUser({
+        // 1. Register User & Student Record directly in Database with full Address & Academic details
+        const parsedCgpa = Math.min(10.0, Math.max(0, parseFloat(cgpa) || 8.0));
+        const studentPayload = {
           name: fullName.trim(),
           email: email.trim().toLowerCase(),
           password: regPassword.trim(),
           role: 'student',
           roleTitle: `${department} B.Tech Student`,
-          department: department
-        });
+          department: department,
+          rollNo: rollNo.trim(),
+          prn: prn.trim(),
+          academicYear: academicYear,
+          division: division,
+          batchGroup: batchGroup,
+          cohortBatch: '2024-2028',
+          gpa: parsedCgpa,
+          attendance: 90,
+          parentName: parentName.trim(),
+          parentEmail: parentEmail.trim().toLowerCase(),
+          parentPhone: parentPhone.trim(),
+          parentRelationship: parentRelationship,
+          addressLine1: addressLine1.trim(),
+          addressLine2: addressLine2.trim() || undefined,
+          villageCity: villageCity.trim(),
+          taluka: taluka.trim(),
+          district: district.trim(),
+          state: state.trim() || 'Maharashtra',
+          pinCode: pinCode.trim(),
+          country: country.trim() || 'India',
+          qualificationPath: qualificationPath,
+          tenthPercentage: parseFloat(tenthPercentage) || 0,
+          twelfthPercentage: qualificationPath === '12TH' ? parseFloat(twelfthPercentage) || 0 : 0,
+          diplomaPercentage: qualificationPath === 'DIPLOMA' ? parseFloat(diplomaPercentage) || 0 : 0
+        };
 
-        // 2. Add Student Record in Database
-        const parsedCgpa = Math.min(10.0, Math.max(0, parseFloat(cgpa) || 8.0));
+        const dbUser = await apiService.registerUser(studentPayload);
+
+        // Ensure token is persisted to localStorage for immediate authenticated requests
+        if (dbUser.token) {
+          localStorage.setItem('sit_portal_jwt_token', dbUser.token);
+        }
+
+        // Secondary backup sync directly to students endpoint
         try {
           await apiService.addStudent({
             name: fullName.trim(),
@@ -319,10 +350,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
             country: country.trim() || 'India'
           });
         } catch (err) {
-          console.warn('Student record add notice:', err);
+          console.warn('Student record secondary add notice:', err);
         }
 
-        // 3. Save Student Academic Scores
+        // Secondary backup sync for academic scores
         try {
           await apiService.saveStudentAcademicData(prn.trim(), {
             prn: prn.trim(),

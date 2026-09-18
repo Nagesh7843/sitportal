@@ -26,10 +26,7 @@ public class StudentController {
             @RequestParam(required = false) String department,
             Authentication authentication
     ) {
-        List<Student> list = studentService.getAllStudents(department);
-        return list.stream()
-                .map(s -> studentService.maskAddressIfUnauthorized(s, authentication))
-                .toList();
+        return studentService.getAllStudents(department);
     }
 
     @GetMapping("/me")
@@ -57,7 +54,6 @@ public class StudentController {
             Authentication authentication
     ) {
         return studentService.getStudentByIdOrRollNo(id)
-                .map(s -> studentService.maskAddressIfUnauthorized(s, authentication))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

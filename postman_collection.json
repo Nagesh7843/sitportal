@@ -105,6 +105,36 @@
           "response": []
         },
         {
+          "name": "Student Registration with Permanent Address & Academic Details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pooja Patil\",\n  \"email\": \"pooja.patil@sitcoe.ac.in\",\n  \"password\": \"StudentPassword@123\",\n  \"role\": \"student\",\n  \"roleTitle\": \"CSE B.Tech Student\",\n  \"department\": \"CSE\",\n  \"rollNo\": \"2023CSE055\",\n  \"prn\": \"2023CSE055\",\n  \"academicYear\": \"TE\",\n  \"division\": \"Div A\",\n  \"batchGroup\": \"A1\",\n  \"cohortBatch\": \"2023-2027\",\n  \"gpa\": 8.85,\n  \"parentName\": \"Suresh Patil\",\n  \"parentEmail\": \"suresh.patil@gmail.com\",\n  \"parentPhone\": \"+91 9876543210\",\n  \"parentRelationship\": \"Father\",\n  \"addressLine1\": \"Flat 202, Shanti Heights, Station Road\",\n  \"addressLine2\": \"Near Gandhi Park\",\n  \"villageCity\": \"Ichalkaranji\",\n  \"taluka\": \"Hatkanangale\",\n  \"district\": \"Kolhapur\",\n  \"state\": \"Maharashtra\",\n  \"pinCode\": \"416115\",\n  \"country\": \"India\",\n  \"qualificationPath\": \"12TH\",\n  \"tenthPercentage\": 89.2,\n  \"twelfthPercentage\": 87.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registers a new student account and atomically persists User, Student record with complete permanent address, Parent relationship, and Academic Data directly into PostgreSQL sitportaldb database."
+          },
+          "response": []
+        },
+        {
           "name": "Parent Status & Linked Wards Check",
           "request": {
             "method": "GET",

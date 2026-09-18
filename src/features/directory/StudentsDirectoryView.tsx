@@ -4,6 +4,7 @@ import { apiService } from '@/services/api';
 
 interface StudentsDirectoryViewProps {
   students: StudentRecord[];
+  onRefresh?: () => void;
   onAddStudent?: () => void;
   onNavigate: (view: ViewMode, emailContext?: string) => void;
   onAddStudentsBulk?: (students: StudentRecord[]) => void;
@@ -16,6 +17,7 @@ interface StudentsDirectoryViewProps {
 
 export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
   students,
+  onRefresh,
   onAddStudent,
   onNavigate,
   onAddStudentsBulk,
@@ -484,6 +486,16 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
               </button>
             </>
           )}
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="flex-1 sm:flex-none justify-center bg-white border border-slate-300 text-[#000666] font-bold px-3 py-2 rounded-xl text-xs sm:text-[13px] hover:bg-slate-50 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+              title="Reload students directly from PostgreSQL database"
+            >
+              <span className="material-symbols-outlined text-[17px]">sync</span>
+              <span>Refresh DB</span>
+            </button>
+          )}
           <button
             onClick={() => onNavigate('bulk-email')}
             className="flex-1 sm:flex-none justify-center bg-[#759efd] text-[#00337c] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
@@ -653,12 +665,13 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       {/* Roster Table Container */}
       <div className="bg-white rounded-2xl border border-[#c6c5d4] shadow-xs overflow-hidden">
         <div className="overflow-x-auto max-h-[480px] overflow-y-auto custom-scrollbar touch-scroll shadow-inner">
-          <table className="w-full text-left text-[11px] relative min-w-[720px]">
+          <table className="w-full text-left text-[11px] relative min-w-[860px]">
             <thead className="bg-[#e6f6ff] text-[#000666] font-bold border-b border-[#c6c5d4] sticky top-0 z-10 shadow-xs">
               <tr>
                 <th className="py-2.5 px-3">Student Name & Roll</th>
                 <th className="py-2.5 px-3">Academic Division</th>
                 <th className="py-2.5 px-3">PRN / GPA / Att.</th>
+                <th className="py-2.5 px-3">Permanent Address</th>
                 <th className="py-2.5 px-3">Parent / Guardian</th>
                 <th className="py-2.5 px-3">Parent Login & Contact</th>
                 <th className="py-2.5 px-3 text-right">Actions</th>
@@ -676,12 +689,6 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                       <div>
                         <p className="font-bold text-[#071e27] leading-tight text-[11px]">{st.name}</p>
                         <p className="text-[10px] font-mono text-[#454652]">{st.rollNo} • <span className="font-sans">{st.email}</span></p>
-                        {st.villageCity && st.district && (
-                          <p className="text-[9px] text-emerald-800 flex items-center gap-0.5 mt-0.5 font-medium">
-                            <span className="material-symbols-outlined text-[11px]">home_pin</span>
-                            <span>{st.villageCity}, {st.district} ({st.pinCode || ''})</span>
-                          </p>
-                        )}
                       </div>
                     </div>
                   </td>
@@ -724,6 +731,26 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                         Att: <strong className="text-gray-800">{st.attendance ?? 90}%</strong>
                       </p>
                     </div>
+                  </td>
+
+                  {/* Permanent / Home Address */}
+                  <td className="py-2 px-3">
+                    {st.addressLine1 || st.villageCity ? (
+                      <div className="text-[10px] space-y-0.5 max-w-[200px]">
+                        <p className="font-bold text-[#071e27] leading-tight flex items-start gap-1">
+                          <span className="material-symbols-outlined text-[13px] text-[#000666] shrink-0 mt-0.5">home_pin</span>
+                          <span className="line-clamp-2">{st.addressLine1}{st.addressLine2 ? `, ${st.addressLine2}` : ''}</span>
+                        </p>
+                        <p className="text-slate-600 text-[10px]">
+                          {[st.villageCity, st.taluka, st.district].filter(Boolean).join(', ')}
+                        </p>
+                        <p className="text-emerald-800 font-bold text-[9px]">
+                          {st.state || 'Maharashtra'}{st.pinCode ? ` - ${st.pinCode}` : ''}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 italic">Not Provided</span>
+                    )}
                   </td>
 
                   {/* Parent / Guardian Name */}
@@ -795,7 +822,7 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 px-4 text-center text-[#454652] text-xs">
+                  <td colSpan={7} className="py-8 px-4 text-center text-[#454652] text-xs">
                     No student records match the selected filters.
                   </td>
                 </tr>

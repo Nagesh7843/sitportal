@@ -149,8 +149,10 @@ export default function App() {
         if (['dashboard', 'hod-dashboard', 'public-landing', 'notices'].includes(activeView) && notices.length === 0) {
           apiService.fetchNotices().then(setNotices).catch(console.warn);
         }
-        if (['dashboard', 'hod-dashboard', 'faculty-portal', 'students', 'analytics'].includes(activeView) && studentsList.length === 0) {
-          apiService.fetchStudents().then(setStudentsList).catch(console.warn);
+        if (['dashboard', 'hod-dashboard', 'faculty-portal', 'students', 'analytics'].includes(activeView)) {
+          if (activeView === 'students' || studentsList.length === 0) {
+            apiService.fetchStudents().then(setStudentsList).catch(console.warn);
+          }
         }
         if (['dashboard', 'hod-dashboard', 'faculty', 'bulk-email', 'faculty-email'].includes(activeView) && facultyList.length === 0) {
           apiService.fetchFaculty().then(setFacultyList).catch(console.warn);
@@ -649,6 +651,15 @@ export default function App() {
     });
   };
 
+  const handleRefreshStudents = async () => {
+    try {
+      const data = await apiService.fetchStudents();
+      setStudentsList(data);
+    } catch (err) {
+      console.warn('Failed to refresh students from database:', err);
+    }
+  };
+
   // Add Faculty Handlers
   const handleAddFaculty = async (faculty: FacultyMember) => {
     requireAuthAction(async () => {
@@ -885,6 +896,7 @@ export default function App() {
           {activeView === 'students' && (
             <StudentsDirectoryView
               students={studentsList}
+              onRefresh={handleRefreshStudents}
               onAddStudent={userRole === 'admin' ? () => requireAuthAction(() => setShowAddStudent(true)) : undefined}
               onDeleteStudent={userRole === 'admin' ? handleDeleteStudent : undefined}
               onUpdateStudent={userRole === 'admin' ? handleUpdateStudent : undefined}

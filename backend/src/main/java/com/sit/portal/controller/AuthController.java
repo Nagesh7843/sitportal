@@ -37,6 +37,12 @@ public class AuthController {
     private ParentRepository parentRepository;
 
     @Autowired
+    private com.sit.portal.repository.StudentAcademicDataRepository studentAcademicDataRepository;
+
+    @Autowired
+    private com.sit.portal.service.StudentService studentService;
+
+    @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
@@ -192,6 +198,113 @@ public class AuthController {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        if ("student".equalsIgnoreCase(savedUser.getRole())) {
+            String rollNo = (String) req.get("rollNo");
+            String prn = (String) req.get("prn");
+            String academicYear = (String) req.get("academicYear");
+            String division = (String) req.get("division");
+            String batchGroup = (String) req.get("batchGroup");
+            String cohortBatch = (String) req.get("cohortBatch");
+            String parentName = (String) req.get("parentName");
+            String parentEmail = (String) req.get("parentEmail");
+            String parentPhone = (String) req.get("parentPhone");
+            String parentRelationship = (String) req.get("parentRelationship");
+            String addressLine1 = (String) req.get("addressLine1");
+            String addressLine2 = (String) req.get("addressLine2");
+            String villageCity = (String) req.get("villageCity");
+            String taluka = (String) req.get("taluka");
+            String district = (String) req.get("district");
+            String state = (String) req.get("state");
+            String pinCode = (String) req.get("pinCode");
+            String country = (String) req.get("country");
+
+            Double gpaVal = 8.5;
+            if (req.get("gpa") != null) {
+                try {
+                    gpaVal = Double.parseDouble(String.valueOf(req.get("gpa")));
+                } catch (Exception ignored) {}
+            }
+
+            Double attendanceVal = 92.5;
+            if (req.get("attendance") != null) {
+                try {
+                    attendanceVal = Double.parseDouble(String.valueOf(req.get("attendance")));
+                } catch (Exception ignored) {}
+            }
+
+            com.sit.portal.entity.Student student = studentRepository.findByEmail(cleanEmail)
+                    .orElse(com.sit.portal.entity.Student.builder().email(cleanEmail).build());
+
+            student.setUserId(savedUser.getId());
+            student.setName(savedUser.getName());
+            student.setEmail(cleanEmail);
+            student.setDepartment(department != null ? department : "CSE");
+            if (rollNo != null && !rollNo.trim().isEmpty()) {
+                student.setRollNo(rollNo.trim());
+            } else if (student.getRollNo() == null) {
+                student.setRollNo("ST-" + (System.currentTimeMillis() % 100000));
+            }
+
+            if (prn != null && !prn.trim().isEmpty()) {
+                student.setPrn(prn.trim());
+            } else if (student.getPrn() == null) {
+                student.setPrn(student.getRollNo());
+            }
+
+            student.setAcademicYear(academicYear != null ? academicYear : "SE");
+            student.setDivision(division != null ? division : "Div A");
+            student.setBatchGroup(batchGroup != null ? batchGroup : "A1");
+            student.setCohortBatch(cohortBatch != null ? cohortBatch : "2024-2028");
+            student.setGpa(gpaVal);
+            student.setAttendance(attendanceVal);
+            student.setStatus("ACTIVE");
+
+            if (parentName != null) student.setParentName(parentName.trim());
+            if (parentEmail != null) student.setParentEmail(parentEmail.trim().toLowerCase());
+            if (parentPhone != null) student.setParentPhone(parentPhone.trim());
+            if (parentRelationship != null) student.setParentRelationship(parentRelationship);
+
+            if (addressLine1 != null) student.setAddressLine1(addressLine1.trim());
+            if (addressLine2 != null) student.setAddressLine2(addressLine2.trim());
+            if (villageCity != null) student.setVillageCity(villageCity.trim());
+            if (taluka != null) student.setTaluka(taluka.trim());
+            if (district != null) student.setDistrict(district.trim());
+            student.setState(state != null && !state.trim().isEmpty() ? state.trim() : "Maharashtra");
+            if (pinCode != null) student.setPinCode(pinCode.trim());
+            student.setCountry(country != null && !country.trim().isEmpty() ? country.trim() : "India");
+
+            com.sit.portal.entity.Student savedStudent = studentRepository.save(student);
+            studentService.syncParentAccount(savedStudent);
+
+            // Save academic scores
+            String qualPath = req.get("qualificationPath") != null ? String.valueOf(req.get("qualificationPath")) : "12TH";
+            java.math.BigDecimal tenth = req.get("tenthPercentage") != null ? new java.math.BigDecimal(String.valueOf(req.get("tenthPercentage"))) : java.math.BigDecimal.ZERO;
+            java.math.BigDecimal twelfth = req.get("twelfthPercentage") != null ? new java.math.BigDecimal(String.valueOf(req.get("twelfthPercentage"))) : java.math.BigDecimal.ZERO;
+            java.math.BigDecimal diploma = req.get("diplomaPercentage") != null ? new java.math.BigDecimal(String.valueOf(req.get("diplomaPercentage"))) : java.math.BigDecimal.ZERO;
+            final double finalGpa = gpaVal;
+
+            studentAcademicDataRepository.findByPrn(savedStudent.getPrn()).ifPresentOrElse(acad -> {
+                acad.setQualificationPath(qualPath);
+                acad.setTenthPercentage(tenth);
+                acad.setTwelfthPercentage(twelfth);
+                acad.setDiplomaPercentage(diploma);
+                acad.setCgpa(java.math.BigDecimal.valueOf(finalGpa));
+                studentAcademicDataRepository.save(acad);
+            }, () -> {
+                studentAcademicDataRepository.save(com.sit.portal.entity.StudentAcademicData.builder()
+                        .studentId(savedStudent.getId())
+                        .prn(savedStudent.getPrn())
+                        .qualificationPath(qualPath)
+                        .tenthPercentage(tenth)
+                        .twelfthPercentage(twelfth)
+                        .diplomaPercentage(diploma)
+                        .cgpa(java.math.BigDecimal.valueOf(finalGpa))
+                        .activeBacklogs(0)
+                        .totalBacklogs(0)
+                        .build());
+            });
+        }
 
         if ("parent".equalsIgnoreCase(savedUser.getRole())) {
             studentRepository.findByParentEmail(cleanEmail).stream().findFirst().ifPresent(student -> {

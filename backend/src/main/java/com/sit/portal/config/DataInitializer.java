@@ -231,6 +231,13 @@ public class DataInitializer {
                         .parentRelationship("Father")
                         .status("ACTIVE")
                         .department("CSE")
+                        .addressLine1("Plot No. 12, Ganesh Nagar")
+                        .villageCity("Ichalkaranji")
+                        .taluka("Hatkanangale")
+                        .district("Kolhapur")
+                        .state("Maharashtra")
+                        .pinCode("416115")
+                        .country("India")
                         .build());
 
                 Student s2 = studentRepository.save(Student.builder()
@@ -250,6 +257,13 @@ public class DataInitializer {
                         .parentRelationship("Father")
                         .status("ACTIVE")
                         .department("CSE")
+                        .addressLine1("Flat 402, Royal Residency")
+                        .villageCity("Jaysingpur")
+                        .taluka("Shirol")
+                        .district("Kolhapur")
+                        .state("Maharashtra")
+                        .pinCode("416101")
+                        .country("India")
                         .build());
 
                 Student s3 = studentRepository.save(Student.builder()
@@ -269,6 +283,13 @@ public class DataInitializer {
                         .parentRelationship("Father")
                         .status("ACTIVE")
                         .department("CSE")
+                        .addressLine1("At Post Shirol, Near Bus Stand")
+                        .villageCity("Shirol")
+                        .taluka("Shirol")
+                        .district("Kolhapur")
+                        .state("Maharashtra")
+                        .pinCode("416103")
+                        .country("India")
                         .build());
 
                 Student s4 = studentRepository.save(Student.builder()
@@ -288,6 +309,13 @@ public class DataInitializer {
                         .parentRelationship("Father")
                         .status("ACTIVE")
                         .department("CSE")
+                        .addressLine1("Shivaji Road, Behind SIT Campus")
+                        .villageCity("Yadrav")
+                        .taluka("Shirol")
+                        .district("Kolhapur")
+                        .state("Maharashtra")
+                        .pinCode("416121")
+                        .country("India")
                         .build());
 
                 // Seed Academic Data for students (both 12th Regular and Diploma Lateral Entry)
@@ -340,6 +368,49 @@ public class DataInitializer {
                     ));
                 }
             }
+
+            // Backfill address for existing seed students if null
+            studentRepository.findAll().forEach(st -> {
+                if (st.getAddressLine1() == null && st.getVillageCity() == null) {
+                    if ("2023CSE014".equals(st.getRollNo()) || "student@sitcoe.ac.in".equalsIgnoreCase(st.getEmail())) {
+                        st.setAddressLine1("Plot No. 12, Ganesh Nagar");
+                        st.setVillageCity("Ichalkaranji");
+                        st.setTaluka("Hatkanangale");
+                        st.setDistrict("Kolhapur");
+                        st.setState("Maharashtra");
+                        st.setPinCode("416115");
+                        st.setCountry("India");
+                        studentRepository.save(st);
+                    } else if ("2023CSE015".equals(st.getRollNo()) || "priya.patel@sitcoe.ac.in".equalsIgnoreCase(st.getEmail())) {
+                        st.setAddressLine1("Flat 402, Royal Residency");
+                        st.setVillageCity("Jaysingpur");
+                        st.setTaluka("Shirol");
+                        st.setDistrict("Kolhapur");
+                        st.setState("Maharashtra");
+                        st.setPinCode("416101");
+                        st.setCountry("India");
+                        studentRepository.save(st);
+                    } else if ("2023CSE016".equals(st.getRollNo()) || "amit.patil@sitcoe.ac.in".equalsIgnoreCase(st.getEmail())) {
+                        st.setAddressLine1("At Post Shirol, Near Bus Stand");
+                        st.setVillageCity("Shirol");
+                        st.setTaluka("Shirol");
+                        st.setDistrict("Kolhapur");
+                        st.setState("Maharashtra");
+                        st.setPinCode("416103");
+                        st.setCountry("India");
+                        studentRepository.save(st);
+                    } else if ("2023CSE017".equals(st.getRollNo()) || "sneha.deshmukh@sitcoe.ac.in".equalsIgnoreCase(st.getEmail())) {
+                        st.setAddressLine1("Shivaji Road, Behind SIT Campus");
+                        st.setVillageCity("Yadrav");
+                        st.setTaluka("Shirol");
+                        st.setDistrict("Kolhapur");
+                        st.setState("Maharashtra");
+                        st.setPinCode("416121");
+                        st.setCountry("India");
+                        studentRepository.save(st);
+                    }
+                }
+            });
 
             // Seed Parent Record linked to Student
             try {
