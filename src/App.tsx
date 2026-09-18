@@ -679,7 +679,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3faff] text-[#071e27] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f3faff] text-[#071e27] flex flex-col font-sans w-full max-w-full overflow-x-hidden">
       {/* Sidebar Navigation */}
       <Sidebar
         activeView={activeView}
@@ -691,7 +691,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="lg:pl-[260px] pl-0 flex-1 flex flex-col min-w-0">
+      <div className="lg:pl-[260px] pl-0 flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden">
         {/* Top Header */}
         <Header
           currentProfile={currentProfile}
@@ -710,13 +710,13 @@ export default function App() {
         />
 
         {/* Global Updates Ticker */}
-        <div className="px-3 sm:px-6 pt-3 sm:pt-4 max-w-[1440px] w-full mx-auto">
+        <div className="px-3 sm:px-6 pt-3 sm:pt-4 max-w-[1440px] w-full mx-auto min-w-0">
           <div className="bg-white border border-slate-200 rounded-xl h-10 flex items-center overflow-hidden px-3 sm:px-4 text-xs shadow-sm">
             <span className="font-bold text-zinc-900 uppercase tracking-wider text-[11px] shrink-0 mr-2 sm:mr-4 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Updates
             </span>
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex-1 overflow-hidden relative min-w-0">
               <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 text-[12px]">
                 {notices.length > 0 ? (
                   notices.map((notice) => (
@@ -731,7 +731,7 @@ export default function App() {
         </div>
 
         {/* Dynamic View Container */}
-        <main className="flex-1 p-3 sm:p-6 pb-24 lg:pb-6 max-w-[1440px] w-full mx-auto animate-in fade-in duration-150">
+        <main className="flex-1 p-3 sm:p-6 pb-24 lg:pb-6 max-w-[1440px] w-full mx-auto min-w-0 overflow-x-hidden animate-in fade-in duration-150">
           {activeView === 'dashboard' && (
             <AdminDashboard
               onNavigate={handleProtectedNavigate}

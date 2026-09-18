@@ -487,9 +487,9 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
 
       {/* Toast Confirmation for Default Batch */}
       {defaultBatchToast && (
-        <div className="fixed top-20 right-6 z-50 bg-emerald-900/95 text-emerald-100 px-5 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 text-xs font-bold flex items-center gap-3 backdrop-blur-md animate-in slide-in-from-top-4 duration-200">
+        <div className="fixed top-20 right-4 sm:right-6 max-w-[calc(100vw-2rem)] z-50 bg-emerald-900/95 text-emerald-100 px-4 sm:px-5 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 text-xs font-bold flex items-center gap-3 backdrop-blur-md animate-in slide-in-from-top-4 duration-200">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{defaultBatchToast}</span>
+          <span className="truncate">{defaultBatchToast}</span>
         </div>
       )}
 

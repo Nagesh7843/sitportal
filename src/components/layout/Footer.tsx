@@ -8,7 +8,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
-    <footer className="w-full bg-[#071e27] text-[#f3faff] py-4 px-6 mt-6 border-t border-[#767683]">
+    <footer className="w-full bg-[#071e27] text-[#f3faff] py-4 px-4 sm:px-6 pb-20 lg:pb-6 mt-6 border-t border-[#767683] overflow-x-hidden">
       <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-4">
           <img src={sitLogo} alt="Sharad Institute of Technology" className="h-12 w-auto object-contain shrink-0" />

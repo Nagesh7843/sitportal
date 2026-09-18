@@ -1885,7 +1885,7 @@ export const PlacementHubSection: React.FC<PlacementHubSectionProps> = ({ onExpl
                 <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                   {noticeForm.placedStudents.map((student, idx) => (
                     <div key={idx} className="p-2.5 bg-white border border-gray-200 rounded-xl space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>

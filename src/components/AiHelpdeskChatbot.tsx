@@ -123,7 +123,7 @@ export function AiHelpdeskChatbot({ notices, faculty, students, documents }: AiH
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-16 right-4 lg:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 bg-zinc-900 border border-zinc-700/80 hover:border-zinc-500 text-zinc-100 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-full shadow-2xl hover:bg-zinc-800 transition-all group cursor-pointer"
+          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex items-center gap-2.5 bg-zinc-900 border border-zinc-700/80 hover:border-zinc-500 text-zinc-100 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-full shadow-2xl hover:bg-zinc-800 transition-all group cursor-pointer"
           aria-label="Open AI Assistant"
         >
           <div className="relative flex items-center justify-center">
@@ -137,7 +137,7 @@ export function AiHelpdeskChatbot({ notices, faculty, students, documents }: AiH
 
       {/* Sleek Minimal Floating Window / Mobile Sheet */}
       {isOpen && (
-        <div className="fixed bottom-0 sm:bottom-6 right-0 sm:right-6 inset-x-0 sm:inset-x-auto z-50 w-full sm:w-[420px] max-w-full sm:max-w-md h-[90vh] sm:h-[560px] bg-slate-900 border-t sm:border border-slate-700/60 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden font-sans text-slate-100 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-0 sm:bottom-6 right-0 sm:right-6 inset-x-0 sm:inset-x-auto z-50 w-full sm:w-[420px] max-w-full sm:max-w-[calc(100vw-2rem)] h-[90vh] sm:h-[560px] bg-slate-900 border-t sm:border border-slate-700/60 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden font-sans text-slate-100 animate-in fade-in slide-in-from-bottom-3 duration-200">
           
           {/* Minimal Header */}
           <div className="px-4 py-3 bg-[#000666] border-b border-white/10 flex items-center justify-between text-white">
