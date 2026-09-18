@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, ViewMode, NoticeItem, AcademicCalendarItem, StudentRecord } from '@/types';
 import { apiService } from '@/services/api';
 import { StudentSelfServicePanel } from '@/features/student/StudentSelfServicePanel';
@@ -7,6 +7,84 @@ interface StudentDashboardProps {
   currentProfile: UserProfile | null;
   onNavigate: (view: ViewMode) => void;
 }
+
+const formatPackageLpa = (pkg: string | undefined | null): string => {
+  if (!pkg || !pkg.trim()) return 'Competitive';
+  const cleaned = pkg.replace(/^[^\d₹]+/, '').replace(/\?/g, '₹').trim();
+  if (cleaned.startsWith('₹')) return cleaned;
+  if (/^\d/.test(cleaned)) return `₹${cleaned}`;
+  return cleaned || 'Competitive';
+};
+
+const checkStudentDriveEligibility = (
+  drive: any,
+  studentInfo: StudentRecord | null,
+  academicData: any,
+  currentProfile: UserProfile | null
+): boolean => {
+  const cgpa = Number(academicData?.cgpa ?? studentInfo?.gpa ?? 0);
+  const tenth = Number(academicData?.tenthPercentage ?? 0);
+  const twelfth = Number(academicData?.twelfthPercentage ?? 0);
+  const diploma = Number(academicData?.diplomaPercentage ?? 0);
+  const isDiploma = academicData?.qualificationPath === 'DIPLOMA';
+  const activeBacklogs = Number(academicData?.activeBacklogs ?? 0);
+  const dept = (studentInfo?.department || currentProfile?.department || 'CSE').trim().toUpperCase();
+  const year = (studentInfo?.academicYear || currentProfile?.academicYear || 'TE').trim().toUpperCase();
+
+  // 1. Department check
+  if (drive.allowedDepartments && drive.allowedDepartments.trim() !== '') {
+    const allowedDepts = drive.allowedDepartments.split(',').map((d: string) => d.trim().toUpperCase());
+    if (!allowedDepts.includes('ALL') && dept && !allowedDepts.includes(dept)) {
+      return false;
+    }
+  }
+
+  // 2. Academic Year check
+  if (drive.allowedAcademicYears && drive.allowedAcademicYears.trim() !== '') {
+    const allowedYears = drive.allowedAcademicYears.split(',').map((y: string) => y.trim().toUpperCase());
+    if (!allowedYears.includes('ALL') && year && !allowedYears.includes(year)) {
+      return false;
+    }
+  }
+
+  // 3. CGPA check
+  if (drive.minimumCgpa !== null && drive.minimumCgpa !== undefined && drive.minimumCgpa > 0) {
+    if (cgpa < Number(drive.minimumCgpa)) {
+      return false;
+    }
+  }
+
+  // 4. 10th standard percentage check
+  if (drive.minimumTenthPercentage !== null && drive.minimumTenthPercentage !== undefined && drive.minimumTenthPercentage > 0) {
+    if (tenth > 0 && tenth < Number(drive.minimumTenthPercentage)) {
+      return false;
+    }
+  }
+
+  // 5. 12th or Diploma percentage check
+  if (isDiploma) {
+    if (drive.minimumDiplomaPercentage !== null && drive.minimumDiplomaPercentage !== undefined && drive.minimumDiplomaPercentage > 0) {
+      if (diploma > 0 && diploma < Number(drive.minimumDiplomaPercentage)) {
+        return false;
+      }
+    }
+  } else {
+    if (drive.minimumTwelfthPercentage !== null && drive.minimumTwelfthPercentage !== undefined && drive.minimumTwelfthPercentage > 0) {
+      if (twelfth > 0 && twelfth < Number(drive.minimumTwelfthPercentage)) {
+        return false;
+      }
+    }
+  }
+
+  // 6. Active backlogs check
+  if (drive.maxActiveBacklogs !== null && drive.maxActiveBacklogs !== undefined) {
+    if (activeBacklogs > Number(drive.maxActiveBacklogs)) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfile, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'self-service'>('overview');
@@ -53,6 +131,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
   useEffect(() => {
     loadData();
   }, [currentProfile]);
+
+  const eligiblePlacementDrives = useMemo(() => {
+    if (!placementDrives || placementDrives.length === 0) return [];
+    return placementDrives.filter((drive) =>
+      checkStudentDriveEligibility(drive, studentInfo, academicData, currentProfile)
+    );
+  }, [placementDrives, studentInfo, academicData, currentProfile]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -311,48 +396,34 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ currentProfi
                   </button>
                 </div>
 
-                {placementDrives && placementDrives.length > 0 ? (
+                {eligiblePlacementDrives && eligiblePlacementDrives.length > 0 ? (
                   <div className="space-y-2">
-                    {placementDrives.slice(0, 3).map((drive: any) => {
-                      const cgpa = Number(academicData?.cgpa ?? studentInfo?.gpa ?? 0);
-                      const isDiploma = academicData?.qualificationPath === 'DIPLOMA';
-                      const tenth = Number(academicData?.tenthPercentage ?? 0);
-                      const twelfth = Number(academicData?.twelfthPercentage ?? 0);
-                      const diploma = Number(academicData?.diplomaPercentage ?? 0);
-
-                      const isEligible = cgpa >= 6.0 && tenth >= 60 && (isDiploma ? diploma >= 60 : twelfth >= 60);
-
-                      return (
-                        <div key={drive.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 space-y-1">
-                          <div className="flex items-start justify-between gap-1">
-                            <h4 className="font-bold text-xs text-slate-900 leading-snug truncate">{drive.companyName}</h4>
-                            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
-                              {drive.packageLpa || 'Competitive'}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-600 line-clamp-1">{drive.role}</p>
-                          <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                            <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                              isEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              <span className="material-symbols-outlined text-[11px]">
-                                {isEligible ? 'check_circle' : 'info'}
-                              </span>
-                              {isEligible ? 'Eligible' : 'Review'}
-                            </span>
-                            <button
-                              onClick={() => onNavigate('public-landing')}
-                              className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
-                            >
-                              Details
-                            </button>
-                          </div>
+                    {eligiblePlacementDrives.slice(0, 3).map((drive: any) => (
+                      <div key={drive.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 space-y-1">
+                        <div className="flex items-start justify-between gap-1">
+                          <h4 className="font-bold text-xs text-slate-900 leading-snug truncate">{drive.companyName}</h4>
+                          <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                            {formatPackageLpa(drive.packageLpa)}
+                          </span>
                         </div>
-                      );
-                    })}
+                        <p className="text-[10px] text-slate-600 line-clamp-1">{drive.role}</p>
+                        <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            <span className="material-symbols-outlined text-[11px]">check_circle</span>
+                            Eligible
+                          </span>
+                          <button
+                            onClick={() => onNavigate('public-landing')}
+                            className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                          >
+                            Details
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 text-center py-3">No active drives announced yet.</p>
+                  <p className="text-xs text-gray-500 text-center py-3">No active placement drives currently match your academic cutoffs.</p>
                 )}
               </div>
 

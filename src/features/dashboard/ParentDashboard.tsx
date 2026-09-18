@@ -337,12 +337,13 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
                   const diffDaysEnd = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                   // 1. Must be posted/triggered (within pre-notice window or officially GENERATED)
+                  // 1. Must be posted/triggered
                   const isPostedOrTriggered = evt.noticeStatus === 'GENERATED' || diffDaysStart <= preNoticeDays;
 
-                  // 2. Auto-removed 5 days after event completion (diffDaysEnd < -5 means expired)
-                  const isNotExpired = diffDaysEnd >= -5;
+                  // 2. Only show upcoming and ongoing events to parents
+                  const isUpcomingOrOngoing = diffDaysEnd >= 0;
 
-                  return isPostedOrTriggered && isNotExpired;
+                  return isPostedOrTriggered && isUpcomingOrOngoing;
                 })
                 .sort((a, b) => {
                   const dateA = parseDate(a.startDate)?.getTime() || 0;
@@ -356,7 +357,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
                     <span className="material-symbols-outlined text-slate-400 text-2xl">notifications_paused</span>
                     <p className="text-xs font-bold text-slate-700">No active circulars currently posted</p>
                     <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-tight">
-                      Academic milestone notices are automatically posted into this feed 5–7 days prior to each event and retained for 5 days after completion.
+                      Academic milestone notices are automatically posted into this feed 5–7 days prior to each event.
                     </p>
                     <button
                       onClick={() => onNavigate('academic-calendar')}
@@ -394,9 +395,8 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ currentProfile
                       } else if (diffDaysStart < 0 && diffDaysEnd >= 0) {
                         tagline = 'Ongoing Event';
                         badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
-                      } else if (diffDaysEnd < 0 && diffDaysEnd >= -5) {
-                        const daysLeft = 5 + diffDaysEnd + 1;
-                        tagline = `Completed • Removes in ${daysLeft}d`;
+                      } else if (diffDaysEnd < 0) {
+                        tagline = 'Completed';
                         badgeColor = 'bg-gray-100 text-gray-600 border-gray-200';
                       }
                     }

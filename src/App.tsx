@@ -723,11 +723,23 @@ export default function App() {
             <div className="flex-1 overflow-hidden relative">
               <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 group-hover:text-indigo-900 text-[12px] w-max shrink-0 transition-colors">
                 {notices.length > 0 ? (
-                  notices.map((notice) => (
-                    <span key={notice.id} className="shrink-0 whitespace-nowrap inline-block font-medium">
-                      • {notice.title}
-                    </span>
-                  ))
+                  (() => {
+                    const tickerNotices = notices.slice(0, 8);
+                    return (
+                      <>
+                        {tickerNotices.map((notice, idx) => (
+                          <span key={`n1-${notice.id || idx}`} className="shrink-0 whitespace-nowrap inline-block font-medium">
+                            • {notice.title}
+                          </span>
+                        ))}
+                        {tickerNotices.map((notice, idx) => (
+                          <span key={`n2-${notice.id || idx}`} className="shrink-0 whitespace-nowrap inline-block font-medium" aria-hidden="true">
+                            • {notice.title}
+                          </span>
+                        ))}
+                      </>
+                    );
+                  })()
                 ) : (
                   <span className="shrink-0 whitespace-nowrap inline-block font-medium">• No new updates at this time.</span>
                 )}

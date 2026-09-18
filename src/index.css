@@ -96,15 +96,19 @@
 }
 
 @keyframes ticker {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .ticker-animate {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  animation: ticker 95s linear infinite;
+  animation: ticker 180s linear infinite;
   width: max-content;
   flex-shrink: 0;
   will-change: transform;

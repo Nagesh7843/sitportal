@@ -351,8 +351,8 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
     // 1. Must be posted/triggered (within pre-notice window or officially GENERATED)
     const isPosted = event.noticeStatus === 'GENERATED' || diffDaysStart <= preNoticeDays;
 
-    // 2. Auto-removed 5 days after event completion
-    const isNotExpired = diffDaysEnd >= -5;
+    // 2. Auto-removed after completion: strictly upcoming for student/parent/public, 5-day grace for admin/faculty
+    const isNotExpired = isStudentOrParent ? diffDaysEnd >= 0 : diffDaysEnd >= -5;
 
     return isPosted && isNotExpired;
   };
@@ -377,8 +377,11 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
     } else if (diffDaysStart < 0 && diffDaysEnd >= 0) {
       return { text: 'Ongoing Event', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' };
     } else if (diffDaysEnd < 0 && diffDaysEnd >= -5) {
-      const daysLeft = 5 + diffDaysEnd + 1;
-      return { text: `Completed • Removes in ${daysLeft}d`, badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' };
+      if (userRole === 'admin') {
+        const daysLeft = 5 + diffDaysEnd + 1;
+        return { text: `Completed • Removes in ${daysLeft}d`, badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' };
+      }
+      return { text: 'Completed', badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' };
     } else if (diffDaysEnd < -5) {
       return { text: 'Archived Event', badgeClass: 'bg-gray-100 text-gray-400 border-gray-200' };
     } else {
@@ -529,21 +532,14 @@ export const AcademicCalendarView: React.FC<AcademicCalendarViewProps> = ({
               ))}
             </select>
 
-            {selectedCalendar?.isActive ? (
-              <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[11px] rounded-full inline-flex items-center gap-1.5 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                Active Term Calendar
-              </span>
-            ) : (
-              canManage && selectedCalendar && (
-                <button
-                  onClick={() => handleActivateCalendar(selectedCalendar.id)}
-                  className="px-2.5 py-1 bg-blue-50 text-[#000666] border border-blue-200 hover:bg-blue-100 font-bold text-[11px] rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[15px]">check</span>
-                  Set Active Term
-                </button>
-              )
+            {!selectedCalendar?.isActive && canManage && selectedCalendar && (
+              <button
+                onClick={() => handleActivateCalendar(selectedCalendar.id)}
+                className="px-2.5 py-1 bg-blue-50 text-[#000666] border border-blue-200 hover:bg-blue-100 font-bold text-[11px] rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">check</span>
+                Set Active Term
+              </button>
             )}
           </div>
 
