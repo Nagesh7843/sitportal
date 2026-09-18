@@ -716,14 +716,16 @@ export default function App() {
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Updates
             </span>
-            <div className="flex-1 overflow-hidden relative min-w-0">
-              <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 text-[12px]">
+            <div className="flex-1 overflow-hidden relative">
+              <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 text-[12px] w-max shrink-0">
                 {notices.length > 0 ? (
                   notices.map((notice) => (
-                    <span key={notice.id}>• {notice.title}</span>
+                    <span key={notice.id} className="shrink-0 whitespace-nowrap inline-block font-medium">
+                      • {notice.title}
+                    </span>
                   ))
                 ) : (
-                  <span>• No new updates at this time.</span>
+                  <span className="shrink-0 whitespace-nowrap inline-block font-medium">• No new updates at this time.</span>
                 )}
               </div>
             </div>

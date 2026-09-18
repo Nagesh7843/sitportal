@@ -47,12 +47,6 @@
     flex-direction: column;
   }
 
-  /* Universal text break & word wrapping to prevent container blowout */
-  p, span, h1, h2, h3, h4, h5, h6, a, label, li, td, th {
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
   /* Prevent media elements from exceeding parent bounds */
   img, svg, video, canvas, iframe, embed, object {
     max-width: 100%;
@@ -68,11 +62,6 @@
   /* Tables must never break parent boundaries */
   table {
     max-width: 100%;
-  }
-
-  /* Flex and Grid child boundary containment: prevents flex items from expanding beyond parent */
-  .flex > *, .grid > * {
-    min-width: 0;
   }
 }
 
@@ -112,11 +101,23 @@
 }
 
 .ticker-animate {
-  animation: ticker 32s linear infinite;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: ticker 40s linear infinite;
+  width: max-content;
+  flex-shrink: 0;
+  will-change: transform;
 }
 
 .ticker-animate:hover {
   animation-play-state: paused;
+}
+
+.ticker-animate > * {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  display: inline-block !important;
 }
 
 /* Mobile & Touch Responsive Enhancements */
