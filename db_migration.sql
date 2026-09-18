@@ -90,9 +90,26 @@ CREATE TABLE IF NOT EXISTS students (
     parent_name VARCHAR(255),
     parent_phone VARCHAR(50),
     parent_email VARCHAR(255),
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    village_city VARCHAR(100),
+    taluka VARCHAR(100),
+    district VARCHAR(100),
+    state VARCHAR(100) DEFAULT 'Maharashtra',
+    pin_code VARCHAR(6),
+    country VARCHAR(100) DEFAULT 'India',
     status VARCHAR(50) DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE students ADD COLUMN IF NOT EXISTS address_line1 VARCHAR(255);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS address_line2 VARCHAR(255);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS village_city VARCHAR(100);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS taluka VARCHAR(100);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS district VARCHAR(100);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS state VARCHAR(100) DEFAULT 'Maharashtra';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pin_code VARCHAR(6);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT 'India';
 
 -- -----------------------------------------------------------------------------
 -- 6. PARENTS & GUARDIANS DIRECTORY TABLE

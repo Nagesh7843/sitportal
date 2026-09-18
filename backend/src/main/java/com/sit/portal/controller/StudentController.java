@@ -1,10 +1,13 @@
 package com.sit.portal.controller;
 
+import com.sit.portal.dto.StudentAddressDto;
 import com.sit.portal.entity.*;
 import com.sit.portal.service.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +22,14 @@ public class StudentController {
     private StudentService studentService;
 
     @GetMapping
-    public List<Student> getAllStudents(@RequestParam(required = false) String department) {
-        return studentService.getAllStudents(department);
+    public List<Student> getAllStudents(
+            @RequestParam(required = false) String department,
+            Authentication authentication
+    ) {
+        List<Student> list = studentService.getAllStudents(department);
+        return list.stream()
+                .map(s -> studentService.maskAddressIfUnauthorized(s, authentication))
+                .toList();
     }
 
     @GetMapping("/me")
@@ -43,15 +52,23 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Student> getStudentById(@PathVariable String id) {
+    public ResponseEntity<Student> getStudentById(
+            @PathVariable String id,
+            Authentication authentication
+    ) {
         return studentService.getStudentByIdOrRollNo(id)
+                .map(s -> studentService.maskAddressIfUnauthorized(s, authentication))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Student> addStudent(@RequestBody Student student) {
-        return ResponseEntity.status(201).body(studentService.addStudent(student));
+    public ResponseEntity<?> addStudent(@RequestBody Student student) {
+        try {
+            return ResponseEntity.status(201).body(studentService.addStudent(student));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @PostMapping("/bulk")
@@ -60,14 +77,67 @@ public class StudentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(@PathVariable String id, @RequestBody Student student) {
-        return studentService.updateStudent(id, student)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> updateStudent(@PathVariable String id, @RequestBody Student student) {
+        try {
+            return studentService.updateStudent(id, student)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/address")
+    public ResponseEntity<?> updateStudentAddress(
+            @PathVariable String id,
+            @Valid @RequestBody StudentAddressDto addressDto,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Authentication required to update home address."));
+        }
+        String userEmail = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_STUDENT");
+        try {
+            return studentService.updateStudentAddress(id, addressDto, userEmail, role)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(403).body(Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/me/address")
+    public ResponseEntity<?> updateCurrentStudentAddress(
+            @Valid @RequestBody StudentAddressDto addressDto,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Authentication required to update home address."));
+        }
+        String userEmail = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_STUDENT");
+        try {
+            return studentService.updateStudentAddress(userEmail, addressDto, userEmail, role)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(403).body(Map.of("message", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable String id) {
         if (!studentService.deleteStudent(id)) {
             return ResponseEntity.notFound().build();
         }

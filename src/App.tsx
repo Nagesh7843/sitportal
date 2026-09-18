@@ -421,7 +421,7 @@ export default function App() {
         });
         
       } catch (err) {
-        alert('Failed to save notice to PostgreSQL database.');
+        alert('Failed to save notice to database.');
       }
     });
   };
@@ -463,7 +463,7 @@ export default function App() {
         }).then(saved => setActivities(prev => [saved, ...prev])).catch(console.warn);
       }
     } catch (err) {
-      alert('Failed to save course to PostgreSQL database.');
+      alert('Failed to save course to database.');
     }
   };
 
@@ -607,7 +607,7 @@ export default function App() {
         const savedAsset = await apiService.createDocument(asset);
         setUploads((prev) => [savedAsset || asset, ...prev]);
       } catch (err) {
-        alert('Failed to save document to PostgreSQL database.');
+        alert('Failed to save document to database.');
       }
     });
   };
@@ -620,7 +620,7 @@ export default function App() {
         setStudentsList((prev) => [savedStudent || student, ...prev]);
         alert('Student record added successfully!');
       } catch (err) {
-        alert('Failed to save student record to PostgreSQL database.');
+        alert('Failed to save student record to database.');
       }
     });
   };
@@ -644,7 +644,7 @@ export default function App() {
         setStudentsList((prev) => [...(savedStudents || students), ...prev]);
         alert(`Successfully imported ${students.length} student records.`);
       } catch (err) {
-        alert('Failed to bulk import student records to PostgreSQL database.');
+        alert('Failed to bulk import student records to database.');
       }
     });
   };
@@ -656,7 +656,7 @@ export default function App() {
         const savedFaculty = await apiService.createFaculty(faculty);
         setFacultyList((prev) => [savedFaculty || faculty, ...prev]);
       } catch (err) {
-        alert('Failed to save faculty record to PostgreSQL database.');
+        alert('Failed to save faculty record to database.');
       }
     });
   };
@@ -668,7 +668,7 @@ export default function App() {
         setFacultyList((prev) => [...(savedFacultyList || facultyList), ...prev]);
         alert(`Successfully imported ${facultyList.length} faculty records.`);
       } catch (err) {
-        alert('Failed to bulk import faculty records to PostgreSQL database.');
+        alert('Failed to bulk import faculty records to database.');
       }
     });
   };

@@ -56,8 +56,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
   const [diagnostics, setDiagnostics] = useState<DiagnosticItem[]>([
     {
       id: 'db',
-      name: 'PostgreSQL Database',
-      category: 'sitportaldb (Port 5432)',
+      name: 'Database System',
+      category: 'Primary Store',
       status: 'OPERATIONAL',
       latencyMs: 8,
       details: 'Connected. Read/Write operational.',
@@ -118,8 +118,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
 
       updated.push({
         id: 'db',
-        name: 'PostgreSQL Database',
-        category: 'sitportaldb (Local / Render Managed)',
+        name: 'Database System',
+        category: 'Managed Store',
         status: 'OPERATIONAL',
         latencyMs: Math.max(4, Math.round(latency / 2)),
         details: `Connected (${notices.length} notices records active).`,
@@ -136,8 +136,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
     } catch (err: any) {
       updated.push({
         id: 'db',
-        name: 'PostgreSQL Database',
-        category: 'sitportaldb',
+        name: 'Database System',
+        category: 'Managed Store',
         status: 'ERROR',
         details: 'Database connection failed: ' + (err.message || 'Unknown error'),
       });
@@ -213,7 +213,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
         soundAlerts,
         emailAlerts,
       });
-      setSaveToast('✅ Configuration saved directly to PostgreSQL database successfully.');
+      setSaveToast('✅ Configuration saved directly to database successfully.');
     } catch (err) {
       setSaveToast('❌ Failed to save configuration to database.');
     }

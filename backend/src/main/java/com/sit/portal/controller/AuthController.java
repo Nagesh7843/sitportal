@@ -115,7 +115,7 @@ public class AuthController {
         String cleanEmail = email.trim().toLowerCase();
         if (userRepository.existsByEmail(cleanEmail)) {
             Map<String, String> err = new HashMap<>();
-            err.put("message", "User with this email already exists in PostgreSQL database.");
+            err.put("message", "User with this email already exists in database.");
             return ResponseEntity.badRequest().body(err);
         }
 

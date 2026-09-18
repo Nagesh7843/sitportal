@@ -254,6 +254,55 @@ export const apiService = {
     return await response.json();
   },
 
+  async updateStudentAddress(
+    id: string | number,
+    address: {
+      addressLine1: string;
+      addressLine2?: string;
+      villageCity: string;
+      taluka: string;
+      district: string;
+      state: string;
+      pinCode: string;
+      country: string;
+    }
+  ): Promise<StudentRecord> {
+    const response = await fetch(`${API_BASE_URL}/students/${id}/address`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(address),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to update student home address');
+    }
+    return await response.json();
+  },
+
+  async updateCurrentStudentAddress(
+    address: {
+      addressLine1: string;
+      addressLine2?: string;
+      villageCity: string;
+      taluka: string;
+      district: string;
+      state: string;
+      pinCode: string;
+      country: string;
+    }
+  ): Promise<StudentRecord> {
+    const response = await fetch(`${API_BASE_URL}/students/me/address`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(address),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to update your home address');
+    }
+    return await response.json();
+  },
+
   async deleteStudent(id: string | number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/students/${id}`, {
       method: 'DELETE',

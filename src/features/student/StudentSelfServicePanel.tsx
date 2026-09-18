@@ -21,6 +21,100 @@ export const StudentSelfServicePanel: React.FC<StudentSelfServicePanelProps> = (
   const [newValue, setNewValue] = useState('');
   const [reason, setReason] = useState('');
 
+  // Address Edit State
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [addressForm, setAddressForm] = useState({
+    addressLine1: student?.addressLine1 || '',
+    addressLine2: student?.addressLine2 || '',
+    villageCity: student?.villageCity || '',
+    taluka: student?.taluka || '',
+    district: student?.district || '',
+    state: student?.state || 'Maharashtra',
+    pinCode: student?.pinCode || '',
+    country: student?.country || 'India'
+  });
+
+  useEffect(() => {
+    if (student) {
+      setAddressForm({
+        addressLine1: student.addressLine1 || '',
+        addressLine2: student.addressLine2 || '',
+        villageCity: student.villageCity || '',
+        taluka: student.taluka || '',
+        district: student.district || '',
+        state: student.state || 'Maharashtra',
+        pinCode: student.pinCode || '',
+        country: student.country || 'India'
+      });
+    }
+  }, [student]);
+
+  const handleOpenAddressModal = () => {
+    setAddressError(null);
+    setAddressForm({
+      addressLine1: student?.addressLine1 || '',
+      addressLine2: student?.addressLine2 || '',
+      villageCity: student?.villageCity || '',
+      taluka: student?.taluka || '',
+      district: student?.district || '',
+      state: student?.state || 'Maharashtra',
+      pinCode: student?.pinCode || '',
+      country: student?.country || 'India'
+    });
+    setShowAddressModal(true);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddressError(null);
+
+    if (!addressForm.addressLine1.trim()) {
+      setAddressError('Address Line 1 is required.');
+      return;
+    }
+    if (!addressForm.villageCity.trim()) {
+      setAddressError('Village / City is required.');
+      return;
+    }
+    if (!addressForm.taluka.trim()) {
+      setAddressError('Taluka is required.');
+      return;
+    }
+    if (!addressForm.district.trim()) {
+      setAddressError('District is required.');
+      return;
+    }
+    if (!addressForm.state.trim()) {
+      setAddressError('State is required.');
+      return;
+    }
+    const pinRegex = /^[1-9][0-9]{5}$/;
+    if (!addressForm.pinCode.trim() || !pinRegex.test(addressForm.pinCode.trim())) {
+      setAddressError('Invalid PIN Code. Must be a valid 6-digit Indian postal code (e.g. 416115).');
+      return;
+    }
+    if (!addressForm.country.trim()) {
+      setAddressError('Country is required.');
+      return;
+    }
+
+    setIsSavingAddress(true);
+    try {
+      const targetId = student?.id || prn;
+      await apiService.updateStudentAddress(targetId, addressForm);
+      setStatusMsg({ type: 'success', text: 'Permanent home address updated successfully!' });
+      setShowAddressModal(false);
+      if (onRefresh) onRefresh();
+      await loadStudentDetails();
+    } catch (err: any) {
+      setAddressError(err.message || 'Failed to update address.');
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
   const prn = student?.prn || student?.rollNo || '';
 
   const loadStudentDetails = async () => {
@@ -171,6 +265,69 @@ export const StudentSelfServicePanel: React.FC<StudentSelfServicePanelProps> = (
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Permanent Home Address Card */}
+      <div className="bg-white rounded-2xl border border-[#d6d9e0] p-6 shadow-xs">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-[#00337c] text-[22px]">home_pin</span>
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm">Permanent Home Address</h3>
+              <p className="text-[11px] text-gray-500">Your verified permanent residence record on institutional file.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleOpenAddressModal}
+            className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#00337c] font-bold text-xs rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">edit_location_alt</span>
+            <span>Update Address</span>
+          </button>
+        </div>
+
+        {student?.addressLine1 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200/70 space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Street & Locality</span>
+              <p className="text-xs font-bold text-slate-900">{student.addressLine1}</p>
+              {student.addressLine2 && (
+                <p className="text-xs text-slate-600">{student.addressLine2}</p>
+              )}
+              <p className="text-xs text-slate-700 font-medium pt-1">
+                {student.villageCity}, Taluka: {student.taluka || 'N/A'}, Dist: {student.district || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/70 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Region & Postal</span>
+                <p className="text-xs font-bold text-slate-900 mt-1">{student.state || 'Maharashtra'}, {student.country || 'India'}</p>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">PIN Code:</span>
+                <span className="px-2 py-0.5 bg-blue-100 text-[#00337c] rounded-md font-mono text-xs font-bold">
+                  {student.pinCode || 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-amber-700 text-[20px]">warning</span>
+              <div>
+                <p className="text-xs font-bold text-amber-900">Home Address Record Incomplete</p>
+                <p className="text-[11px] text-amber-700">Please provide your permanent home address to complete institutional records.</p>
+              </div>
+            </div>
+            <button
+              onClick={handleOpenAddressModal}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-colors shrink-0 cursor-pointer"
+            >
+              Add Address
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Enrollment Progression History Timeline */}
@@ -325,6 +482,146 @@ export const StudentSelfServicePanel: React.FC<StudentSelfServicePanelProps> = (
                   className="px-4 py-2 bg-[#00337c] hover:bg-blue-900 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Home Address Edit Modal */}
+      {showAddressModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-gray-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#00337c]">edit_location_alt</span>
+                <h3 className="font-bold text-gray-900 text-base">Update Permanent Home Address</h3>
+              </div>
+              <button onClick={() => setShowAddressModal(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {addressError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-800 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                <span>{addressError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveAddress} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Address Line 1 *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="House / Flat No., Building, Street Name"
+                  value={addressForm.addressLine1}
+                  onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Address Line 2 (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Area, Locality, Landmark"
+                  value={addressForm.addressLine2}
+                  onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Village / City *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ichalkaranji"
+                    value={addressForm.villageCity}
+                    onChange={(e) => setAddressForm({ ...addressForm, villageCity: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Taluka *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Hatkanangale"
+                    value={addressForm.taluka}
+                    onChange={(e) => setAddressForm({ ...addressForm, taluka: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">District *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kolhapur"
+                    value={addressForm.district}
+                    onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">PIN Code *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="e.g. 416115"
+                    value={addressForm.pinCode}
+                    onChange={(e) => setAddressForm({ ...addressForm, pinCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">State *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addressForm.state}
+                    onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Country *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addressForm.country}
+                    onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingAddress}
+                  className="px-5 py-2 bg-[#00337c] hover:bg-blue-900 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingAddress ? 'Saving Address...' : 'Save Permanent Address'}
                 </button>
               </div>
             </form>

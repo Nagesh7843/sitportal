@@ -60,6 +60,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
   const [parentPhone, setParentPhone] = useState('');
   const [parentRelationship, setParentRelationship] = useState('Father');
 
+  // Permanent / Home Address State (Student Registration)
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
+  const [villageCity, setVillageCity] = useState('');
+  const [taluka, setTaluka] = useState('');
+  const [district, setDistrict] = useState('');
+  const [state, setState] = useState('Maharashtra');
+  const [pinCode, setPinCode] = useState('');
+  const [country, setCountry] = useState('India');
+
   // Parent First-Time Password Activation Modal State
   const [showParentSetupModal, setShowParentSetupModal] = useState(false);
   const [parentSetupEmail, setParentSetupEmail] = useState('');
@@ -231,6 +241,44 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           return;
         }
 
+        // Home Address Validations
+        if (!addressLine1.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter Address Line 1 for permanent home address.');
+          return;
+        }
+        if (!villageCity.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter Village / City for permanent home address.');
+          return;
+        }
+        if (!taluka.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter Taluka for permanent home address.');
+          return;
+        }
+        if (!district.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter District for permanent home address.');
+          return;
+        }
+        if (!state.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter State for permanent home address.');
+          return;
+        }
+        const pinRegex = /^[1-9][0-9]{5}$/;
+        if (!pinCode.trim() || !pinRegex.test(pinCode.trim())) {
+          setIsLoading(false);
+          setErrorMessage('Invalid PIN Code. Please enter a valid 6-digit Indian postal code (e.g. 416115).');
+          return;
+        }
+        if (!country.trim()) {
+          setIsLoading(false);
+          setErrorMessage('Please enter Country for permanent home address.');
+          return;
+        }
+
         // 1. Register User in Database
         const dbUser = await apiService.registerUser({
           name: fullName.trim(),
@@ -260,7 +308,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
             parentName: parentName.trim(),
             parentEmail: parentEmail.trim().toLowerCase(),
             parentPhone: parentPhone.trim(),
-            parentRelationship: parentRelationship
+            parentRelationship: parentRelationship,
+            addressLine1: addressLine1.trim(),
+            addressLine2: addressLine2.trim() || undefined,
+            villageCity: villageCity.trim(),
+            taluka: taluka.trim(),
+            district: district.trim(),
+            state: state.trim() || 'Maharashtra',
+            pinCode: pinCode.trim(),
+            country: country.trim() || 'India'
           });
         } catch (err) {
           console.warn('Student record add notice:', err);
@@ -933,6 +989,105 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
                         <option value="Mother">Mother</option>
                         <option value="Guardian">Guardian</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Dedicated Home Address Section */}
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[16px] text-[#000666]">home_pin</span>
+                        Permanent / Home Address *
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">All required except Line 2</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <input
+                          type="text"
+                          required
+                          value={addressLine1}
+                          onChange={(e) => setAddressLine1(e.target.value)}
+                          placeholder="Address Line 1 (House/Flat No, Building, Street) *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={addressLine2}
+                          onChange={(e) => setAddressLine2(e.target.value)}
+                          placeholder="Address Line 2 (Area, Landmark) - Optional"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          required
+                          value={villageCity}
+                          onChange={(e) => setVillageCity(e.target.value)}
+                          placeholder="Village / City *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                        <input
+                          type="text"
+                          required
+                          value={taluka}
+                          onChange={(e) => setTaluka(e.target.value)}
+                          placeholder="Taluka *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          required
+                          value={district}
+                          onChange={(e) => setDistrict(e.target.value)}
+                          placeholder="District *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                        <div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={6}
+                            value={pinCode}
+                            onChange={(e) => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="PIN Code (6 Digits) *"
+                            className={`w-full bg-slate-50 border rounded-xl px-3 py-1.5 text-xs text-slate-900 font-mono outline-none focus:bg-white focus:ring-2 ${
+                              pinCode && !/^[1-9][0-9]{5}$/.test(pinCode)
+                                ? 'border-rose-400 focus:ring-rose-500'
+                                : 'border-slate-300 focus:ring-[#000666]'
+                            }`}
+                          />
+                          {pinCode && !/^[1-9][0-9]{5}$/.test(pinCode) && (
+                            <span className="text-[10px] text-rose-600 font-semibold block mt-0.5">
+                              Must be 6 digits (first digit 1-9)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          required
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          placeholder="State *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                        <input
+                          type="text"
+                          required
+                          value={country}
+                          onChange={(e) => setCountry(e.target.value)}
+                          placeholder="Country *"
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#000666]"
+                        />
+                      </div>
                     </div>
                   </div>
                 </>

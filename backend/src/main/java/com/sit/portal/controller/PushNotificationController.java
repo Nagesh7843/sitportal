@@ -87,7 +87,9 @@ public class PushNotificationController {
             sub = existingList.get(0);
             if (existingList.size() > 1) {
                 for (int i = 1; i < existingList.size(); i++) {
-                    repository.delete(existingList.get(i));
+                    try {
+                        repository.deleteById(existingList.get(i).getId());
+                    } catch (Exception ignored) {}
                 }
             }
         } else {

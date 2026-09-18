@@ -907,7 +907,7 @@
             "description": "Creates a new student record.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"prn\": \"PRN2026CSE045\",\n  \"rollNo\": \"STU-4501\",\n  \"name\": \"Rohan Verma\",\n  \"email\": \"rohan.verma@sitcoe.ac.in\",\n  \"academicYear\": \"BE\",\n  \"division\": \"Div B\",\n  \"batchGroup\": \"B2\",\n  \"department\": \"CSE\",\n  \"gpa\": 8.75,\n  \"attendance\": 92.5,\n  \"status\": \"Active\"\n}",
+              "raw": "{\n  \"prn\": \"PRN2026CSE045\",\n  \"rollNo\": \"STU-4501\",\n  \"name\": \"Rohan Verma\",\n  \"email\": \"rohan.verma@sitcoe.ac.in\",\n  \"academicYear\": \"BE\",\n  \"division\": \"Div B\",\n  \"batchGroup\": \"B2\",\n  \"department\": \"CSE\",\n  \"gpa\": 8.75,\n  \"attendance\": 92.5,\n  \"status\": \"Active\",\n  \"addressLine1\": \"Flat 402, Sunshine Heights, Station Road\",\n  \"addressLine2\": \"Near Shivaji Chowk\",\n  \"villageCity\": \"Yadrav\",\n  \"taluka\": \"Shirol\",\n  \"district\": \"Kolhapur\",\n  \"state\": \"Maharashtra\",\n  \"pinCode\": \"416115\",\n  \"country\": \"India\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1013,6 +1013,80 @@
               ]
             },
             "description": "Removes student record from portal."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Student Home Address (Self-Service Profile)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/students/me/address",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "me",
+                "address"
+              ]
+            },
+            "description": "Authenticated student updates their permanent/home address. Enforces Indian 6-digit PIN code validation.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressLine1\": \"Flat 402, Sunshine Heights, Station Road\",\n  \"addressLine2\": \"Near Shivaji Chowk\",\n  \"villageCity\": \"Yadrav\",\n  \"taluka\": \"Shirol\",\n  \"district\": \"Kolhapur\",\n  \"state\": \"Maharashtra\",\n  \"pinCode\": \"416115\",\n  \"country\": \"India\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Student Home Address by ID (Admin / Faculty)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/students/1/address",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "1",
+                "address"
+              ]
+            },
+            "description": "Authorized administrative faculty updates a student's permanent home address.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressLine1\": \"Plot No. 12, Guruprasad Nagar\",\n  \"addressLine2\": \"Opposite SIT COE Campus\",\n  \"villageCity\": \"Yadrav\",\n  \"taluka\": \"Shirol\",\n  \"district\": \"Kolhapur\",\n  \"state\": \"Maharashtra\",\n  \"pinCode\": \"416115\",\n  \"country\": \"India\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": []
         },

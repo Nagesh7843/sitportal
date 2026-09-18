@@ -332,51 +332,41 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
           setSelectedDivision(initialDiv);
           if (initialDiv) setSelectedYearLevel(initialDiv.yearLevel);
         } else {
-          const sampleDivs = [
-            { id: 1, yearLevel: 'SE', name: 'Div A' },
-            { id: 2, yearLevel: 'SE', name: 'Div B' },
-            { id: 3, yearLevel: 'SE', name: 'Div C' },
-            { id: 4, yearLevel: 'TE', name: 'Div A' },
-            { id: 5, yearLevel: 'TE', name: 'Div B' },
-            { id: 6, yearLevel: 'TE', name: 'Div C' },
-            { id: 7, yearLevel: 'BE', name: 'Div A' },
-            { id: 8, yearLevel: 'BE', name: 'Div B' },
-            { id: 9, yearLevel: 'BE', name: 'Div C' }
-          ];
-          setDivisions(sampleDivs);
-          setSelectedDivision(sampleDivs[0]);
-          setSelectedYearLevel('SE');
+          setDivisions([]);
+          setSelectedDivision(null);
         }
       } catch (err) {
-        console.warn('Failed to load dept details:', err);
+        console.warn('Failed to load dept details from database:', err);
+        setDivisions([]);
+        setSelectedDivision(null);
       }
     };
 
     loadDeptDetails();
   }, [selectedDept]);
 
-  // When selected division changes, load batches
+  // When selected division changes, load batches from database
   useEffect(() => {
-    if (!selectedDivision) return;
+    if (!selectedDivision) {
+      setBatches([]);
+      setSelectedBatch(null);
+      return;
+    }
 
     const loadBatches = async () => {
       try {
         const batchesRes = await apiService.getBatches(selectedDivision.id).catch(() => []);
-        const divLetter = (selectedDivision.name || 'Div A').replace('Div ', '').trim();
         if (batchesRes && batchesRes.length > 0) {
           setBatches(batchesRes);
           setSelectedBatch(batchesRes[0]);
         } else {
-          const sampleBatches = [
-            { id: 1, name: `Batch ${divLetter}1` },
-            { id: 2, name: `Batch ${divLetter}2` },
-            { id: 3, name: `Batch ${divLetter}3` }
-          ];
-          setBatches(sampleBatches);
-          setSelectedBatch(sampleBatches[0]);
+          setBatches([]);
+          setSelectedBatch(null);
         }
       } catch (err) {
-        console.warn('Failed to load division batches:', err);
+        console.warn('Failed to load division batches from database:', err);
+        setBatches([]);
+        setSelectedBatch(null);
       }
     };
 
@@ -397,8 +387,7 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
       const prns = cohortStudents.map((s: any) => s.prn || s.rollNo).filter(Boolean);
 
       if (prns.length === 0) {
-        // Fallback demo PRNs if none matched
-        prns.push('2410104007', '2410104011', '2410104016');
+        throw new Error(`No students found enrolled in ${transitionSourceYear} level to transition in database.`);
       }
 
       await apiService.transitionCohort({
@@ -571,30 +560,36 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
 
             {/* Divisions Grid: Div A, Div B, Div C */}
             <div className="grid grid-cols-3 gap-2.5">
-              {divisions
-                .filter(d => d.yearLevel === selectedYearLevel)
-                .map((div) => {
-                  const isDivSelected = selectedDivision?.id === div.id;
-                  const divCount = getDivisionStudentCount(div.yearLevel, div.name);
-                  return (
-                    <button
-                      key={div.id}
-                      onClick={() => setSelectedDivision(div)}
-                      className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
-                        isDivSelected
-                          ? 'bg-[#000666] text-white border-[#000666] shadow-md scale-[1.02]'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
-                      }`}
-                    >
-                      <h4 className="font-extrabold text-sm">{div.name}</h4>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 mt-1.5 inline-block rounded-full ${
-                        isDivSelected ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
-                      }`}>
-                        {divCount} Students
-                      </span>
-                    </button>
-                  );
-                })}
+              {divisions.filter(d => d.yearLevel === selectedYearLevel).length === 0 ? (
+                <div className="col-span-3 py-6 text-center text-xs text-slate-400 italic">
+                  No divisions found in database for {selectedYearLevel}.
+                </div>
+              ) : (
+                divisions
+                  .filter(d => d.yearLevel === selectedYearLevel)
+                  .map((div) => {
+                    const isDivSelected = selectedDivision?.id === div.id;
+                    const divCount = getDivisionStudentCount(div.yearLevel, div.name);
+                    return (
+                      <button
+                        key={div.id}
+                        onClick={() => setSelectedDivision(div)}
+                        className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                          isDivSelected
+                            ? 'bg-[#000666] text-white border-[#000666] shadow-md scale-[1.02]'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                        }`}
+                      >
+                        <h4 className="font-extrabold text-sm">{div.name}</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 mt-1.5 inline-block rounded-full ${
+                          isDivSelected ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                        }`}>
+                          {divCount} Students
+                        </span>
+                      </button>
+                    );
+                  })
+              )}
             </div>
           </div>
 
@@ -611,7 +606,12 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
             </div>
 
             <div className="space-y-2.5">
-              {batches.map((b, idx) => {
+              {batches.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400 italic">
+                  No batches configured in database for {selectedDivision?.name || 'this division'}.
+                </div>
+              ) : (
+                batches.map((b, idx) => {
                 const batchCount = getBatchStudentCount(b.name, idx);
                 const isBatchSelected = selectedBatch?.id === b.id || (!selectedBatch && idx === 0);
                 const isThisDefault = isBatchDefault(b.name);
@@ -649,7 +649,7 @@ export const DepartmentHierarchyView: React.FC<DepartmentHierarchyViewProps> = (
                     </span>
                   </div>
                 );
-              })}
+              }))}
             </div>
 
             {/* Prominent Default Batch Action Strip */}

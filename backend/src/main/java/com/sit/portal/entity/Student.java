@@ -67,6 +67,33 @@ public class Student {
     @Builder.Default
     private String parentRelationship = "Parent/Guardian";
 
+    // Permanent / Home Address Fields
+    @Column(name = "address_line1")
+    private String addressLine1;
+
+    @Column(name = "address_line2")
+    private String addressLine2;
+
+    @Column(name = "village_city")
+    private String villageCity;
+
+    @Column(name = "taluka")
+    private String taluka;
+
+    @Column(name = "district")
+    private String district;
+
+    @Column(name = "state")
+    @Builder.Default
+    private String state = "Maharashtra";
+
+    @Column(name = "pin_code", length = 6)
+    private String pinCode;
+
+    @Column(name = "country")
+    @Builder.Default
+    private String country = "India";
+
     @Builder.Default
     private String status = "Active";
 }

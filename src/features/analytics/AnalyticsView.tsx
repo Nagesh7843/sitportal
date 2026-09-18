@@ -84,7 +84,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ notices, students,
 
           <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl border border-white/20">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[12px] font-bold text-white">Live PostgreSQL Sync</span>
+            <span className="text-[12px] font-bold text-white">Live Database Sync</span>
           </div>
         </div>
       </div>
@@ -198,7 +198,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ notices, students,
               <span className="material-symbols-outlined text-[#000666]">history</span>
               Live System Activity & Notification Audit Trail
             </h3>
-            <p className="text-xs text-gray-500">Real-time database track records from PostgreSQL</p>
+            <p className="text-xs text-gray-500">Real-time database audit trail records</p>
           </div>
           <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs flex items-center gap-1.5 border border-emerald-200">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>

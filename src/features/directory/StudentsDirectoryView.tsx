@@ -87,6 +87,14 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     parentEmail: string;
     parentPhone: string;
     parentRelationship: string;
+    addressLine1: string;
+    addressLine2: string;
+    villageCity: string;
+    taluka: string;
+    district: string;
+    state: string;
+    pinCode: string;
+    country: string;
   }>({
     name: '',
     rollNo: '',
@@ -107,7 +115,15 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     parentName: '',
     parentEmail: '',
     parentPhone: '',
-    parentRelationship: 'Father'
+    parentRelationship: 'Father',
+    addressLine1: '',
+    addressLine2: '',
+    villageCity: '',
+    taluka: '',
+    district: '',
+    state: 'Maharashtra',
+    pinCode: '',
+    country: 'India'
   });
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -143,7 +159,15 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       parentName: student.parentName || '',
       parentEmail: student.parentEmail || '',
       parentPhone: student.parentPhone || '',
-      parentRelationship: student.parentRelationship || 'Father'
+      parentRelationship: student.parentRelationship || 'Father',
+      addressLine1: student.addressLine1 || '',
+      addressLine2: student.addressLine2 || '',
+      villageCity: student.villageCity || '',
+      taluka: student.taluka || '',
+      district: student.district || '',
+      state: student.state || 'Maharashtra',
+      pinCode: student.pinCode || '',
+      country: student.country || 'India'
     });
 
     if (prnKey) {
@@ -187,7 +211,15 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       parentName: editForm.parentName.trim(),
       parentEmail: editForm.parentEmail.trim().toLowerCase(),
       parentPhone: editForm.parentPhone.trim(),
-      parentRelationship: editForm.parentRelationship.trim()
+      parentRelationship: editForm.parentRelationship.trim(),
+      addressLine1: editForm.addressLine1.trim(),
+      addressLine2: editForm.addressLine2.trim() || undefined,
+      villageCity: editForm.villageCity.trim(),
+      taluka: editForm.taluka.trim(),
+      district: editForm.district.trim(),
+      state: editForm.state.trim() || 'Maharashtra',
+      pinCode: editForm.pinCode.trim(),
+      country: editForm.country.trim() || 'India'
     };
 
     onUpdateStudent(studentId, updatedData);
@@ -523,6 +555,12 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                       <div>
                         <p className="font-bold text-[#071e27] leading-tight text-[11px]">{st.name}</p>
                         <p className="text-[10px] font-mono text-[#454652]">{st.rollNo} • <span className="font-sans">{st.email}</span></p>
+                        {st.villageCity && st.district && (
+                          <p className="text-[9px] text-emerald-800 flex items-center gap-0.5 mt-0.5 font-medium">
+                            <span className="material-symbols-outlined text-[11px]">home_pin</span>
+                            <span>{st.villageCity}, {st.district} ({st.pinCode || ''})</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -939,6 +977,110 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                       <option value="Guardian">Guardian</option>
                       <option value="Other">Other</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Permanent Home Address (Staff & Administrative Access) */}
+              <div className="bg-emerald-50/50 p-4 rounded-xl space-y-3 border border-emerald-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-emerald-700">home_pin</span>
+                    Permanent / Home Address (Confidential Staff View)
+                  </h4>
+                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                    Faculty / Admin Only
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Address Line 1 (Flat, House no., Building, Street) *</label>
+                    <input
+                      type="text"
+                      value={editForm.addressLine1}
+                      onChange={(e) => setEditForm({ ...editForm, addressLine1: e.target.value })}
+                      placeholder="e.g. 102, Shanti Niwas, Station Road"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Address Line 2 (Area, Colony, Sector, Landmark - Optional)</label>
+                    <input
+                      type="text"
+                      value={editForm.addressLine2}
+                      onChange={(e) => setEditForm({ ...editForm, addressLine2: e.target.value })}
+                      placeholder="e.g. Near Ganpati Temple"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Village / City *</label>
+                    <input
+                      type="text"
+                      value={editForm.villageCity}
+                      onChange={(e) => setEditForm({ ...editForm, villageCity: e.target.value })}
+                      placeholder="e.g. Yadrav / Ichalkaranji"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Taluka *</label>
+                    <input
+                      type="text"
+                      value={editForm.taluka}
+                      onChange={(e) => setEditForm({ ...editForm, taluka: e.target.value })}
+                      placeholder="e.g. Shirol"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">District *</label>
+                    <input
+                      type="text"
+                      value={editForm.district}
+                      onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
+                      placeholder="e.g. Kolhapur"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">State *</label>
+                    <input
+                      type="text"
+                      value={editForm.state}
+                      onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
+                      placeholder="e.g. Maharashtra"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">PIN Code (6 digits) *</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={editForm.pinCode}
+                      onChange={(e) => setEditForm({ ...editForm, pinCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                      placeholder="416115"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase">Country *</label>
+                    <input
+                      type="text"
+                      value={editForm.country}
+                      onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                      placeholder="India"
+                      className="w-full mt-1 px-3 py-2 border border-emerald-200 bg-white rounded-lg text-xs focus:ring-2 focus:ring-[#000666] outline-none"
+                    />
                   </div>
                 </div>
               </div>

@@ -118,7 +118,7 @@ export const CollegeNewsEventsSection: React.FC<CollegeNewsEventsSectionProps> =
         location: 'SITCOE Main Auditorium & CSE Labs',
         organizer: 'Department of Computer Science & Engineering'
       });
-      alert(`🎉 Event "${created.title}" published successfully to PostgreSQL and desktop notification sent to all users!`);
+      alert(`🎉 Event "${created.title}" published successfully to database and desktop notification sent to all users!`);
     } catch (err: any) {
       alert(err.message || 'Failed to publish event.');
     }

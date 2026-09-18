@@ -56,6 +56,14 @@ export interface StudentRecord {
   parentEmail?: string;
   parentPhone?: string;
   parentRelationship?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  villageCity?: string;
+  taluka?: string;
+  district?: string;
+  state?: string;
+  pinCode?: string;
+  country?: string;
 }
 
 export interface CourseItem {
