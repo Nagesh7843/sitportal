@@ -64,6 +64,9 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
     }
   }, [isFaculty, activeWorkingBatch]);
   
+  // Export CSV Loading State
+  const [isExporting, setIsExporting] = useState(false);
+
   // Edit Student Modal State
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
   const [editForm, setEditForm] = useState<{
@@ -338,7 +341,6 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
       matchesDiv = sDiv === divFilterClean || sDiv === divFilterClean.replace('DIV', '');
     }
 
-    // 5. Batch Group (Strict match: A1 should only match A1, not A3)
     const sBatch = (s.batchGroup || '').toUpperCase().replace('BATCH', '').trim();
     const bFilterClean = (batchGroupFilter || 'ALL').toUpperCase().replace('BATCH', '').trim();
     let matchesBatchGroup = true;
@@ -348,6 +350,97 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
 
     return matchesSearch && matchesDept && matchesYear && matchesDiv && matchesBatchGroup;
   });
+
+  const handleExportCsv = () => {
+    setIsExporting(true);
+    try {
+      if (!filtered || filtered.length === 0) {
+        alert('No students found matching the current search/filters to download.');
+        setIsExporting(false);
+        return;
+      }
+
+      const escapeCsvCell = (val: any): string => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val);
+        return `"${str.replace(/"/g, '""')}"`;
+      };
+
+      const headers = [
+        'Roll No',
+        'Student Name',
+        'PRN',
+        'Email',
+        'Department',
+        'Academic Year',
+        'Division',
+        'Batch Group',
+        'Cohort Batch',
+        'Status',
+        'GPA',
+        'Attendance (%)',
+        'Parent Name',
+        'Parent Relationship',
+        'Parent Email',
+        'Parent Phone',
+        'Address Line 1',
+        'City / Village',
+        'Taluka',
+        'District',
+        'State',
+        'PIN Code'
+      ];
+
+      const rows = filtered.map((s) => [
+        s.rollNo ?? '',
+        s.name ?? '',
+        s.prn ?? '',
+        s.email ?? '',
+        s.department ?? 'CSE',
+        s.academicYear ?? '',
+        s.division ?? '',
+        s.batchGroup ?? '',
+        s.cohortBatch ?? '',
+        s.status ?? 'Active',
+        s.gpa ?? '',
+        s.attendance ?? '',
+        s.parentName ?? '',
+        s.parentRelationship ?? '',
+        s.parentEmail ?? '',
+        s.parentPhone ?? '',
+        s.addressLine1 ?? '',
+        s.villageCity ?? '',
+        s.taluka ?? '',
+        s.district ?? '',
+        s.state ?? '',
+        s.pinCode ?? ''
+      ]);
+
+      const csvContent = [
+        headers.map(escapeCsvCell).join(','),
+        ...rows.map((row) => row.map(escapeCsvCell).join(','))
+      ].join('\r\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const filename = `students_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.csv`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download CSV error:', err);
+      alert('Failed to generate students CSV export. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -391,6 +484,17 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
               </button>
             </>
           )}
+          <button
+            onClick={handleExportCsv}
+            disabled={isExporting}
+            title={`Download CSV (${filtered.length} students)`}
+            className="flex-1 sm:flex-none justify-center bg-white text-[#000666] border-2 border-white hover:bg-[#cfe6f2] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+          >
+            <span className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}>
+              {isExporting ? 'progress_activity' : 'download'}
+            </span>
+            <span>{isExporting ? 'Exporting...' : 'Download CSV'}</span>
+          </button>
           <button
             onClick={() => onNavigate('bulk-email')}
             className="flex-1 sm:flex-none justify-center bg-[#759efd] text-[#00337c] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
@@ -444,6 +548,19 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                 );
               })}
             </div>
+
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              title={`Download CSV (${filtered.length} students)`}
+              className="px-3 py-1.5 bg-[#000666] hover:bg-[#002171] disabled:opacity-60 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <span className={`material-symbols-outlined text-[15px] ${isExporting ? 'animate-spin' : ''}`}>
+                {isExporting ? 'progress_activity' : 'download'}
+              </span>
+              <span>{isExporting ? 'Exporting...' : 'Download CSV'}</span>
+            </button>
           </div>
         ) : (
           /* Global Directory View Filters (Admin & Staff) */
@@ -524,6 +641,21 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
                   </optgroup>
                 )}
               </select>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={isExporting}
+                title={`Download CSV (${filtered.length} students)`}
+                className="w-full sm:w-auto px-3.5 py-1.5 bg-[#000666] hover:bg-[#002171] disabled:opacity-60 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <span className={`material-symbols-outlined text-[16px] ${isExporting ? 'animate-spin' : ''}`}>
+                  {isExporting ? 'progress_activity' : 'download'}
+                </span>
+                <span>{isExporting ? 'Exporting...' : 'Download CSV'}</span>
+              </button>
             </div>
           </div>
         )}
