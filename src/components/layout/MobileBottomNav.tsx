@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewMode, UserRole } from '@/types';
-import { Home, LayoutDashboard, Megaphone, HelpCircle, Menu, School } from 'lucide-react';
+import { Home, LayoutDashboard, Megaphone, HelpCircle, Menu, School, Users } from 'lucide-react';
 
 interface MobileBottomNavProps {
   activeView: ViewMode;
@@ -30,7 +30,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       case 'parent':
         return 'parent-dashboard';
       default:
-        return 'organization';
+        return 'faculty';
     }
   };
 
@@ -47,7 +47,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       case 'parent':
         return 'Parent';
       default:
-        return 'Depts';
+        return 'Faculty';
     }
   };
 
@@ -70,7 +70,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     {
       id: dashboardView,
       label: getDashboardLabel(),
-      icon: userRole === 'student' ? School : LayoutDashboard,
+      icon: userRole === 'student' ? School : (userRole === 'public' ? Users : LayoutDashboard),
       isActive: activeView === dashboardView
     },
     {

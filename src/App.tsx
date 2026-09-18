@@ -711,13 +711,17 @@ export default function App() {
 
         {/* Global Updates Ticker */}
         <div className="px-3 sm:px-6 pt-3 sm:pt-4 max-w-[1440px] w-full mx-auto min-w-0">
-          <div className="bg-white border border-slate-200 rounded-xl h-10 flex items-center overflow-hidden px-3 sm:px-4 text-xs shadow-sm">
+          <div 
+            className="bg-white border border-slate-200 rounded-xl h-10 flex items-center overflow-hidden px-3 sm:px-4 text-xs shadow-sm cursor-pointer group select-none"
+            title="Click to view notices • Hover or touch to pause"
+            onClick={() => handleProtectedNavigate('notices')}
+          >
             <span className="font-bold text-zinc-900 uppercase tracking-wider text-[11px] shrink-0 mr-2 sm:mr-4 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Updates
             </span>
             <div className="flex-1 overflow-hidden relative">
-              <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 text-[12px] w-max shrink-0">
+              <div className="ticker-animate whitespace-nowrap flex items-center gap-10 text-slate-600 group-hover:text-indigo-900 text-[12px] w-max shrink-0 transition-colors">
                 {notices.length > 0 ? (
                   notices.map((notice) => (
                     <span key={notice.id} className="shrink-0 whitespace-nowrap inline-block font-medium">
@@ -909,7 +913,7 @@ export default function App() {
             />
           )}
 
-          {activeView === 'organization' && (
+          {activeView === 'organization' && (userRole === 'admin' || userRole === 'hod' || userRole === 'faculty') && (
             <DepartmentHierarchyView
               userRole={userRole}
               currentProfile={currentProfile}

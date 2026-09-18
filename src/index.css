@@ -104,13 +104,14 @@
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  animation: ticker 40s linear infinite;
+  animation: ticker 95s linear infinite;
   width: max-content;
   flex-shrink: 0;
   will-change: transform;
 }
 
-.ticker-animate:hover {
+.ticker-animate:hover,
+.ticker-animate:active {
   animation-play-state: paused;
 }
 

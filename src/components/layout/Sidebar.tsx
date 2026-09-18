@@ -85,7 +85,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       // Public guest
       return [
         { id: 'public-landing', label: 'Portal Home', icon: 'public' },
-        { id: 'organization', label: 'Departments & Hierarchy', icon: 'domain' },
         { id: 'notices', label: 'Digital Notices', icon: 'campaign' },
         { id: 'academic-calendar', label: 'Academic Calendar', icon: 'calendar_month' },
         { id: 'questions', label: 'Central Q&A', icon: 'forum' },
