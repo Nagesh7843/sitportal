@@ -485,17 +485,6 @@ export const StudentsDirectoryView: React.FC<StudentsDirectoryViewProps> = ({
             </>
           )}
           <button
-            onClick={handleExportCsv}
-            disabled={isExporting}
-            title={`Download CSV (${filtered.length} students)`}
-            className="flex-1 sm:flex-none justify-center bg-white text-[#000666] border-2 border-white hover:bg-[#cfe6f2] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}>
-              {isExporting ? 'progress_activity' : 'download'}
-            </span>
-            <span>{isExporting ? 'Exporting...' : 'Download CSV'}</span>
-          </button>
-          <button
             onClick={() => onNavigate('bulk-email')}
             className="flex-1 sm:flex-none justify-center bg-[#759efd] text-[#00337c] font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] hover:bg-[#b0c6ff] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
           >
