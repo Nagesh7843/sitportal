@@ -322,21 +322,62 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentProfile }) =>
 
       {/* 1. System Health & Diagnostic Live Status */}
       <div className="bg-white p-6 rounded-2xl border border-[#c6c5d4] shadow-xs space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="font-bold text-[16px] text-[#071e27] flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-600 text-[20px]">verified</span>
-              Live System Health & Service Diagnostics
-            </h3>
-            <p className="text-[12px] text-[#454652]">
-              Real-time connectivity and latency status of all SIT Portal core infrastructure services.
-            </p>
-          </div>
-          <span className="text-[11px] font-bold px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            All Core Systems Operational
-          </span>
-        </div>
+        {(() => {
+          const hasErrors = diagnostics.some((d) => d.status === 'ERROR');
+          const hasWarnings = diagnostics.some((d) => d.status === 'WARNING');
+          return (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-bold text-[16px] text-[#071e27] flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-[20px] ${hasErrors ? 'text-rose-600' : hasWarnings ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      {hasErrors ? 'error' : hasWarnings ? 'warning' : 'verified'}
+                    </span>
+                    Live System Health & Service Diagnostics
+                  </h3>
+                  <p className="text-[12px] text-[#454652]">
+                    Real-time connectivity and latency status of all SIT Portal core infrastructure services.
+                  </p>
+                </div>
+                <div>
+                  {isRunningDiagnostics ? (
+                    <span className="text-[11px] font-bold px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full flex items-center gap-1.5 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                      Checking Core Services...
+                    </span>
+                  ) : hasErrors ? (
+                    <span className="text-[11px] font-bold px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full flex items-center gap-1.5 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                      System Outage Detected
+                    </span>
+                  ) : hasWarnings ? (
+                    <span className="text-[11px] font-bold px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full flex items-center gap-1.5 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                      Degraded / Fallback Mode
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full flex items-center gap-1.5 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      All Core Systems Operational
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {hasErrors && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 space-y-1.5">
+                  <div className="flex items-center gap-2 font-bold text-rose-800">
+                    <span className="material-symbols-outlined text-[18px]">dns</span>
+                    <span>Backend Endpoint Unreachable: <code className="font-mono text-[11px] bg-rose-100 px-1.5 py-0.5 rounded text-rose-900">{apiService.getBaseUrl()}</code></span>
+                  </div>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    When hosted on Vercel, the Spring Boot API engine cannot run on port 8080 of the frontend host. Deploy the backend (e.g. on Render, Railway, or VPS) and define <code className="font-bold font-mono text-slate-800">VITE_API_BASE_URL=https://&lt;your-backend-domain&gt;</code> in Vercel Project Settings &rarr; Environment Variables.
+                  </p>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
           {diagnostics.map((item) => (

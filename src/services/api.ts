@@ -27,6 +27,15 @@ const getAuthHeaders = (): Record<string, string> => {
 };
 
 export const apiService = {
+  getBaseUrl(): string {
+    return API_BASE_URL;
+  },
+
+  isConfigured(): boolean {
+    const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+    return Boolean(envUrl && envUrl.trim() !== '');
+  },
+
   // Authentication Endpoints (JWT + PostgreSQL sitportaldb)
   async loginUser(email: string, password: string) {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
