@@ -6,11 +6,11 @@ databases:
 
 services:
   - type: web
-    name: sit-cse-portal-backend
-    env: java
+    name: sitportal
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
     plan: free
-    buildCommand: "cd backend && mvn clean package -DskipTests"
-    startCommand: "java -jar backend/target/sit-cse-portal-backend-*.jar"
     envVars:
       - key: PORT
         value: 8080
@@ -32,3 +32,7 @@ services:
         value: BIZRhlCjiAthaeVDsYk6XhYD-W0wByq8A65inxm8AjgA8WJQTgV1F5FDmtLP15cwPHXt3fsF5aVsFgJvu-usg7U
       - key: VAPID_PRIVATE_KEY
         value: g5y8LW8emWI87N44Rc_NFg1NbNUEKv0Ux7B22WBLfeI
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://sitportal.vercel.app,https://*.vercel.app,http://localhost:3000,http://127.0.0.1:3000"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx350m -Xms128m -XX:+UseContainerSupport"

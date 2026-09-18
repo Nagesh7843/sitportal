@@ -14,10 +14,20 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("*")
+                        .allowedOriginPatterns(
+                                "http://localhost:[*]",
+                                "http://127.0.0.1:[*]",
+                                "https://*.vercel.app",
+                                "https://*.onrender.com",
+                                "https://sitportal.vercel.app",
+                                "https://sitportal.onrender.com",
+                                "https://sitcoe.ac.in",
+                                "*"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")
-                        .allowCredentials(false);
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
