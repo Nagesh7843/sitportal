@@ -5781,6 +5781,151 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "👨‍👩‍👦 25. Parents & Guardian Portal Module",
+      "item": [
+        {
+          "name": "Get Authenticated Parent Profile & Wards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parents/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parents",
+                "me"
+              ]
+            },
+            "description": "Returns parent details, linked student info, and verified wards."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Verified Ward Academic Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parents/me/students/2023CSE014",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parents",
+                "me",
+                "students",
+                "2023CSE014"
+              ]
+            },
+            "description": "Fetches academic transcript, current enrollment, and history for an authorized ward."
+          },
+          "response": []
+        },
+        {
+          "name": "Link Student to Parent Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentRollNo\": \"2023CSE014\",\n  \"relationship\": \"Father\",\n  \"alternatePhone\": \"+91 9876543210\",\n  \"occupation\": \"Engineer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/parents/link-student",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parents",
+                "link-student"
+              ]
+            },
+            "description": "Associates a student roll number with the parent's account."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parent Department Notices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parents/notices",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parents",
+                "notices"
+              ]
+            },
+            "description": "Fetches all prioritized and published department circulars for parents."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Parents Directory (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parents"
+              ]
+            },
+            "description": "Returns directory list of all registered parents in the department."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

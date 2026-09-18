@@ -267,6 +267,12 @@ public class UserController {
                 Optional<Parent> parentOpt = parentRepository.findByUserId(savedUser.getId());
                 if (parentOpt.isPresent()) {
                     Parent p = parentOpt.get();
+                    if (savedUser.getName() != null && !savedUser.getName().trim().isEmpty()) {
+                        p.setParentName(savedUser.getName().trim());
+                    }
+                    if (savedUser.getEmail() != null && !savedUser.getEmail().trim().isEmpty()) {
+                        p.setEmail(savedUser.getEmail().trim().toLowerCase());
+                    }
                     if (savedUser.getPhone() != null) p.setAlternatePhone(savedUser.getPhone());
                     if (updates.containsKey("parentRelationship") && updates.get("parentRelationship") != null) {
                         p.setRelationship(updates.get("parentRelationship").toString());

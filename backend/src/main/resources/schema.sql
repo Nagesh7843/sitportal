@@ -255,7 +255,10 @@ CREATE TABLE IF NOT EXISTS system_notifications (
 CREATE TABLE IF NOT EXISTS parents (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    student_roll_no VARCHAR(30) NOT NULL,
+    parent_name VARCHAR(255) NOT NULL DEFAULT 'Parent/Guardian',
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    student_roll_no VARCHAR(100) NOT NULL,
     student_name VARCHAR(100),
     relationship VARCHAR(50) DEFAULT 'Parent/Guardian',
     alternate_phone VARCHAR(20),

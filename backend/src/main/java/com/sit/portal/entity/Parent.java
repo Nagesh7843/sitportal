@@ -21,6 +21,16 @@ public class Parent {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(name = "parent_name", nullable = false)
+    @Builder.Default
+    private String parentName = "Parent/Guardian";
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "phone")
+    private String phone;
+
     @Column(name = "student_roll_no", nullable = false)
     private String studentRollNo;
 
@@ -42,9 +52,15 @@ public class Parent {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PrePersist
-    protected void onCreate() {
+    @PreUpdate
+    protected void ensureDefaults() {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
+        }
+        if (this.parentName == null || this.parentName.trim().isEmpty()) {
+            this.parentName = (this.studentName != null && !this.studentName.trim().isEmpty())
+                    ? "Parent of " + this.studentName.trim()
+                    : "Parent/Guardian";
         }
     }
 }

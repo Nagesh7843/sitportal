@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/faculty")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class FacultyController {
 
     @Autowired

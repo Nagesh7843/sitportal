@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/parents")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class ParentController {
 
     @Autowired
@@ -73,6 +73,11 @@ public class ParentController {
             parent.setUserId(user.getId());
             parent.setStudentRollNo(linkedStudent.getRollNo() != null ? linkedStudent.getRollNo() : linkedStudent.getPrn());
             parent.setStudentName(linkedStudent.getName());
+            String pName = (linkedStudent.getParentName() != null && !linkedStudent.getParentName().trim().isEmpty())
+                    ? linkedStudent.getParentName().trim()
+                    : (user.getName() != null && !user.getName().trim().isEmpty() ? user.getName().trim() : "Parent of " + linkedStudent.getName());
+            parent.setParentName(pName);
+            if (parent.getEmail() == null || parent.getEmail().isEmpty()) parent.setEmail(email);
             if (linkedStudent.getParentRelationship() != null) parent.setRelationship(linkedStudent.getParentRelationship());
             if (linkedStudent.getParentPhone() != null) parent.setAlternatePhone(linkedStudent.getParentPhone());
             Parent saved = parentRepository.save(parent);
@@ -210,6 +215,15 @@ public class ParentController {
         parent.setRelationship(relationship);
         if (alternatePhone != null) parent.setAlternatePhone(alternatePhone);
         if (occupation != null) parent.setOccupation(occupation);
+        if (parent.getParentName() == null || parent.getParentName().trim().isEmpty()) {
+            String pName = (student.getParentName() != null && !student.getParentName().trim().isEmpty())
+                    ? student.getParentName().trim()
+                    : "Parent of " + student.getName();
+            parent.setParentName(pName);
+        }
+        if (authentication != null && authentication.getName() != null && (parent.getEmail() == null || parent.getEmail().trim().isEmpty())) {
+            parent.setEmail(authentication.getName().trim().toLowerCase());
+        }
 
         Parent savedParent = parentRepository.save(parent);
 

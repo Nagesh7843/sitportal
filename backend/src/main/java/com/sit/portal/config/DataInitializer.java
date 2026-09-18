@@ -342,15 +342,25 @@ public class DataInitializer {
             }
 
             // Seed Parent Record linked to Student
-            if (parentRepository.count() == 0) {
-                parentRepository.save(Parent.builder()
-                        .userId(5L)
-                        .studentRollNo("2023CSE014")
-                        .studentName("Rahul Sharma")
-                        .relationship("Father")
-                        .alternatePhone("+91 9876543210")
-                        .occupation("Business")
-                        .build());
+            try {
+                if (parentRepository.count() == 0 || parentRepository.findByStudentRollNo("2023CSE014").isEmpty()) {
+                    User parentUser = userRepository.findByEmail("parent@sitcoe.ac.in").orElse(null);
+                    Long parentUserId = parentUser != null ? parentUser.getId() : 5L;
+
+                    parentRepository.save(Parent.builder()
+                            .userId(parentUserId)
+                            .parentName("Suresh Sharma")
+                            .email("parent@sitcoe.ac.in")
+                            .phone("+91 9876543210")
+                            .studentRollNo("2023CSE014")
+                            .studentName("Rahul Sharma")
+                            .relationship("Father")
+                            .alternatePhone("+91 9876543210")
+                            .occupation("Business")
+                            .build());
+                }
+            } catch (Exception ex) {
+                System.err.println("WARN: Could not seed default parent record: " + ex.getMessage());
             }
 
             // Seed Sample Placement Drives & Rules

@@ -200,6 +200,12 @@ public class AuthController {
                 p.setUserId(savedUser.getId());
                 p.setStudentRollNo(student.getRollNo() != null ? student.getRollNo() : student.getPrn());
                 p.setStudentName(student.getName());
+                p.setParentName(savedUser.getName() != null && !savedUser.getName().trim().isEmpty()
+                        ? savedUser.getName().trim()
+                        : (student.getParentName() != null && !student.getParentName().trim().isEmpty()
+                            ? student.getParentName().trim()
+                            : "Parent of " + student.getName()));
+                p.setEmail(cleanEmail);
                 if (student.getParentRelationship() != null) p.setRelationship(student.getParentRelationship());
                 if (student.getParentPhone() != null) p.setAlternatePhone(student.getParentPhone());
                 parentRepository.save(p);
@@ -334,6 +340,12 @@ public class AuthController {
         p.setUserId(savedUser.getId());
         p.setStudentRollNo(primaryStudent.getRollNo() != null ? primaryStudent.getRollNo() : primaryStudent.getPrn());
         p.setStudentName(primaryStudent.getName());
+        p.setParentName(savedUser.getName() != null && !savedUser.getName().trim().isEmpty()
+                ? savedUser.getName().trim()
+                : (primaryStudent.getParentName() != null && !primaryStudent.getParentName().trim().isEmpty()
+                    ? primaryStudent.getParentName().trim()
+                    : "Parent of " + primaryStudent.getName()));
+        p.setEmail(cleanEmail);
         if (primaryStudent.getParentRelationship() != null) p.setRelationship(primaryStudent.getParentRelationship());
         if (primaryStudent.getParentPhone() != null) p.setAlternatePhone(primaryStudent.getParentPhone());
         parentRepository.save(p);
@@ -475,6 +487,12 @@ public class AuthController {
             p.setUserId(savedUser.getId());
             p.setStudentRollNo(st.getRollNo() != null ? st.getRollNo() : st.getPrn());
             p.setStudentName(st.getName());
+            p.setParentName(savedUser.getName() != null && !savedUser.getName().trim().isEmpty()
+                    ? savedUser.getName().trim()
+                    : (st.getParentName() != null && !st.getParentName().trim().isEmpty()
+                        ? st.getParentName().trim()
+                        : "Parent of " + st.getName()));
+            p.setEmail(cleanEmail);
             if (st.getParentRelationship() != null) p.setRelationship(st.getParentRelationship());
             if (st.getParentPhone() != null) p.setAlternatePhone(st.getParentPhone());
             parentRepository.save(p);

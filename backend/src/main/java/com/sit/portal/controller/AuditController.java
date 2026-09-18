@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping({"/api/audit-logs", "/api/v1/audit"})
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class AuditController {
 
     private final AuditService auditService;

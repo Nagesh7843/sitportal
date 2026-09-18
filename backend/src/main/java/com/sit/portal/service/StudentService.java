@@ -491,16 +491,28 @@ public class StudentService {
         if (identifier == null) return;
 
         Optional<Parent> parentOpt = parentRepository.findByStudentRollNo(identifier);
+        String pName = (student.getParentName() != null && !student.getParentName().trim().isEmpty())
+                ? student.getParentName().trim()
+                : "Parent of " + (student.getName() != null ? student.getName().trim() : identifier);
+
         Parent parent;
         if (parentOpt.isPresent()) {
             parent = parentOpt.get();
             if (userId != null) parent.setUserId(userId);
+            parent.setParentName(pName);
+            if (student.getParentEmail() != null) parent.setEmail(student.getParentEmail().trim().toLowerCase());
+            if (student.getParentPhone() != null) {
+                parent.setPhone(student.getParentPhone().trim());
+                parent.setAlternatePhone(student.getParentPhone().trim());
+            }
             parent.setStudentName(student.getName());
-            if (student.getParentPhone() != null) parent.setAlternatePhone(student.getParentPhone());
             if (student.getParentRelationship() != null) parent.setRelationship(student.getParentRelationship());
         } else {
             parent = Parent.builder()
                     .userId(userId)
+                    .parentName(pName)
+                    .email(student.getParentEmail() != null ? student.getParentEmail().trim().toLowerCase() : null)
+                    .phone(student.getParentPhone() != null ? student.getParentPhone().trim() : null)
                     .studentRollNo(identifier)
                     .studentName(student.getName())
                     .alternatePhone(student.getParentPhone())

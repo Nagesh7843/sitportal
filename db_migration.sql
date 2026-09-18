@@ -483,6 +483,17 @@ CREATE INDEX IF NOT EXISTS idx_device_deliveries_notice ON device_notice_deliver
 CREATE INDEX IF NOT EXISTS idx_device_deliveries_endpoint ON device_notice_deliveries(device_endpoint);
 CREATE INDEX IF NOT EXISTS idx_device_deliveries_email ON device_notice_deliveries(user_email);
 
+-- -----------------------------------------------------------------------------
+-- 29. SAFE PARENTS TABLE SCHEMA & INTEGRITY UPGRADE
+-- -----------------------------------------------------------------------------
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS parent_name VARCHAR(255) DEFAULT 'Parent/Guardian';
+ALTER TABLE parents ALTER COLUMN parent_name SET DEFAULT 'Parent/Guardian';
+UPDATE parents SET parent_name = 'Parent/Guardian' WHERE parent_name IS NULL OR TRIM(parent_name) = '';
+ALTER TABLE parents ALTER COLUMN parent_name SET NOT NULL;
 
-
-
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS user_id BIGINT;
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS student_name VARCHAR(100);
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS alternate_phone VARCHAR(20);
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS occupation VARCHAR(100);
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
